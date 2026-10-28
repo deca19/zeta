@@ -296,6 +296,8 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     <div class="m-head"><h2 id="lTitle">보관함</h2><button class="btn small" type="button" data-close>닫기</button></div>
     <p class="m-sub">작품마다 따로 저장돼요. 새 작품을 만들어도 예전 작품은 그대로 남아 있어요.</p>
     <label class="fld"><span class="fld-l">지금 작품 이름</span><input type="text" id="lName" maxlength="40" autocomplete="off"></label>
+    <div class="row"><button class="btn small" type="button" id="lImport">파일에서 작품 불러오기</button></div>
+    <input type="file" id="fileWork" accept=".json,application/json" hidden>
     <div class="seg" id="lTabs" role="tablist"></div>
     <div class="row"><button class="btn primary" type="button" id="lNew">+ 새 세로툰</button><button class="btn" type="button" id="lSample">예시로 새 세로툰</button></div>
     <div class="lib-list" id="lList"></div>
@@ -477,7 +479,7 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     red: { fill: "#e5392f", ink: "#ffffff", line: "#111111", label: "빨강" }
   };
   const BGS = [["#000000", "검정"], ["#17181c", "먹색"], ["#ffffff", "흰색"], ["#f4efe6", "종이"]];
-  const DEF = { width: 720, bg: "#000000", gap: 60, frame: "full", narrFont: "myeongjo", bubbleFont: "gothic", bubbleShape: "oval", parts: 1, format: "png", pageRatio: "a4", perPage: 4, rtl: false, comicJoin: false };
+  const DEF = { width: 720, bg: "#000000", gap: 60, frame: "full", narrFont: "myeongjo", bubbleFont: "gothic", bubbleShape: "oval", parts: 1, format: "png", sign: "", pageRatio: "a4", perPage: 4, rtl: false, comicJoin: false };
 
   let P = { v: 2, settings: Object.assign({}, DEF), blocks: [] };
   const images = new Map(); // key -> {el, blob, w, h}
@@ -754,7 +756,7 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
         ctx.save(); ctx.beginPath(); ctx.rect(r.x, r.y, r.w, r.h); ctx.clip();
         if (im) {
           const z = (pn.zoom || 100) / 100, sc = Math.max(r.w / im.w, r.h / im.h) * z, dw = im.w * sc, dh = im.h * sc;
-          ctx.drawImage(im.el, r.x + (r.w - dw) * (pn.fx == null ? 50 : pn.fx) / 100, r.y + (r.h - dh) * (pn.fy == null ? 50 : pn.fy) / 100, dw, dh);
+          ctx.drawImage(lookSrc(pn.img, pn.look) || im.el, r.x + (r.w - dw) * (pn.fx == null ? 50 : pn.fx) / 100, r.y + (r.h - dh) * (pn.fy == null ? 50 : pn.fy) / 100, dw, dh);
         } else if (preview) {
           ctx.fillStyle = dark ? "#2a2d33" : "#eceef1"; ctx.fillRect(r.x, r.y, r.w, r.h);
           ctx.fillStyle = "#8a919c"; ctx.font = fontCss("gothic", 24 * k); ctx.textAlign = "center"; ctx.textBaseline = "middle";
@@ -783,7 +785,7 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     }
     if (b.type !== "image") return;
     const im = images.get(b.img);
-    if (im) ctx.drawImage(im.el, S.ix, S.iy, S.iw, S.ih);
+    if (im) ctx.drawImage(lookSrc(b.img, b.look) || im.el, S.ix, S.iy, S.iw, S.ih);
     else {
       ctx.fillStyle = "#3a3d44"; ctx.fillRect(S.ix, S.iy, S.iw, S.ih);
       ctx.fillStyle = "#c9ced6"; ctx.font = fontCss("gothic", 26 * W / BASE); ctx.textAlign = "center"; ctx.textBaseline = "middle";
@@ -798,6 +800,7 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   const strip = $("strip");
   function cssScale() { return (strip.clientWidth || 360) / P.settings.width; }
   function renderStrip() {
+    if (viewObs) { canvasMap.forEach((cv) => viewObs.unobserve(cv)); onScreen.clear(); }
     canvasMap.clear();
     strip.innerHTML = "";
     const W = P.settings.width;
@@ -840,11 +843,21 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
       renderBlock(b.id);
     });
   }
+  const onScreen = new Set();
+  const viewObs = "IntersectionObserver" in window ? new IntersectionObserver((entries) => {
+    entries.forEach((en) => {
+      const id = en.target.dataset.bid; if (!id) return;
+      if (en.isIntersecting) { if (!onScreen.has(id)) { onScreen.add(id); renderBlock(id); } }
+      else if (onScreen.has(id)) { onScreen.delete(id); en.target.width = 1; en.target.height = 1; }
+    });
+  }, { rootMargin: "1600px 0px" }) : null;
   function renderBlock(id) {
     const b = findBlock(id), cv = canvasMap.get(id);
     if (!b || !cv) return;
     const W = P.settings.width, cssW = strip.clientWidth || 360, dpr = Math.min(2, window.devicePixelRatio || 1);
     const S = blockSize(b, W), s = cssW * dpr / W;
+    if (viewObs && !cv.dataset.bid) { cv.dataset.bid = id; viewObs.observe(cv); }
+    if (viewObs && !onScreen.has(id)) { cv.style.height = (S.h * cssW / W) + "px"; cv.parentElement.classList.toggle("sel", sel.block === id && !sel.bubble); return; }
     const pw = Math.max(1, Math.round(W * s)), ph = Math.max(1, Math.round(S.h * s));
     if (cv.width !== pw) cv.width = pw;
     if (cv.height !== ph) cv.height = ph;
@@ -1523,13 +1536,74 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
         h("div", { class: "lib-info" }, h("b", { text: e.title || "제목 없는 작품" }), h("span", {}, h("span", { class: "mode-tag", text: e.mode === "comic" ? "만화" : "세로툰" }), (cur ? "지금 작품 · " : "") + (e.mode === "comic" ? "페이지 " + (e.cuts || 0) + "장" : "컷 " + (e.cuts || 0) + "개") + " · " + fmtDate(e.updated))),
         h("div", { class: "lib-act" },
           cur ? h("span", { class: "cur-tag", text: "편집 중" }) : h("button", { type: "button", class: "btn small primary", onclick: () => openProject(e.id) }, "열기"),
-          h("button", { type: "button", class: "btn small", onclick: () => duplicateProject(e.id) }, "복제"), del)));
+          h("button", { type: "button", class: "btn small", onclick: () => duplicateProject(e.id) }, "복제"),
+          h("button", { type: "button", class: "btn small", onclick: (ev) => exportWork(e.id, ev.currentTarget) }, "파일로 백업"), del)));
     });
+  }
+  function blobToDataURL(blob) { return new Promise((ok, no) => { const fr = new FileReader(); fr.onload = () => ok(fr.result); fr.onerror = no; fr.readAsDataURL(blob); }); }
+  async function saveFileBlob(blob, name) {
+    try {
+      const d = window.claude && typeof window.claude.use === "function" ? await window.claude.use("downloads") : null;
+      if (d) { await d.save({ filename: name, data: blob }); return "saved"; }
+    } catch (e) { if (e && e.code === "declined") return "declined"; }
+    const a = document.createElement("a"), href = URL.createObjectURL(blob);
+    a.href = href; a.download = name; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(href), 60000);
+    return "downloaded";
+  }
+  async function exportWork(id, btn) {
+    if (btn) { btn.disabled = true; btn.textContent = "만드는 중…"; }
+    try {
+      if (id === curId) { clearTimeout(saveTimer); await saveNow(); }
+      const raw = await store.run("kv", "readonly", (st) => st.get(projKey(id)));
+      if (!raw) throw new Error("none");
+      const proj = JSON.parse(raw), sbRaw = await store.run("kv", "readonly", (st) => st.get("sb:" + id));
+      const sbo = sbRaw ? JSON.parse(sbRaw) : null, keys = new Set();
+      (proj.blocks || []).forEach((b) => blockImgs(b).forEach((k) => keys.add(k)));
+      if (sbo && Array.isArray(sbo.cuts)) sbo.cuts.forEach((c) => c.img && keys.add(c.img));
+      const imgs = {};
+      for (const k of keys) {
+        if (k.startsWith("sample")) continue;
+        let blob = images.has(k) ? images.get(k).blob : null;
+        if (!blob) blob = await store.run("img", "readonly", (st) => st.get(k));
+        if (blob) imgs[k] = await blobToDataURL(blob);
+      }
+      const e = libEntry(id) || {};
+      const out = { app: "sedotoon", v: 1, title: proj.title || e.title || "작품", mode: proj.mode || e.mode || "webtoon", savedAt: Date.now(), project: proj, storyboard: sbo, images: imgs };
+      const dt = new Date(), stamp = dt.getFullYear() + String(dt.getMonth() + 1).padStart(2, "0") + String(dt.getDate()).padStart(2, "0") + "_" + String(dt.getHours()).padStart(2, "0") + String(dt.getMinutes()).padStart(2, "0");
+      const r = await saveFileBlob(new Blob([JSON.stringify(out)], { type: "application/json" }), "sedotoon_" + (out.mode === "comic" ? "comic_" : "") + stamp + ".json");
+      toast(r === "declined" ? "백업을 취소했어요" : "‘" + out.title + "’를 파일로 백업했어요. 다른 폰에서도 불러올 수 있어요.");
+    } catch (er) { toast("백업 파일을 만들지 못했어요", true); }
+    if (btn) { btn.disabled = false; btn.textContent = "파일로 백업"; }
+  }
+  async function importWork(file) {
+    let data;
+    try { data = JSON.parse(await file.text()); } catch (e) { toast("세로툰 백업 파일이 아니에요", true); return; }
+    if (!data || data.app !== "sedotoon" || !data.project || !Array.isArray(data.project.blocks)) { toast("세로툰 백업 파일이 아니에요", true); return; }
+    clearTimeout(saveTimer); await saveNow();
+    const map = {};
+    for (const [k, url] of Object.entries(data.images || {})) {
+      try { const blob = await (await fetch(url)).blob(); const nk = await addBlob(blob); map[k] = nk; await store.run("img", "readwrite", (st) => st.put(blob, nk)); savedImgs.add(nk); } catch (e) { /* skip broken image */ }
+    }
+    const fix = (k) => (k && map[k]) || k;
+    const proj = data.project;
+    proj.blocks.forEach((b) => { if (b.type === "image") b.img = fix(b.img); if (b.type === "page") (b.panels || []).forEach((pn) => { if (pn) pn.img = fix(pn.img); }); });
+    if (proj.blocks.some((b) => blockImgs(b).some((k) => k.startsWith("sample")))) await ensureSamples();
+    const id = nid("p"), title = (data.title || proj.title || "불러온 작품");
+    proj.title = title; proj.mode = data.mode || proj.mode || "webtoon";
+    await store.run("kv", "readwrite", (st) => st.put(JSON.stringify(proj), projKey(id)));
+    if (data.storyboard && Array.isArray(data.storyboard.cuts)) { data.storyboard.cuts.forEach((c) => { c.img = fix(c.img); }); await store.run("kv", "readwrite", (st) => st.put(JSON.stringify(data.storyboard), "sb:" + id)); }
+    lib.unshift({ id, title, updated: Date.now(), cuts: 0, thumb: "", mode: proj.mode });
+    await store.run("kv", "readwrite", (st) => st.put(JSON.stringify(lib), "library"));
+    await openProject(id);
+    toast("‘" + title + "’를 불러왔어요");
   }
   let libTab = "webtoon";
   function openLib() { delArm = null; libTab = isComic() ? "comic" : "webtoon"; renderLib(); openModal("mLib"); }
   $("bLib").addEventListener("click", openLib);
   $("lNew").addEventListener("click", () => newProject(false, libTab));
+  $("lImport").addEventListener("click", () => $("fileWork").click());
+  $("fileWork").addEventListener("change", async (e) => { const f = e.target.files && e.target.files[0]; e.target.value = ""; if (f) await importWork(f); });
   $("lSample").addEventListener("click", () => newProject(true, libTab));
   $("lName").addEventListener("input", (e) => { P.title = e.target.value.trim() || "제목 없는 작품"; updateTitle(); const en = libEntry(curId); if (en) en.title = P.title; scheduleSave(); });
 
@@ -1546,6 +1620,75 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   if (document.fonts) document.fonts.addEventListener("loadingdone", () => { clearTimeout(fontTimer); fontTimer = setTimeout(() => { iconCache.clear(); P.blocks.forEach((b) => renderBlock(b.id)); if (!document.activeElement || !$("insp").contains(document.activeElement)) buildInspector(); }, 120); });
 
   // ---------- icons for shapes ----------
+  const LOOKS = [["none", "원본"], ["mono", "흑백"], ["manga", "만화톤"], ["cel", "웹툰 채색"], ["sepia", "세피아"], ["vivid", "선명하게"]];
+  const lookCache = new Map();
+  function lookSrc(key, look) {
+    const im = images.get(key);
+    if (!im) return null;
+    if (!look || ((look.f || "none") === "none" && !look.br && !look.ct)) return im.el;
+    const ck = key + "|" + (look.f || "none") + "|" + (look.br || 0) + "|" + (look.ct || 0);
+    if (lookCache.has(ck)) return lookCache.get(ck);
+    const sc = Math.min(1, 1400 / Math.max(im.w, im.h)), w = Math.max(1, Math.round(im.w * sc)), hh = Math.max(1, Math.round(im.h * sc));
+    const c = document.createElement("canvas"); c.width = w; c.height = hh;
+    const g = c.getContext("2d"); g.drawImage(im.el, 0, 0, w, hh);
+    let data; try { data = g.getImageData(0, 0, w, hh); } catch (e) { return im.el; }
+    const d = data.data, n = w * hh, f = look.f || "none";
+    const br = (look.br || 0) * 2.55, ctv = (look.ct || 0) * 2.55, cf = (259 * (ctv + 255)) / (255 * (259 - ctv));
+    const adj = (v) => { v = cf * (v - 128) + 128 + br; return v < 0 ? 0 : v > 255 ? 255 : v; };
+    const gray = new Float32Array(n);
+    for (let i = 0, p = 0; i < n; i++, p += 4) {
+      let r = adj(d[p]), gg = adj(d[p + 1]), b = adj(d[p + 2]);
+      if (f === "sepia") { const R = r * .393 + gg * .769 + b * .189, G = r * .349 + gg * .686 + b * .168, B = r * .272 + gg * .534 + b * .131; r = Math.min(255, R); gg = Math.min(255, G); b = Math.min(255, B); }
+      else if (f === "vivid") { const L = (r + gg + b) / 3; r = clamp(L + (r - L) * 1.4, 0, 255); gg = clamp(L + (gg - L) * 1.4, 0, 255); b = clamp(L + (b - L) * 1.4, 0, 255); }
+      d[p] = r; d[p + 1] = gg; d[p + 2] = b;
+      gray[i] = r * .299 + gg * .587 + b * .114;
+    }
+    if (f === "mono") for (let i = 0, p = 0; i < n; i++, p += 4) d[p] = d[p + 1] = d[p + 2] = gray[i];
+    if (f === "manga" || f === "cel") {
+      const edge = new Float32Array(n);
+      for (let y = 1; y < hh - 1; y++) for (let x = 1; x < w - 1; x++) {
+        const i = y * w + x;
+        const gx = -gray[i - w - 1] - 2 * gray[i - 1] - gray[i + w - 1] + gray[i - w + 1] + 2 * gray[i + 1] + gray[i + w + 1];
+        const gy = -gray[i - w - 1] - 2 * gray[i - w] - gray[i - w + 1] + gray[i + w - 1] + 2 * gray[i + w] + gray[i + w + 1];
+        edge[i] = Math.sqrt(gx * gx + gy * gy);
+      }
+      const cell = Math.max(4, Math.round(w / 160)), half = cell / 2;
+      for (let y = 0; y < hh; y++) for (let x = 0; x < w; x++) {
+        const i = y * w + x, p = i * 4, e = edge[i];
+        if (f === "manga") {
+          const v = gray[i]; let out;
+          if (e > 150) out = 0;
+          else if (v > 200) out = 255;
+          else if (v < 55) out = 18;
+          else { const dx = (x % cell) - half + 0.5, dy = (y % cell) - half + 0.5, rr = Math.sqrt(dx * dx + dy * dy) / half; out = rr < (1 - (v - 55) / 145) * 1.15 ? 25 : 255; }
+          d[p] = d[p + 1] = d[p + 2] = out;
+        } else {
+          if (e > 170) { d[p] = d[p + 1] = d[p + 2] = 22; continue; }
+          const q = (v) => Math.round(v / 51) * 51;
+          d[p] = q(d[p]); d[p + 1] = q(d[p + 1]); d[p + 2] = q(d[p + 2]);
+        }
+      }
+    }
+    g.putImageData(data, 0, 0);
+    if (lookCache.size > 40) lookCache.delete(lookCache.keys().next().value);
+    lookCache.set(ck, c);
+    return c;
+  }
+  function lookSection(target, onChange, onAll) {
+    const L = target.look || (target.look = { f: "none", br: 0, ct: 0 });
+    const wrap = h("div", { class: "sec" }, h("div", { class: "sec-l", text: "사진 효과" }),
+      seg(LOOKS, L.f || "none", (v) => { L.f = v; onChange(true); }, "사진 효과"),
+      h("div", { class: "grid2" },
+        slider("밝기", -50, 50, 5, L.br || 0, "", (v) => { L.br = v; onChange(false); }),
+        slider("대비", -50, 50, 5, L.ct || 0, "", (v) => { L.ct = v; onChange(false); })),
+      onAll ? h("div", { class: "row" }, h("button", { type: "button", class: "btn small", onclick: () => onAll(JSON.parse(JSON.stringify(L))) }, "모든 사진에 같은 효과")) : null);
+    return wrap;
+  }
+  function applyLookAll(look) {
+    let n = 0;
+    P.blocks.forEach((b) => { if (b.type === "image") { b.look = JSON.parse(JSON.stringify(look)); n++; } else if (b.type === "page") (b.panels || []).forEach((pn) => { if (pn && pn.img) { pn.look = JSON.parse(JSON.stringify(look)); n++; } }); });
+    renderStrip(); commit(); toast("사진 " + n + "장에 같은 효과를 넣었어요");
+  }
   const iconCache = new Map();
   function shapeIcon(shape) {
     if (iconCache.has(shape)) return iconCache.get(shape);
@@ -1671,6 +1814,11 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     body.appendChild(h("div", { class: "row" },
       h("button", { type: "button", class: "btn small", onclick: () => { const c = JSON.parse(JSON.stringify(u)); c.id = nid("u"); c.x = clamp(u.x + 6, 0, 100); c.y = clamp(u.y + 8, 0, 100); if (c.tail) { c.tail.y = clamp(c.tail.y + 8, 0, 100); } b.bubbles.push(c); normalizeBubble(b, c); renderBlock(b.id); commit(); select({ block: b.id, bubble: c.id }); } }, "복제"),
       h("button", { type: "button", class: "btn small", onclick: () => { const i = b.bubbles.indexOf(u); b.bubbles.splice(i, 1); b.bubbles.push(u); renderBlock(b.id); commit(); toast("맨 앞으로 가져왔어요"); } }, "맨 앞으로"),
+      h("button", { type: "button", class: "btn small", onclick: () => {
+        let n = 0; const keys = ["font", "size", "cols", "tone", "padX", "padY", "tailW", "tailBend"];
+        P.blocks.forEach((bb) => hasBubbles(bb) && bb.bubbles.forEach((x) => { if (x !== u && x.shape === u.shape) { keys.forEach((k) => { if (u[k] == null) delete x[k]; else x[k] = u[k]; }); n++; } }));
+        P.blocks.forEach((bb) => hasBubbles(bb) && renderBlock(bb.id)); commit(); toast(n ? "같은 모양 말풍선 " + n + "개에 이 스타일을 넣었어요" : "같은 모양의 다른 말풍선이 없어요");
+      } }, "같은 모양에 스타일 복사"),
       h("button", { type: "button", class: "btn small danger", onclick: () => removeBubble(b, u) }, "삭제")));
     if (!isMobile()) body.appendChild(h("p", { class: "kbd", text: "Delete 지우기 · 방향키 미세 이동 · Esc 선택 해제" }));
   }
@@ -1706,6 +1854,7 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
       b.bubbles.forEach((u) => chips.appendChild(h("button", { type: "button", class: "chip-b", onclick: () => select({ block: b.id, bubble: u.id }, { reveal: true }) }, (SHAPES[u.shape].label) + " · " + (u.text || "").replace(/\n/g, " ").slice(0, 16))));
       body.appendChild(sec("이 컷의 말풍선 " + b.bubbles.length + "개", chips));
     }
+    if (images.has(b.img)) body.appendChild(lookSection(b, (now) => { now ? renderBlock(b.id) : renderSoon(b.id); if (now) commit(); else commitSoon(); }, applyLookAll));
     body.appendChild(sec("컷", h("div", { class: "row" },
       h("button", { type: "button", class: "btn small", onclick: () => { replaceTarget = b.id; replacePanel = null; $("fileReplace").click(); } }, "사진 바꾸기"),
       h("button", { type: "button", class: "btn small", onclick: () => moveBlock(b.id, -1) }, "↑ 위로"),
@@ -1747,6 +1896,7 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
         slider("확대", 100, 300, 5, pn.zoom || 100, "%", (v) => { pn.zoom = v; renderSoon(b.id); }),
         slider("가로 위치", 0, 100, 1, pn.fx == null ? 50 : pn.fx, "", (v) => { pn.fx = v; renderSoon(b.id); }),
         slider("세로 위치", 0, 100, 1, pn.fy == null ? 50 : pn.fy, "", (v) => { pn.fy = v; renderSoon(b.id); })));
+      if (has) parts.push(lookSection(pn, (now) => { now ? renderBlock(b.id) : renderSoon(b.id); if (now) commit(); else commitSoon(); }, applyLookAll));
       if (panelAiBox && has) { const box = panelAiBox(b, pi); if (box) parts.push(box); }
       body.appendChild(sec("칸 " + (pi + 1), ...parts));
     } else body.appendChild(h("p", { class: "hint", text: "그림에서 칸을 누르면 그 칸에 사진을 넣고 말풍선을 달 수 있어요." }));
@@ -1800,6 +1950,9 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     body.appendChild(sec("대사 글꼴", fontGrid(st.bubbleFont, (f) => { st.bubbleFont = f; commit(); }),
       h("button", { type: "button", class: "btn small", onclick: () => { let n = 0; P.blocks.forEach((b) => hasBubbles(b) && b.bubbles.forEach((u) => { if (!SHAPES[u.shape].font) { u.font = st.bubbleFont; n++; } })); renderStrip(); commit(); toast("대사 " + n + "개에 적용했어요"); } }, "지금 있는 대사에도 적용")));
     if (!isComic()) body.appendChild(sec("나레이션 글꼴", fontGrid(st.narrFont, (f) => { st.narrFont = f; renderStrip(); commit(); })));
+    const signIn = h("input", { type: "text", value: st.sign || "", maxlength: "30", placeholder: "예) @deca · 그림 정헌", "aria-label": "작가 서명" });
+    signIn.addEventListener("input", () => { st.sign = signIn.value; commitSoon(); });
+    body.appendChild(h("label", { class: "fld" }, h("span", { class: "fld-l", text: "작가 서명 (저장한 이미지 오른쪽 아래에 들어가요)" }), signIn));
     body.appendChild(sec("폰 AI", h("div", { class: "row" }, h("button", { type: "button", class: "btn small", onclick: openEngine }, "폰 AI 상태 보기")),
       h("p", { class: "hint", text: engine.ready ? "켜져 있어요 · " + curModel().label : engine.cached ? "받아 둠 · 쓸 때 자동으로 켜져요" : "아직 안 받았어요 (약 1GB)" })));
     body.appendChild(sec("작품", h("div", { class: "row" },
@@ -2272,6 +2425,9 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     } else if (!engine.ready) {
       b.append(h("button", { type: "button", class: "btn primary wide", onclick: () => loadModel() }, engine.cached ? "폰 AI 켜기" : "폰 AI 받기 (" + curModel().size + ")"));
     }
+    const pre = h("input", { type: "checkbox", id: "preloadAI" }); pre.checked = preloadOn();
+    pre.addEventListener("change", () => { try { localStorage.setItem("sedo-preload", pre.checked ? "1" : "0"); } catch (e) { /* ignore */ } if (pre.checked && engine.cached && !engine.ready) loadModel(); });
+    b.append(h("label", { class: "switch" }, h("span", { text: "앱을 열 때 폰 AI 미리 켜 두기 (첫 대사가 빨라져요)" }), pre));
     if (est && est.quota) b.append(h("p", { class: "hint", text: "이 앱 저장 공간: " + (est.usage / 1e9).toFixed(2) + "GB 사용 · 최대 " + (est.quota / 1e9).toFixed(1) + "GB" }));
     b.append(h("div", { class: "sec" }, h("div", { class: "sec-l", text: "그림은 폰 그림 앱으로" }),
       h("p", { class: "hint", text: "그림도 폰 안에서 무료로 뽑을 수 있어요. 안드로이드는 Local Dream, 아이폰은 Draw Things 앱에서 콘티의 프롬프트를 붙여 넣고 뽑은 다음, 이 앱으로 가져오면 돼요. 안드로이드는 갤러리에서 ‘공유 → 세로툰’으로 바로 보낼 수도 있어요." })));
@@ -2280,7 +2436,11 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
       engine.cached = false; engine.ready = false; engine.model = null; engine.processor = null; renderEngine(); engineUI(); toast("폰 AI를 지웠어요");
     } }, "폰 AI 지우기 (저장 공간 비우기)"));
   }
-  async function refreshEngine() { engine.cached = engine.ready || (await checkCached()); engineUI(); }
+  const preloadOn = () => { try { return localStorage.getItem("sedo-preload") === "1"; } catch (e) { return false; } };
+  async function refreshEngine() {
+    engine.cached = engine.ready || (await checkCached()); engineUI();
+    if (engine.cached && !engine.ready && !engine.loading && preloadOn()) loadModel();
+  }
 
   // ---------- pictures shared from other apps (Android share target) ----------
   async function takeShared() {
@@ -2513,6 +2673,14 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
           if (it.y + it.S.h <= a || it.y >= b) return;
           ctx.save(); ctx.translate(0, it.y - a); drawBlock(ctx, it.b, W, it.S, null); ctx.restore();
         });
+        if ((P.settings.sign || "").trim() && (isComic() || i === parts.length - 1 || parts.length > 1)) {
+          const k = W / BASE, px = Math.round(18 * k);
+          ctx.font = fontCss("gothic", px); ctx.textAlign = "right"; ctx.textBaseline = "bottom";
+          ctx.lineWidth = Math.max(2, px * 0.22); ctx.lineJoin = "round";
+          ctx.strokeStyle = lightBg() ? "rgba(255,255,255,.85)" : "rgba(0,0,0,.6)"; ctx.fillStyle = lightBg() ? "rgba(20,20,20,.75)" : "rgba(255,255,255,.85)";
+          const tx = W - 16 * k, ty = c.height - 12 * k;
+          ctx.strokeText(P.settings.sign.trim(), tx, ty); ctx.fillText(P.settings.sign.trim(), tx, ty);
+        }
         const blob = await toBlob(c, mime, 0.93);
         c.width = 1; c.height = 1;
         if (!blob) throw new Error("too_tall");
