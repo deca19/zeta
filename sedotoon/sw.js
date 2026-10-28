@@ -1,6 +1,6 @@
 // 세로툰 서비스 워커: 앱을 오프라인에서도 열리게 하고, 다른 앱에서 공유한 그림을 받는다.
-const APP = "sedotoon-app-v1";
-const SHELL = ["./", "./index.html", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png"];
+const APP = "sedotoon-app-v2";
+const SHELL = ["./index.html", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png"];
 self.addEventListener("install", (e) => { e.waitUntil(caches.open(APP).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting())); });
 self.addEventListener("activate", (e) => {
   e.waitUntil(caches.keys().then((ks) => Promise.all(ks.filter((k) => k.startsWith("sedotoon-app-") && k !== APP).map((k) => caches.delete(k)))).then(() => self.clients.claim()));
@@ -15,7 +15,7 @@ self.addEventListener("fetch", (e) => {
         let i = 0;
         for (const f of files) { if (f && f.size) await box.put(new Request("./inbox/" + Date.now() + "-" + (i++)), new Response(f, { headers: { "Content-Type": f.type || "image/png" } })); }
       } catch (err) { /* nothing to keep */ }
-      return Response.redirect("./?shared=1", 303);
+      return Response.redirect("./index.html?shared=1", 303);
     })());
     return;
   }

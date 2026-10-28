@@ -2,7 +2,7 @@
   "name": "세로툰 — 폰에서 만드는 세로 웹툰",
   "short_name": "세로툰",
   "description": "폰 안에서 돌아가는 AI로 대사를 쓰고 말풍선을 놓아 세로 웹툰을 만들어요.",
-  "start_url": "./",
+  "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
