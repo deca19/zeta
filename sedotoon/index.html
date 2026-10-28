@@ -191,6 +191,16 @@ input[type="range"] { width: 100%; accent-color: var(--accent); height: 28px; }
 .kbd { font-size: 11px; color: var(--muted); }
 .switch { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 36px; }
 .switch input { width: 44px; height: 24px; accent-color: var(--accent); }
+.insp-tabs { display: flex; gap: 2px; overflow-x: auto; padding: 0 10px; border-bottom: 1px solid var(--line); scrollbar-width: none; flex: none; }
+.insp-tabs::-webkit-scrollbar { display: none; }
+.itab { flex: none; min-height: 42px; padding: 0 12px; border: 0; border-bottom: 2.5px solid transparent; background: none; color: var(--muted); font: inherit; font-weight: 600; font-size: 14px; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; margin-bottom: -1px; }
+.itab[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--accent); }
+.itab-n { font-size: 11px; line-height: 1; background: var(--pencil); color: var(--ink); border-radius: 99px; padding: 3px 6px; }
+.insp-body { min-height: 0; flex: 1 1 auto; }
+.insp-body > * { flex-shrink: 0; }
+.insp-head .btn.small { flex: none; }
+#inspSize { display: none; }
+.trs { display: grid; grid-template-columns: repeat(auto-fill, minmax(70px, 1fr)); gap: 6px; }
 
 /* toast */
 .fab { display: none; position: fixed; right: max(16px, env(safe-area-inset-right, 0px)); bottom: calc(18px + env(safe-area-inset-bottom, 0px)); z-index: 31; width: 60px; height: 60px; border-radius: 50%; border: 0; background: var(--accent); color: var(--accent-ink); box-shadow: 0 6px 20px rgba(0,0,0,.28); align-items: center; justify-content: center; cursor: pointer; padding: 0; }
@@ -276,6 +286,19 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   .modal { align-items: flex-end; padding-left: 0; padding-right: 0; padding-bottom: 0; }
   .modal-card { border-radius: 16px 16px 0 0; max-height: 92vh; padding: 16px max(16px, env(safe-area-inset-right, 0px)) calc(16px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); }
 }
+@media (max-width: 860px) {
+  .insp { max-height: min(44vh, 420px); transition: max-height .18s ease; }
+  .insp.tall { max-height: 82vh; }
+  .insp-head { padding: 12px 10px 6px 16px; border-bottom: 0; }
+  .insp-title { font-size: 16px; }
+  .insp-hint { display: none; }
+  #inspSize { display: inline-flex; }
+  .insp-body { gap: 12px; padding: 12px 14px 16px; }
+  .shapes, .fonts, .trs { grid-template-columns: none; grid-auto-flow: column; grid-template-rows: repeat(2, auto); grid-auto-columns: 74px; overflow-x: auto; padding-bottom: 6px; overscroll-behavior-x: contain; scrollbar-width: thin; }
+  .trs { grid-template-rows: auto; }
+  .fonts { grid-auto-columns: 84px; }
+  .grab { cursor: pointer; width: 46px; height: 5px; top: 6px; }
+}
 @media (max-width: 560px) {
   .tb .full { display: none; }
   .tb .short { display: inline; }
@@ -320,7 +343,8 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     </div>
   </main>
   <aside class="insp collapsed" id="insp" aria-label="편집 도구">
-    <div class="insp-head" id="inspHead"><span class="grab"></span><div class="insp-title" id="inspTitle"></div><button class="btn small" type="button" id="inspDone" hidden>완료</button></div>
+    <div class="insp-head" id="inspHead"><span class="grab" id="inspGrab"></span><div class="insp-title" id="inspTitle"></div><button class="btn small" type="button" id="inspSize">크게</button><button class="btn small" type="button" id="inspDone" hidden>완료</button></div>
+    <div class="insp-tabs" id="inspTabs" role="tablist" hidden></div>
     <div class="insp-body" id="inspBody"></div>
   </aside>
 </div>
@@ -947,12 +971,12 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     ctx.restore();
   }
   // ---------- transitions between cuts (fade in / fade out / cross-dissolve) ----------
-  const TR_IN = [["none", "없음"], ["fade", "스르륵"], ["mix", "앞 컷과 겹치기"], ["brush", "붓 자국"], ["cloud", "몽글몽글"], ["dots", "망점"], ["wave", "물결"]];
+  const TR_IN = [["none", "없음"], ["fade", "스르륵"], ["mix", "겹쳐 녹이기"], ["brush", "붓 터치"], ["cloud", "몽글몽글"], ["dots", "망점"], ["wave", "물결"]];
   const TR_OUT = TR_IN.filter((t) => t[0] !== "mix");
   const TR_COL = [["bg", "배경색으로"], ["#ffffff", "흰색으로"], ["#000000", "검정으로"]];
   const trOn = (t) => !!(t && t.kind && t.kind !== "none");
   const trCol = (t) => (!t || !t.col || t.col === "bg" ? P.settings.bg : t.col);
-  const trLen = (t, ih) => Math.round(ih * Math.max(3, Math.min(70, t.len || 20)) / 100);
+  const trLen = (t, ih) => Math.round(ih * Math.max(3, Math.min(70, t.len || 24)) / 100);
   function prevBlock(b) { const i = P.blocks.indexOf(b); return i > 0 ? P.blocks[i - 1] : null; }
   function isMix(b) { const pv = b && b.type === "image" && b.tin && b.tin.kind === "mix" && !isComic() ? prevBlock(b) : null; return !!pv && (pv.type === "image" || pv.type === "space"); }
   function mixOverlap(b, W) {
@@ -968,55 +992,78 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     const col = ca && cb ? (ca === cb ? ca : null) : (ca || cb);
     return { gap, col: col && col !== P.settings.bg ? col : null };
   }
-  // erase an edge band of height L; local coords: edge at v=0, image inward at v>0
-  function edgeMask(g, kind, w, L, seed, k) {
-    const R = rng(hashStr(seed + kind));
-    if (kind === "fade") {
-      const gr = g.createLinearGradient(0, 0, 0, L);
-      for (let i = 0; i <= 10; i++) { const t = i / 10, a = 1 - t * t * (3 - 2 * t); gr.addColorStop(t, "rgba(0,0,0," + a.toFixed(3) + ")"); }
-      g.fillStyle = gr; g.fillRect(-2, -2, w + 4, L + 2); return;
+  // ---- organic edge masks: built per pixel, with value noise and dithering so gradients never band ----
+  const smooth = (a, b, x) => { const t = x <= a ? 0 : x >= b ? 1 : (x - a) / (b - a); return t * t * (3 - 2 * t); };
+  const smoother = (x) => { x = x < 0 ? 0 : x > 1 ? 1 : x; return x * x * x * (x * (x * 6 - 15) + 10); };
+  const noiseCache = new Map();
+  function noiseFor(seed) {
+    if (noiseCache.has(seed)) return noiseCache.get(seed);
+    const R = rng(seed), perm = new Uint16Array(512), val = new Float32Array(256), p = [];
+    for (let i = 0; i < 256; i++) p.push(i);
+    for (let i = 255; i > 0; i--) { const j = Math.floor(R() * (i + 1)), t = p[i]; p[i] = p[j]; p[j] = t; }
+    for (let i = 0; i < 512; i++) perm[i] = p[i & 255];
+    for (let i = 0; i < 256; i++) val[i] = R();
+    const sm = (t) => t * t * (3 - 2 * t);
+    const n1 = (x) => { const i = Math.floor(x), f = sm(x - i), a = val[perm[i & 255]], b = val[perm[(i + 1) & 255]]; return a + (b - a) * f; };
+    const n2 = (x, y) => {
+      const xi = Math.floor(x), yi = Math.floor(y), fx = sm(x - xi), fy = sm(y - yi), X = xi & 255, Y = yi & 255;
+      const a = val[perm[X + perm[Y]]], b = val[perm[X + 1 + perm[Y]]], c = val[perm[X + perm[Y + 1]]], d = val[perm[X + 1 + perm[Y + 1]]];
+      return a + (b - a) * fx + (c - a) * fy + (a - b - c + d) * fx * fy;
+    };
+    const fb1 = (x, o) => { let v = 0, a = 0.5, f = 1, t = 0; for (let i = 0; i < o; i++) { v += n1(x * f + i * 31.7) * a; t += a; a *= 0.5; f *= 2.03; } return v / t; };
+    const fb2 = (x, y, o) => { let v = 0, a = 0.5, f = 1, t = 0; for (let i = 0; i < o; i++) { v += n2(x * f + i * 17.1, y * f + i * 9.3) * a; t += a; a *= 0.5; f *= 2.03; } return v / t; };
+    const out = { n1, n2, fb1, fb2 };
+    if (noiseCache.size > 40) noiseCache.delete(noiseCache.keys().next().value);
+    noiseCache.set(seed, out); return out;
+  }
+  // draws an "erase" band (black with alpha = how much to remove) of w x L logical px; edge at y=0, picture inward
+  function edgeMask(g, kind, w, L, seed, k, scale) {
+    const bw = Math.max(1, Math.round(w * scale)), bh = Math.max(1, Math.round(L * scale));
+    const c = document.createElement("canvas"); c.width = bw; c.height = bh;
+    const cg = c.getContext("2d"), img = cg.createImageData(bw, bh), d = img.data;
+    const N = noiseFor(hashStr(seed + kind)), R = rng(hashStr(seed + "dither")), lp = 1 / scale / k, aa = 1.4 / bh;
+    const col = new Float32Array(bw);
+    if (kind === "fade") for (let x = 0; x < bw; x++) col[x] = (N.fb1(x * lp / 150, 3) - 0.5) * 0.5;
+    else if (kind === "brush") for (let x = 0; x < bw; x++) { const X = x * lp; col[x] = 0.5 + (N.fb1(X / 85, 4) - 0.5) * 0.5 + (N.n1(X / 7) - 0.5) * 0.06; }
+    else if (kind === "wave") {
+      const per = 210 + N.n1(3.3) * 120, ph = N.n1(7.7) * 6.283, ph2 = N.n1(11.1) * 6.283;
+      for (let x = 0; x < bw; x++) { const X = x * lp; col[x] = 0.42 + Math.sin(X / per * 6.283 + ph) * 0.12 + Math.sin(X / (per * 0.43) + ph2) * 0.035; }
     }
-    g.fillStyle = "#000";
-    if (kind === "brush") {
-      const base = L * 0.5, n = Math.max(30, Math.round(w / (5 * k)));
-      let off = 0; g.beginPath(); g.moveTo(-2, -2);
-      for (let i = 0; i <= n; i++) { off = off * 0.8 + (R() - 0.5) * 0.5; g.lineTo(w * i / n, Math.max(0, base + off * L * 0.32 + (R() - 0.5) * L * 0.05)); }
-      g.lineTo(w + 2, -2); g.closePath(); g.fill();
-      const m = Math.round(w / (11 * k));
-      for (let i = 0; i < m; i++) { g.globalAlpha = 0.25 + R() * 0.55; const sw = (2 + R() * 9) * k; g.beginPath(); g.ellipse(R() * w, base, sw, Math.min(L * 0.5, base * 0.25 + R() * L * 0.3), 0, 0, Math.PI * 2); g.fill(); }
-      g.globalAlpha = 1;
-      const gr = g.createLinearGradient(0, 0, 0, L); gr.addColorStop(0, "rgba(0,0,0,.6)"); gr.addColorStop(1, "rgba(0,0,0,0)");
-      g.fillStyle = gr; g.fillRect(-2, 0, w + 4, L); return;
-    }
+    let puffs = null, puffs2 = null, Ll = L / k;
     if (kind === "cloud") {
-      const base = L * 0.42; g.fillRect(-2, -2, w + 4, base + 2);
-      let x = -L * 0.1;
-      while (x < w + L * 0.3) { const r = L * (0.16 + R() * 0.2); g.beginPath(); g.arc(x, base, r, 0, Math.PI * 2); g.fill(); x += r * (1.05 + R() * 0.5); }
-      g.globalAlpha = 0.4; x = R() * L * 0.2;
-      while (x < w + L * 0.3) { const r = L * (0.08 + R() * 0.12); g.beginPath(); g.arc(x, base + L * 0.3, r, 0, Math.PI * 2); g.fill(); x += r * (1.8 + R() * 0.9); }
-      g.globalAlpha = 1; return;
+      const Rb = rng(hashStr(seed + "blobs")), Wl = w / k; puffs = []; puffs2 = [];
+      for (let x = -Ll * 0.2; x < Wl + Ll * 0.3;) { const r = Ll * (0.14 + Rb() * 0.16); puffs.push([x, Ll * (0.24 + Rb() * 0.08), r]); x += r * (1.0 + Rb() * 0.5); }
+      for (let x = Rb() * Ll * 0.3; x < Wl + Ll * 0.2;) { const r = Ll * (0.05 + Rb() * 0.07); puffs2.push([x, Ll * (0.5 + Rb() * 0.16), r]); x += r * (2.2 + Rb() * 1.6); }
     }
-    if (kind === "dots") {
-      const cell = Math.max(6, 13 * k), cols = Math.ceil(w / cell) + 2;
-      for (let r = 0; r * cell <= L; r++) {
-        const t = r * cell / L, rad = cell * 0.74 * Math.pow(1 - t, 1.15); if (rad < 0.4) break;
-        const xo = (r % 2) * cell / 2; g.beginPath();
-        for (let c = -1; c < cols; c++) { const cx = c * cell + xo; g.moveTo(cx + rad, r * cell); g.arc(cx, r * cell, rad, 0, Math.PI * 2); }
-        g.fill();
+    const cell = 11, s2 = Math.SQRT2;
+    for (let y = 0; y < bh; y++) {
+      const t = (y + 0.5) / bh, Y = y * lp;
+      for (let x = 0; x < bw; x++) {
+        let e;
+        if (kind === "fade") { const u = t + col[x] * t * (1 - t); e = 1 - smoother(u); }
+        else if (kind === "brush") {
+          const X = x * lp, n = N.fb2(X / 150 + Y / 55, Y / 2.4, 4), n2 = N.n2(X / 22, Y / 1.6), p = col[x], u = t + (n - 0.5) * 0.34 + (n2 - 0.5) * 0.05;
+          e = Math.max(1 - smooth(p - 0.1, p + 0.1, u), 0.2 * (1 - smooth(p, 1, t)));
+        } else if (kind === "cloud") {
+          const X = x * lp; let sd = Ll * 0.26 - Y;
+          for (const [cx, cy, r] of puffs) { const dx = X - cx; if (dx > -r && dx < r) { const dy = Y - cy, v = r - Math.sqrt(dx * dx + dy * dy); if (v > sd) sd = v; } }
+          let sd2 = -1e9;
+          for (const [cx, cy, r] of puffs2) { const dx = X - cx; if (dx > -r && dx < r) { const dy = Y - cy, v = r - Math.sqrt(dx * dx + dy * dy); if (v > sd2) sd2 = v; } }
+          const f = Ll * 0.035;
+          e = Math.max(smooth(-f, f, sd), 0.36 * (1 - smooth(0, Ll * 0.36, -sd)), 0.6 * smooth(-f, f, sd2));
+        }
+        else if (kind === "wave") { const p = col[x]; e = Math.max(1 - smooth(p - aa, p + aa, t), 0.4 * (1 - smooth(p, p + 0.34, t))); }
+        else if (kind === "dots") {
+          const X = x * lp, u = (X + Y) / (cell * s2), v = (Y - X) / (cell * s2), du = (u - Math.round(u)) * cell, dv = (v - Math.round(v)) * cell;
+          const dist = Math.sqrt(du * du + dv * dv), r = cell * 0.74 * Math.pow(1 - smooth(0, 1, t), 0.9), pxl = lp * 0.8;
+          e = t < 0.03 ? 1 : 1 - smooth(r - pxl, r + pxl, dist);
+        } else e = 0;
+        const a = e * 255 + (R() - 0.5) * 2.2;
+        d[(y * bw + x) * 4 + 3] = a < 0 ? 0 : a > 255 ? 255 : a;
       }
-      return;
     }
-    if (kind === "wave") {
-      const base = L * 0.45, amp = L * 0.16, per = Math.max(40 * k, w / (2.5 + R() * 1.5)), ph = R() * Math.PI * 2;
-      g.beginPath(); g.moveTo(-2, -2);
-      for (let x = 0; x <= w + 4; x += 4) g.lineTo(x, base + Math.sin(x / per * Math.PI * 2 + ph) * amp);
-      g.lineTo(w + 2, -2); g.closePath(); g.fill();
-      g.globalAlpha = 0.5; g.beginPath(); g.moveTo(-2, -2);
-      for (let x = 0; x <= w + 4; x += 4) g.lineTo(x, base + amp * 1.6 + Math.sin(x / per * Math.PI * 2 + ph + 1.3) * amp * 0.8);
-      g.lineTo(w + 2, -2); g.closePath(); g.fill(); g.globalAlpha = 1;
-      const gr = g.createLinearGradient(0, base, 0, L); gr.addColorStop(0, "rgba(0,0,0,.35)"); gr.addColorStop(1, "rgba(0,0,0,0)");
-      g.fillStyle = gr; g.fillRect(-2, base, w + 4, L - base);
-    }
+    cg.putImageData(img, 0, 0);
+    g.drawImage(c, 0, 0, w, L);
   }
   function outOf(b) { const nx = P.blocks[P.blocks.indexOf(b) + 1]; return trOn(b.tout) && !(nx && isMix(nx)) ? b.tout : null; }
   const trCache = new Map();
@@ -1033,15 +1080,14 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     drawFxLines(g, b.fxl, 0, 0, S.iw, S.ih, b.id, W / BASE);
     g.globalCompositeOperation = "destination-out";
     const k = W / BASE;
-    if (Lin) { g.save(); edgeMask(g, tin.kind, S.iw, Math.min(Lin, S.ih), b.id + "in", k); g.restore(); }
-    if (Lout) { g.save(); g.translate(0, S.ih); g.scale(1, -1); edgeMask(g, tout.kind, S.iw, Math.min(Lout, S.ih), b.id + "out", k); g.restore(); }
+    if (Lin) { g.save(); edgeMask(g, tin.kind, S.iw, Math.min(Lin, S.ih), b.id + "in", k, cw / S.iw); g.restore(); }
+    if (Lout) { g.save(); g.translate(0, S.ih); g.scale(1, -1); edgeMask(g, tout.kind, S.iw, Math.min(Lout, S.ih), b.id + "out", k, cw / S.iw); g.restore(); }
     g.globalCompositeOperation = "source-over";
     while (trCache.size > 10) trCache.delete(trCache.keys().next().value);
     trCache.set(key, c); return c;
   }
   function drawBlock(ctx, b, W, S, selInfo, preview) {
     const mixO = b.type === "image" && isMix(b) ? mixOverlap(b, W) : 0;
-    if (mixO) ctx.clearRect(0, 0, W, mixO);
     ctx.fillStyle = P.settings.bg; ctx.fillRect(0, mixO, W, S.h - mixO);
     if (b.type === "page") {
       const k = W / BASE, dark = !lightBg(), line = dark ? "#e9e9e9" : "#111111";
@@ -1113,7 +1159,33 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   // ---------- strip view ----------
   const strip = $("strip");
   function cssScale() { return (strip.clientWidth || 360) / P.settings.width; }
+  function stripAnchor() {
+    const top = document.querySelector(".top"), line = top ? top.getBoundingClientRect().bottom : 0;
+    if (sel.block && canvasMap.has(sel.block)) { const r = canvasMap.get(sel.block).getBoundingClientRect(); if (r.bottom > line && r.top < window.innerHeight) return { id: sel.block, top: r.top }; }
+    for (const [id, cv] of canvasMap) { const r = cv.getBoundingClientRect(); if (r.bottom > line + 1) return { id, top: r.top }; }
+    return null;
+  }
+  function restoreAnchor(a) {
+    if (!a) return; const cv = canvasMap.get(a.id); if (!cv) return;
+    const dy = cv.getBoundingClientRect().top - a.top;
+    if (Math.abs(dy) > 0.5) window.scrollTo(window.scrollX, window.scrollY + dy);
+  }
+  function refreshJoins() {
+    if (isComic() || !P.blocks.length || canvasMap.size !== P.blocks.length) { renderStrip(); return; }
+    const anchor = stripAnchor(), W = P.settings.width, sc = cssScale(), gapCss = P.settings.gap * W / BASE * sc;
+    P.blocks.forEach((b, i) => {
+      const cv = canvasMap.get(b.id); if (!cv) return;
+      const wrap = cv.parentElement, mix = isMix(b);
+      wrap.style.marginTop = mix ? -(mixOverlap(b, W) * sc) + "px" : ""; wrap.classList.toggle("mix", mix);
+      const g = wrap.nextElementSibling;
+      if (g && g.classList.contains("gap") && i < P.blocks.length - 1) { const J = junction(b, P.blocks[i + 1], W); g.style.height = (J.gap < 0 ? 0 : gapCss) + "px"; g.style.background = J.col || ""; }
+      renderBlock(b.id);
+    });
+    restoreAnchor(anchor);
+  }
   function renderStrip() {
+    const anchor = !strip.hidden && canvasMap.size ? stripAnchor() : null, keepH = strip.hidden ? 0 : strip.offsetHeight, wasOn = new Set(onScreen);
+    if (keepH) strip.style.minHeight = keepH + "px";
     if (viewObs) { canvasMap.forEach((cv) => viewObs.unobserve(cv)); onScreen.clear(); }
     canvasMap.clear();
     strip.innerHTML = "";
@@ -1121,6 +1193,7 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     $("stage").querySelectorAll(".empty").forEach((n) => n.remove());
     modeUI();
     if (!P.blocks.length) {
+      strip.style.minHeight = "";
       strip.hidden = true;
       const empty = isComic() ? h("div", { class: "empty" },
         h("h2", { text: "첫 페이지를 만들어 볼까요" }),
@@ -1149,6 +1222,7 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
       wrap.appendChild(cv);
       strip.appendChild(wrap);
       canvasMap.set(b.id, cv);
+      if (wasOn.has(b.id)) onScreen.add(b.id);
       attachPointer(cv, b.id);
       if (i < P.blocks.length - 1) {
         let gh = gapCss, gbg = "";
@@ -1159,6 +1233,8 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
       }
       renderBlock(b.id);
     });
+    strip.style.minHeight = "";
+    restoreAnchor(anchor);
   }
   const onScreen = new Set();
   const viewObs = "IntersectionObserver" in window ? new IntersectionObserver((entries) => {
@@ -1181,6 +1257,7 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     cv.style.height = (S.h * cssW / W) + "px";
     const ctx = cv.getContext("2d");
     ctx.setTransform(s, 0, 0, s, 0, 0);
+    ctx.clearRect(0, 0, W, S.h);
     drawBlock(ctx, b, W, S, sel.block === id ? { bubble: sel.bubble, panel: sel.panel, hs: cssW / W } : null, true);
     cv.parentElement.classList.toggle("sel", sel.block === id && !sel.bubble);
     if (!isComic()) { const nx = P.blocks[P.blocks.indexOf(b) + 1]; if (nx && isMix(nx)) renderSoon(nx.id); }
@@ -1195,6 +1272,7 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     sel = { block: next.block || null, bubble: next.bubble || null, panel: next.panel == null ? null : next.panel };
     if (prev && prev !== sel.block) renderBlock(prev);
     if (sel.block) renderBlock(sel.block);
+    if (opts.focus) { inspTab.bubble = "text"; inspTab.narr = "text"; }
     buildInspector();
     if (opts.open) openSheet();
     updateFab(); updateSheetH();
@@ -2107,6 +2185,7 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     const keep = key === inspKey ? body.scrollTop : 0;
     inspKey = key;
     body.innerHTML = "";
+    $("inspTabs").innerHTML = ""; $("inspTabs").hidden = true;
     $("inspDone").hidden = isMobile() ? false : !sel.block;
     $("inspDone").textContent = isMobile() ? "접기" : "완료";
     if (u) inspBubble(b, u);
@@ -2117,70 +2196,95 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     else inspSettings();
     body.scrollTop = keep;
   }
+  const inspTab = {};
+  function tabbed(kind, tabs) {
+    tabs = tabs.filter(Boolean);
+    const bar = $("inspTabs");
+    let cur = inspTab[kind];
+    if (!tabs.some((t) => t[0] === cur)) cur = tabs[0][0];
+    inspTab[kind] = cur;
+    bar.innerHTML = ""; bar.hidden = tabs.length < 2;
+    tabs.forEach(([k, label, , badge]) => bar.appendChild(h("button", { type: "button", class: "itab", role: "tab", "aria-selected": String(k === cur), "data-k": k,
+      onclick: () => { if (inspTab[kind] === k) return; inspTab[kind] = k; inspKey = ""; buildInspector(); } }, label, badge ? h("span", { class: "itab-n", text: String(badge) }) : null)));
+    const on = bar.querySelector('[aria-selected="true"]');
+    if (on && !bar.hidden) requestAnimationFrame(() => { const l = on.offsetLeft - 12, r = on.offsetLeft + on.offsetWidth + 12; if (l < bar.scrollLeft) bar.scrollLeft = l; else if (r > bar.scrollLeft + bar.clientWidth) bar.scrollLeft = r - bar.clientWidth; });
+    tabs.find((t) => t[0] === cur)[2]();
+  }
   function syncInspector() { const a = document.activeElement; if (a && body.contains(a) && (a.tagName === "TEXTAREA" || a.type === "text")) return; buildInspector(); }
 
   function inspBubble(b, u) {
-    setTitle("말풍선", isMobile() ? "끌어서 옮기기 · 파란 점: 꼬리 · 흰 점: 크기" : "그림에서 끌어 옮기고, 흰 점으로 크기, 파란 점으로 꼬리를 조절해요");
-    const ta = textArea("uText", u.text, "대사를 입력하세요", (v) => { u.text = v; renderBlock(b.id); }, 3);
-    body.appendChild(ta);
-    body.appendChild(aiPolishBox(b, u, ta));
-    const shapes = h("div", { class: "shapes" });
-    Object.entries(SHAPES).forEach(([k, s]) => {
-      shapes.appendChild(h("button", { type: "button", class: "shape-b", "aria-pressed": String(k === u.shape), onclick: () => setShape(b, u, k) },
-        h("img", { src: shapeIcon(k), alt: "" }), s.label));
-    });
-    body.appendChild(sec("모양", shapes));
-    body.appendChild(sec("글꼴", fontGrid(u.font, (f) => { u.font = f; renderBlock(b.id); commit(); })));
-    const tones = h("div", { class: "tones" });
-    Object.entries(TONES).forEach(([k, t]) => tones.appendChild(h("button", { type: "button", class: "tone-b", title: t.label, "aria-label": t.label, "aria-pressed": String(k === u.tone), style: "background:" + t.fill,
-      onclick: (e) => { u.tone = k; [...tones.children].forEach((c) => c.setAttribute("aria-pressed", String(c === e.currentTarget))); renderBlock(b.id); commit(); } })));
-    body.appendChild(sec("색", tones));
-    const sliders = h("div", { class: "grid2" },
-      slider("글자 크기", 12, 170, 1, u.size, "", (v) => { u.size = v; renderSoon(b.id); }),
-      slider("한 줄 글자 수", 3, 24, 1, u.cols, "", (v) => { u.cols = v; renderSoon(b.id); }));
-    if (u.shape === "sfx" || u.shape === "plain") sliders.appendChild(slider("기울기", -30, 30, 1, u.rot || 0, "°", (v) => { u.rot = v; renderSoon(b.id); }));
-    body.appendChild(sliders);
-    const nudge = (dx, dy) => { u.x = clamp(u.x + dx, 0, 100); u.y = clamp(u.y + dy, 0, 100); normalizeBubble(b, u); renderBlock(b.id); commitSoon(); };
-    const posPad = h("div", { class: "pad", role: "group", "aria-label": "말풍선 위치 옮기기" },
-      h("span"), h("button", { type: "button", "aria-label": "위로", onclick: () => nudge(0, -2) }, "↑"), h("span"),
-      h("button", { type: "button", "aria-label": "왼쪽으로", onclick: () => nudge(-2, 0) }, "←"), h("button", { type: "button", class: "mid", "aria-label": "가로 가운데로", onclick: () => { u.x = 50; normalizeBubble(b, u); renderBlock(b.id); commit(); } }, "가운데"), h("button", { type: "button", "aria-label": "오른쪽으로", onclick: () => nudge(2, 0) }, "→"),
-      h("span"), h("button", { type: "button", "aria-label": "아래로", onclick: () => nudge(0, 2) }, "↓"), h("span"));
-    const shapeSliders = u.shape === "sfx" || u.shape === "plain" ? null : h("div", { class: "grow" },
-      slider("가로 넓이", 40, 300, 5, u.padX || 100, "%", (v) => { u.padX = v; renderSoon(b.id); }),
-      slider("세로 높이", 40, 300, 5, u.padY || 100, "%", (v) => { u.padY = v; renderSoon(b.id); }));
-    body.appendChild(sec("위치 · 모양", h("div", { class: "pad-row" }, posPad, shapeSliders)));
-    if (SHAPES[u.shape].tail) {
-      u.tail = u.tail || { on: false };
-      if (u.tail.x == null) autoTail(b, u);
-      const sw = h("input", { type: "checkbox", id: "tailOn" }); sw.checked = !!u.tail.on;
-      sw.addEventListener("change", () => { u.tail.on = sw.checked; renderBlock(b.id); commit(); });
-      const ti = tailInfo(b, u);
-      const dirBtn = (label, deg, aria) => h("button", { type: "button", "aria-label": aria, onclick: () => { const t = tailInfo(b, u); setTail(b, u, deg * Math.PI / 180, Math.max(t.len, 30 * t.k)); renderBlock(b.id); commit(); sw.checked = true; lenOut(); } }, label);
-      const dirPad = h("div", { class: "pad", role: "group", "aria-label": "꼬리 방향" },
-        dirBtn("↖", -135, "왼쪽 위"), dirBtn("↑", -90, "위"), dirBtn("↗", -45, "오른쪽 위"),
-        dirBtn("←", 180, "왼쪽"), h("button", { type: "button", class: "mid", "aria-label": "꼬리 자동", onclick: () => { autoTail(b, u); renderBlock(b.id); commit(); sw.checked = true; lenOut(); } }, "자동"), dirBtn("→", 0, "오른쪽"),
-        dirBtn("↙", 135, "왼쪽 아래"), dirBtn("↓", 90, "아래"), dirBtn("↘", 45, "오른쪽 아래"));
-      const lenSlider = slider("길이", 0, 400, 2, Math.round(ti.len / ti.k), "", (v) => { const t = tailInfo(b, u); setTail(b, u, t.ang, v * t.k); renderSoon(b.id); });
-      const lenOut = () => { const t = tailInfo(b, u), inp = lenSlider.querySelector("input"), out = lenSlider.querySelector("output"); inp.value = Math.round(t.len / t.k); out.textContent = inp.value; };
-      body.appendChild(sec("꼬리 (뾰족한 끝)", h("label", { class: "switch" }, h("span", { text: "꼬리 보이기" }), sw),
-        h("div", { class: "pad-row" }, dirPad, h("div", { class: "grow" },
+    setTitle("말풍선", "그림에서 끌어 옮기고, 흰 점으로 크기, 파란 점으로 꼬리를 조절해요");
+    tabbed("bubble", [
+      ["text", "대사", () => {
+        const ta = textArea("uText", u.text, "대사를 입력하세요", (v) => { u.text = v; renderBlock(b.id); }, 3);
+        body.appendChild(ta);
+        body.appendChild(aiPolishBox(b, u, ta));
+        const who = h("input", { type: "text", value: u.who || "", placeholder: "예) 카일", "aria-label": "말하는 사람" });
+        who.addEventListener("input", () => { u.who = who.value.trim(); commitSoon(); });
+        body.appendChild(h("label", { class: "fld" }, h("span", { class: "fld-l", text: "말하는 사람 (자동 배치·AI가 참고해요)" }), who));
+        body.appendChild(h("div", { class: "row" },
+          h("button", { type: "button", class: "btn small", onclick: () => { const c = JSON.parse(JSON.stringify(u)); c.id = nid("u"); c.x = clamp(u.x + 6, 0, 100); c.y = clamp(u.y + 8, 0, 100); if (c.tail) { c.tail.y = clamp(c.tail.y + 8, 0, 100); } b.bubbles.push(c); normalizeBubble(b, c); renderBlock(b.id); commit(); select({ block: b.id, bubble: c.id }); } }, "복제"),
+          h("button", { type: "button", class: "btn small", onclick: () => { const i = b.bubbles.indexOf(u); b.bubbles.splice(i, 1); b.bubbles.push(u); renderBlock(b.id); commit(); toast("맨 앞으로 가져왔어요"); } }, "맨 앞으로"),
+          h("button", { type: "button", class: "btn small danger", onclick: () => removeBubble(b, u) }, "삭제")));
+      }],
+      ["shape", "모양", () => {
+        const shapes = h("div", { class: "shapes" });
+        Object.entries(SHAPES).forEach(([k, s]) => {
+          shapes.appendChild(h("button", { type: "button", class: "shape-b", "aria-pressed": String(k === u.shape), onclick: () => setShape(b, u, k) },
+            h("img", { src: shapeIcon(k), alt: "" }), s.label));
+        });
+        body.appendChild(shapes);
+        const tones = h("div", { class: "tones" });
+        Object.entries(TONES).forEach(([k, t]) => tones.appendChild(h("button", { type: "button", class: "tone-b", title: t.label, "aria-label": t.label, "aria-pressed": String(k === u.tone), style: "background:" + t.fill,
+          onclick: (e) => { u.tone = k; [...tones.children].forEach((c) => c.setAttribute("aria-pressed", String(c === e.currentTarget))); renderBlock(b.id); commit(); } })));
+        body.appendChild(sec("색", tones));
+        body.appendChild(h("div", { class: "row" }, h("button", { type: "button", class: "btn small", onclick: () => {
+          let n = 0; const keys = ["font", "size", "cols", "tone", "padX", "padY", "tailW", "tailBend"];
+          P.blocks.forEach((bb) => hasBubbles(bb) && bb.bubbles.forEach((x) => { if (x !== u && x.shape === u.shape) { keys.forEach((k) => { if (u[k] == null) delete x[k]; else x[k] = u[k]; }); n++; } }));
+          P.blocks.forEach((bb) => hasBubbles(bb) && renderBlock(bb.id)); commit(); toast(n ? "같은 모양 말풍선 " + n + "개에 이 스타일을 넣었어요" : "같은 모양의 다른 말풍선이 없어요");
+        } }, "같은 모양에 스타일 복사")));
+      }],
+      ["font", "글꼴", () => {
+        const sliders = h("div", { class: "grid2" },
+          slider("글자 크기", 12, 170, 1, u.size, "", (v) => { u.size = v; renderSoon(b.id); }),
+          slider("한 줄 글자 수", 3, 24, 1, u.cols, "", (v) => { u.cols = v; renderSoon(b.id); }));
+        if (u.shape === "sfx" || u.shape === "plain") sliders.appendChild(slider("기울기", -30, 30, 1, u.rot || 0, "°", (v) => { u.rot = v; renderSoon(b.id); }));
+        body.appendChild(sliders);
+        body.appendChild(fontGrid(u.font, (f) => { u.font = f; renderBlock(b.id); commit(); }));
+      }],
+      ["pos", "위치 · 크기", () => {
+        const nudge = (dx, dy) => { u.x = clamp(u.x + dx, 0, 100); u.y = clamp(u.y + dy, 0, 100); normalizeBubble(b, u); renderBlock(b.id); commitSoon(); };
+        const posPad = h("div", { class: "pad", role: "group", "aria-label": "말풍선 위치 옮기기" },
+          h("span"), h("button", { type: "button", "aria-label": "위로", onclick: () => nudge(0, -2) }, "↑"), h("span"),
+          h("button", { type: "button", "aria-label": "왼쪽으로", onclick: () => nudge(-2, 0) }, "←"), h("button", { type: "button", class: "mid", "aria-label": "가로 가운데로", onclick: () => { u.x = 50; normalizeBubble(b, u); renderBlock(b.id); commit(); } }, "가운데"), h("button", { type: "button", "aria-label": "오른쪽으로", onclick: () => nudge(2, 0) }, "→"),
+          h("span"), h("button", { type: "button", "aria-label": "아래로", onclick: () => nudge(0, 2) }, "↓"), h("span"));
+        const shapeSliders = u.shape === "sfx" || u.shape === "plain" ? null : h("div", { class: "grow" },
+          slider("가로 넓이", 40, 300, 5, u.padX || 100, "%", (v) => { u.padX = v; renderSoon(b.id); }),
+          slider("세로 높이", 40, 300, 5, u.padY || 100, "%", (v) => { u.padY = v; renderSoon(b.id); }));
+        body.appendChild(h("div", { class: "pad-row" }, posPad, shapeSliders));
+        body.appendChild(h("p", { class: "hint", text: "그림에서 말풍선을 끌어 옮기고, 흰 점을 끌면 크기가 바뀌어요." }));
+      }],
+      SHAPES[u.shape].tail ? ["tail", "꼬리", () => {
+        u.tail = u.tail || { on: false };
+        if (u.tail.x == null) autoTail(b, u);
+        const sw = h("input", { type: "checkbox", id: "tailOn" }); sw.checked = !!u.tail.on;
+        sw.addEventListener("change", () => { u.tail.on = sw.checked; renderBlock(b.id); commit(); });
+        const ti = tailInfo(b, u);
+        const dirBtn = (label, deg, aria) => h("button", { type: "button", "aria-label": aria, onclick: () => { const t = tailInfo(b, u); setTail(b, u, deg * Math.PI / 180, Math.max(t.len, 30 * t.k)); renderBlock(b.id); commit(); sw.checked = true; lenOut(); } }, label);
+        const dirPad = h("div", { class: "pad", role: "group", "aria-label": "꼬리 방향" },
+          dirBtn("↖", -135, "왼쪽 위"), dirBtn("↑", -90, "위"), dirBtn("↗", -45, "오른쪽 위"),
+          dirBtn("←", 180, "왼쪽"), h("button", { type: "button", class: "mid", "aria-label": "꼬리 자동", onclick: () => { autoTail(b, u); renderBlock(b.id); commit(); sw.checked = true; lenOut(); } }, "자동"), dirBtn("→", 0, "오른쪽"),
+          dirBtn("↙", 135, "왼쪽 아래"), dirBtn("↓", 90, "아래"), dirBtn("↘", 45, "오른쪽 아래"));
+        const lenSlider = slider("길이", 0, 400, 2, Math.round(ti.len / ti.k), "", (v) => { const t = tailInfo(b, u); setTail(b, u, t.ang, v * t.k); renderSoon(b.id); });
+        const lenOut = () => { const t = tailInfo(b, u), inp = lenSlider.querySelector("input"), out = lenSlider.querySelector("output"); inp.value = Math.round(t.len / t.k); out.textContent = inp.value; };
+        body.appendChild(h("label", { class: "switch" }, h("span", { text: "꼬리 보이기" }), sw));
+        body.appendChild(h("div", { class: "pad-row" }, dirPad, h("div", { class: "grow" },
           lenSlider,
           slider("굵기", 30, 250, 5, u.tailW || 100, "%", (v) => { u.tailW = v; renderSoon(b.id); }),
-          slider("휘어짐", -100, 100, 5, u.tailBend == null ? 25 : u.tailBend, "", (v) => { u.tailBend = v; renderSoon(b.id); }))),
-        h("p", { class: "hint", text: "화살표로 방향을 고르고 길이를 조절하세요. 그림에서 파란 점을 끌어도 돼요." })));
-    }
-    const who = h("input", { type: "text", value: u.who || "", placeholder: "예) 카일", "aria-label": "말하는 사람" });
-    who.addEventListener("input", () => { u.who = who.value.trim(); commitSoon(); });
-    body.appendChild(h("label", { class: "fld" }, h("span", { class: "fld-l", text: "말하는 사람 (자동 배치·AI가 참고해요)" }), who));
-    body.appendChild(h("div", { class: "row" },
-      h("button", { type: "button", class: "btn small", onclick: () => { const c = JSON.parse(JSON.stringify(u)); c.id = nid("u"); c.x = clamp(u.x + 6, 0, 100); c.y = clamp(u.y + 8, 0, 100); if (c.tail) { c.tail.y = clamp(c.tail.y + 8, 0, 100); } b.bubbles.push(c); normalizeBubble(b, c); renderBlock(b.id); commit(); select({ block: b.id, bubble: c.id }); } }, "복제"),
-      h("button", { type: "button", class: "btn small", onclick: () => { const i = b.bubbles.indexOf(u); b.bubbles.splice(i, 1); b.bubbles.push(u); renderBlock(b.id); commit(); toast("맨 앞으로 가져왔어요"); } }, "맨 앞으로"),
-      h("button", { type: "button", class: "btn small", onclick: () => {
-        let n = 0; const keys = ["font", "size", "cols", "tone", "padX", "padY", "tailW", "tailBend"];
-        P.blocks.forEach((bb) => hasBubbles(bb) && bb.bubbles.forEach((x) => { if (x !== u && x.shape === u.shape) { keys.forEach((k) => { if (u[k] == null) delete x[k]; else x[k] = u[k]; }); n++; } }));
-        P.blocks.forEach((bb) => hasBubbles(bb) && renderBlock(bb.id)); commit(); toast(n ? "같은 모양 말풍선 " + n + "개에 이 스타일을 넣었어요" : "같은 모양의 다른 말풍선이 없어요");
-      } }, "같은 모양에 스타일 복사"),
-      h("button", { type: "button", class: "btn small danger", onclick: () => removeBubble(b, u) }, "삭제")));
+          slider("휘어짐", -100, 100, 5, u.tailBend == null ? 25 : u.tailBend, "", (v) => { u.tailBend = v; renderSoon(b.id); }))));
+        body.appendChild(h("p", { class: "hint", text: "화살표로 방향을 고르거나, 그림에서 파란 점을 끌어 옮기세요." }));
+      }] : null,
+    ]);
     if (!isMobile()) body.appendChild(h("p", { class: "kbd", text: "Delete 지우기 · 방향키 미세 이동 · Esc 선택 해제" }));
   }
   function removeBubble(b, u) { b.bubbles = b.bubbles.filter((x) => x !== u); renderBlock(b.id); commit(); select({ block: b.id }); toast("말풍선을 지웠어요"); }
@@ -2199,10 +2303,13 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   function inspImage(b) {
     const idx = P.blocks.filter((x) => x.type === "image").indexOf(b) + 1;
     setTitle("컷 " + idx, "빈 곳을 두 번 누르면 그 자리에 말풍선이 생겨요");
-    body.appendChild(h("div", { class: "row" },
-      h("button", { type: "button", class: "btn primary", onclick: () => addBubbleSmart(b) }, "+ 말풍선"),
-      h("button", { type: "button", class: "btn", disabled: !b.bubbles.length, onclick: () => { autoLayout(b); renderBlock(b.id); commit(); toast("이 컷의 말풍선을 다시 놓았어요"); } }, "자동 배치")));
-    body.appendChild(h("div", { class: "ai-box" }, h("div", { class: "sec-l", text: "대사 자동완성 · 폰 AI" }),
+    const nTr = (trOn(b.tin) ? 1 : 0) + (trOn(b.tout) ? 1 : 0);
+    tabbed("image", [
+      ["bubbles", "말풍선", () => {
+        body.appendChild(h("div", { class: "row" },
+          h("button", { type: "button", class: "btn primary", onclick: () => addBubbleSmart(b) }, "+ 말풍선"),
+          h("button", { type: "button", class: "btn", disabled: !b.bubbles.length, onclick: () => { autoLayout(b); renderBlock(b.id); commit(); toast("이 컷의 말풍선을 다시 놓았어요"); } }, "자동 배치")));
+        body.appendChild(h("div", { class: "ai-box" }, h("div", { class: "sec-l", text: "대사 자동완성 · 폰 AI" }),
       h("div", { class: "row" }, h("button", { type: "button", class: "btn ai", onclick: async (e) => {
         const btn = e.currentTarget, label = btn.textContent; btn.disabled = true; btn.textContent = "그림 보고 쓰는 중…";
         const ok = await autoLinesForBlock(b);
@@ -2210,21 +2317,25 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
         else { btn.disabled = false; btn.textContent = label; }
       } }, b.bubbles.length ? "대사 다시 쓰기" : "그림 보고 대사 쓰기")),
       h("p", { class: "hint", text: b.bubbles.length ? "지금 말풍선을 지우고 새로 써요." : "앞 컷 흐름을 이어서 대사 1~3개를 넣어요." })));
-    if (b.bubbles.length) {
-      const chips = h("div", { class: "chips" });
-      b.bubbles.forEach((u) => chips.appendChild(h("button", { type: "button", class: "chip-b", onclick: () => select({ block: b.id, bubble: u.id }, { reveal: true }) }, (SHAPES[u.shape].label) + " · " + (u.text || "").replace(/\n/g, " ").slice(0, 16))));
-      body.appendChild(sec("이 컷의 말풍선 " + b.bubbles.length + "개", chips));
-    }
-    if (images.has(b.img)) body.appendChild(lookSection(b, (now) => { now ? renderBlock(b.id) : renderSoon(b.id); if (now) commit(); else commitSoon(); }, applyLookAll));
-    body.appendChild(trSection(b));
-    body.appendChild(sec("컷", h("div", { class: "row" },
-      h("button", { type: "button", class: "btn small", onclick: () => { replaceTarget = b.id; replacePanel = null; $("fileReplace").click(); } }, "사진 바꾸기"),
-      h("button", { type: "button", class: "btn small", onclick: () => moveBlock(b.id, -1) }, "↑ 위로"),
-      h("button", { type: "button", class: "btn small", onclick: () => moveBlock(b.id, 1) }, "↓ 아래로")),
-      h("div", { class: "row" },
-        h("button", { type: "button", class: "btn small", onclick: () => { const n = makeNarr("나레이션"); insertAfter(b.id, n); select({ block: n.id }, { focus: true, selectAll: true, reveal: true }); } }, "아래에 나레이션"),
-        h("button", { type: "button", class: "btn small", onclick: () => duplicateBlock(b) }, "컷 복제"),
-        h("button", { type: "button", class: "btn small danger", onclick: () => deleteBlock(b.id) }, "컷 지우기"))));
+        if (b.bubbles.length) {
+          const chips = h("div", { class: "chips" });
+          b.bubbles.forEach((u) => chips.appendChild(h("button", { type: "button", class: "chip-b", onclick: () => select({ block: b.id, bubble: u.id }, { reveal: true }) }, (SHAPES[u.shape].label) + " · " + (u.text || "").replace(/\n/g, " ").slice(0, 16))));
+          body.appendChild(sec("이 컷의 말풍선 " + b.bubbles.length + "개", chips));
+        } else body.appendChild(h("p", { class: "hint", text: "그림의 빈 곳을 두 번 누르면 그 자리에 말풍선이 생겨요." }));
+      }, b.bubbles.length || null],
+      images.has(b.img) ? ["photo", "사진 효과", () => body.appendChild(lookSection(b, (now) => { now ? renderBlock(b.id) : renderSoon(b.id); if (now) commit(); else commitSoon(); }, applyLookAll))] : null,
+      ["trans", "이어짐", () => body.appendChild(trSection(b)), nTr || null],
+      ["cut", "컷", () => {
+        body.appendChild(h("div", { class: "row" },
+          h("button", { type: "button", class: "btn small", onclick: () => { replaceTarget = b.id; replacePanel = null; $("fileReplace").click(); } }, "사진 바꾸기"),
+          h("button", { type: "button", class: "btn small", onclick: () => moveBlock(b.id, -1) }, "↑ 위로"),
+          h("button", { type: "button", class: "btn small", onclick: () => moveBlock(b.id, 1) }, "↓ 아래로")));
+        body.appendChild(h("div", { class: "row" },
+          h("button", { type: "button", class: "btn small", onclick: () => { const n = makeNarr("나레이션"); insertAfter(b.id, n); select({ block: n.id }, { focus: true, selectAll: true, reveal: true }); } }, "아래에 나레이션"),
+          h("button", { type: "button", class: "btn small", onclick: () => duplicateBlock(b) }, "컷 복제"),
+          h("button", { type: "button", class: "btn small danger", onclick: () => deleteBlock(b.id) }, "컷 지우기")));
+      }],
+    ]);
   }
   let panelAiBox = null;
   function layoutSvg(l) {
@@ -2239,105 +2350,138 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     sp.innerHTML = '<svg viewBox="0 0 30 40" width="30" height="40" fill="currentColor" fill-opacity=".16" stroke="currentColor" stroke-width="1.3" aria-hidden="true">' + out + "</svg>";
     return sp.firstChild;
   }
-  let trT = 0;
-  const trDef = () => ({ kind: "none", col: "bg", len: 20 });
-  const trSet = (b, side, kind, col, len) => { b[side] = { kind, col: col || "bg", len: len || 20 }; };
+  let trT = 0, trEdge = "tin";
+  const trDef = () => ({ kind: "none", col: "bg", len: 24 });
+  const trSet = (b, side, kind, col, len) => { b[side] = { kind, col: col || "bg", len: len || 24 }; };
   function sceneBreak(b, col) {
     const i = P.blocks.indexOf(b), nx = P.blocks[i + 1];
-    trSet(b, "tout", "fade", col, 30);
+    trSet(b, "tout", "fade", col, 34);
     if (!(nx && nx.type === "space" && nx.bgc === col)) P.blocks.splice(i + 1, 0, { id: nid("s"), type: "space", h: 260, bgc: col });
     const nn = P.blocks[i + 2];
-    if (nn && nn.type === "image") trSet(nn, "tin", "fade", col, 30);
+    if (nn && nn.type === "image") trSet(nn, "tin", "fade", col, 34);
+  }
+  const trIconCache = new Map();
+  function trIcon(kind, edge) {
+    const key = kind + "|" + edge; if (trIconCache.has(key)) return trIconCache.get(key);
+    const W = 112, H = 84, c = document.createElement("canvas"); c.width = W; c.height = H;
+    const pic = (c1, c2, sy) => {
+      const p = document.createElement("canvas"); p.width = W; p.height = H; const q = p.getContext("2d");
+      const gr = q.createLinearGradient(0, 0, 0, H); gr.addColorStop(0, c1); gr.addColorStop(1, c2); q.fillStyle = gr; q.fillRect(0, 0, W, H);
+      q.fillStyle = "rgba(255,236,214,.95)"; q.beginPath(); q.arc(W * 0.64, sy, 11, 0, Math.PI * 2); q.fill();
+      q.fillStyle = "rgba(18,22,40,.5)"; q.beginPath(); q.moveTo(0, H); q.lineTo(W * 0.28, H * 0.56); q.lineTo(W * 0.52, H * 0.8); q.lineTo(W * 0.8, H * 0.48); q.lineTo(W, H * 0.74); q.lineTo(W, H); q.fill();
+      return p;
+    };
+    const top = edge === "tin", p = pic("#3c4f9c", "#e08a7a", H * 0.42), q = p.getContext("2d");
+    if (kind !== "none") { q.globalCompositeOperation = "destination-out"; q.save(); if (!top) { q.translate(0, H); q.scale(1, -1); } edgeMask(q, kind === "mix" ? "fade" : kind, W, H * 0.62, "icon" + edge, 0.3, 1); q.restore(); }
+    const g = c.getContext("2d");
+    if (kind === "mix") g.drawImage(pic("#2c6b4e", "#8fc98e", H * 0.3), 0, 0); else { g.fillStyle = "#e7e3db"; g.fillRect(0, 0, W, H); }
+    g.drawImage(p, 0, 0);
+    const url = c.toDataURL(); trIconCache.set(key, url); return url;
   }
   function trSection(b) {
     b.tin = b.tin || trDef(); b.tout = b.tout || trDef();
     const i = P.blocks.indexOf(b), prev = P.blocks[i - 1], next = P.blocks[i + 1];
     const canMix = !!prev && (prev.type === "image" || prev.type === "space");
-    const redo = (rebuild) => { renderStrip(); commit(); if (rebuild) buildInspector(); };
-    const wrap = h("div", { class: "sec" }, h("div", { class: "sec-l", text: "컷 이어짐 · 페이드" }),
-      h("p", { class: "hint", text: "사진 위아래 끝을 부드럽게 녹여서 다음 장면으로 자연스럽게 넘어가게 해요." }));
-    const quick = h("div", { class: "row" });
-    if (next && next.type === "image") quick.appendChild(h("button", { type: "button", class: "btn small", onclick: () => { b.tout.kind = "none"; trSet(next, "tin", "mix", "bg", 28); redo(true); toast("다음 컷이 이 컷 위로 겹쳐지며 녹아들어요"); } }, "다음 컷과 겹쳐 녹이기"));
-    quick.appendChild(h("button", { type: "button", class: "btn small", onclick: () => { trSet(b, "tout", "fade", "bg", 18); if (next && next.type === "image" && !isMix(next)) trSet(next, "tin", "fade", "bg", 18); redo(true); } }, "스르륵 잇기"));
-    quick.appendChild(h("button", { type: "button", class: "btn small", onclick: () => { sceneBreak(b, "#000000"); redo(true); toast("검게 사라졌다가 다음 컷이 떠올라요"); } }, "암전 (검게)"));
-    quick.appendChild(h("button", { type: "button", class: "btn small", onclick: () => { sceneBreak(b, "#ffffff"); redo(true); toast("하얗게 사라졌다가 다음 컷이 떠올라요"); } }, "화이트아웃"));
-    wrap.appendChild(quick);
-    const side = (key, label, opts) => {
-      const t = b[key];
-      if (t.kind === "mix" && !canMix) t.kind = "fade";
-      wrap.appendChild(h("div", { class: "sec-l", text: label, style: "margin-top:6px" }));
-      wrap.appendChild(seg(opts, t.kind || "none", (v) => {
-        t.kind = v;
-        if (v === "mix" && prev && prev.type === "image" && prev.tout) prev.tout.kind = "none";
-        if (v !== "none" && !t.len) t.len = 20;
-        redo(true);
-      }, label));
-      if (trOn(t)) {
-        if (t.kind !== "mix") wrap.appendChild(seg(TR_COL, t.col || "bg", (v) => { t.col = v; redo(false); }, label + " 색"));
-        wrap.appendChild(slider(t.kind === "mix" ? "겹치는 길이" : "녹는 길이", 5, 60, 1, t.len || 20, "%", (v) => { t.len = v; clearTimeout(trT); trT = setTimeout(renderStrip, 80); }));
-      }
-    };
-    side("tin", "들어올 때 · 위쪽 (페이드 인)", canMix ? TR_IN : TR_IN.filter((x) => x[0] !== "mix"));
-    side("tout", "나갈 때 · 아래쪽 (페이드 아웃)", TR_OUT);
+    const redo = (rebuild) => { refreshJoins(); commit(); if (rebuild) buildInspector(); };
+    const wrap = h("div", { class: "sec", style: "gap:12px" });
+    const pre = h("div", { class: "chips" }), chip = (label, fn) => pre.appendChild(h("button", { type: "button", class: "chip-b", onclick: fn }, label));
+    if (next && next.type === "image") chip("다음 컷과 겹쳐 녹이기", () => { b.tout = trDef(); trSet(next, "tin", "mix", "bg", 32); redo(true); toast("다음 컷이 이 컷 위로 겹쳐지며 녹아들어요"); });
+    chip("스르륵 잇기", () => { trSet(b, "tout", "fade", "bg", 24); if (next && next.type === "image" && !isMix(next)) trSet(next, "tin", "fade", "bg", 24); trEdge = "tout"; redo(true); });
+    chip("암전", () => { sceneBreak(b, "#000000"); trEdge = "tout"; renderStrip(); commit(); buildInspector(); toast("검게 사라졌다가 다음 컷이 떠올라요"); });
+    chip("화이트아웃", () => { sceneBreak(b, "#ffffff"); trEdge = "tout"; renderStrip(); commit(); buildInspector(); toast("하얗게 사라졌다가 다음 컷이 떠올라요"); });
+    wrap.appendChild(sec("한 번에", pre));
+    const mark = (t) => (trOn(t) ? " ●" : "");
+    wrap.appendChild(seg([["tin", "위쪽 (들어올 때)" + mark(b.tin)], ["tout", "아래쪽 (나갈 때)" + mark(b.tout)]], trEdge, (v) => { trEdge = v; buildInspector(); }, "고칠 곳"));
+    const key = trEdge, t = b[key];
+    if (t.kind === "mix" && (key !== "tin" || !canMix)) t.kind = "fade";
+    const grid = h("div", { class: "trs" });
+    (key === "tin" && canMix ? TR_IN : TR_OUT).forEach(([k, label]) => grid.appendChild(h("button", { type: "button", class: "shape-b", "data-v": k, "aria-pressed": String((t.kind || "none") === k),
+      onclick: () => { t.kind = k; if (k === "mix" && prev && prev.type === "image") prev.tout = trDef(); if (k !== "none" && !t.len) t.len = k === "mix" ? 32 : 24; redo(true); } },
+      h("img", { src: trIcon(k, key), alt: "" }), label)));
+    wrap.appendChild(grid);
+    if (key === "tout" && next && isMix(next)) wrap.appendChild(h("p", { class: "hint", text: "다음 컷이 이 컷 위로 겹쳐 녹아드는 중이라 아래쪽 효과는 쉬고 있어요." }));
+    if (trOn(t)) {
+      const box = h("div", { class: "sec" });
+      if (t.kind !== "mix") box.appendChild(sec("어떤 색으로", seg(TR_COL, t.col || "bg", (v) => { t.col = v; redo(false); }, "사라지는 색")));
+      box.appendChild(slider(t.kind === "mix" ? "겹치는 길이" : "녹는 길이", 5, 60, 1, t.len || 24, "%", (v) => { t.len = v; clearTimeout(trT); trT = setTimeout(refreshJoins, 50); }));
+      wrap.appendChild(box);
+    }
     wrap.appendChild(h("div", { class: "row" },
       h("button", { type: "button", class: "btn small", onclick: () => { let n = 0; P.blocks.forEach((x) => { if (x.type === "image" && x !== b) { x.tin = JSON.parse(JSON.stringify(b.tin)); x.tout = JSON.parse(JSON.stringify(b.tout)); n++; } }); redo(false); toast("컷 " + (n + 1) + "개에 같은 이어짐을 넣었어요"); } }, "모든 컷에 똑같이"),
       h("button", { type: "button", class: "btn small", disabled: !trOn(b.tin) && !trOn(b.tout), onclick: () => { b.tin = trDef(); b.tout = trDef(); redo(true); } }, "이 컷 이어짐 빼기")));
     return wrap;
   }
+  let lastPanelSel = "";
   function inspPage(b) {
     const W = P.settings.width, S = blockSize(b, W), pages = P.blocks.filter((x) => x.type === "page"), cnt = S.rects.length;
     setTitle("페이지 " + (pages.indexOf(b) + 1), "칸을 누르면 고를 수 있어요 · 빈 곳을 두 번 누르면 말풍선");
-    const grid = h("div", { class: "layouts" });
-    Object.keys(LAYOUTS).forEach((l) => grid.appendChild(h("button", { type: "button", class: "layout-b", "aria-pressed": String(l === b.layout), "aria-label": panelCount(l) + "칸 배치",
-      onclick: () => { b.layout = l; const c = panelCount(l); b.bubbles.forEach((u) => { if (u.panel >= c) u.panel = c - 1; }); if (sel.panel != null && sel.panel >= c) sel.panel = c - 1; renderBlock(b.id); commit(); buildInspector(); } }, layoutSvg(l))));
-    body.appendChild(sec("칸 나누기 · 지금 " + cnt + "칸", grid));
-    const pi = sel.panel;
-    if (pi != null && pi < cnt) {
-      b.panels = b.panels || [];
-      const pn = b.panels[pi], has = !!(pn && pn.img && images.has(pn.img));
-      const parts = [h("div", { class: "row" },
-        h("button", { type: "button", class: "btn small primary", onclick: () => { replaceTarget = b.id; replacePanel = pi; $("fileReplace").click(); } }, has ? "사진 바꾸기" : "사진 넣기"),
-        has ? h("button", { type: "button", class: "btn small", onclick: () => { b.panels[pi] = null; renderBlock(b.id); commit(); buildInspector(); } }, "사진 빼기") : null,
-        h("button", { type: "button", class: "btn small", onclick: () => addBubbleSmart(b) }, "+ 말풍선"),
-        h("button", { type: "button", class: "btn small", disabled: !b.bubbles.some((u) => u.panel === pi), onclick: () => { autoLayout(b, pi); renderBlock(b.id); commit(); toast("이 칸의 말풍선을 다시 놓았어요"); } }, "자동 배치"))];
-      if (has) parts.push(h("div", { class: "grid2" },
-        slider("확대", 100, 300, 5, pn.zoom || 100, "%", (v) => { pn.zoom = v; renderSoon(b.id); }),
-        slider("가로 위치", 0, 100, 1, pn.fx == null ? 50 : pn.fx, "", (v) => { pn.fx = v; renderSoon(b.id); }),
-        slider("세로 위치", 0, 100, 1, pn.fy == null ? 50 : pn.fy, "", (v) => { pn.fy = v; renderSoon(b.id); })));
-      if (has) parts.push(lookSection(pn, (now) => { now ? renderBlock(b.id) : renderSoon(b.id); if (now) commit(); else commitSoon(); }, applyLookAll));
-      if (panelAiBox && has) { const box = panelAiBox(b, pi); if (box) parts.push(box); }
-      body.appendChild(sec("칸 " + (pi + 1), ...parts));
-    } else body.appendChild(h("p", { class: "hint", text: "그림에서 칸을 누르면 그 칸에 사진을 넣고 말풍선을 달 수 있어요." }));
-    if (b.bubbles.length) {
-      const list = h("div", { class: "chips" });
-      b.bubbles.forEach((u) => list.appendChild(h("button", { type: "button", class: "chip-b", onclick: () => select({ block: b.id, bubble: u.id, panel: u.panel }, { reveal: true }) }, "칸" + ((u.panel || 0) + 1) + " · " + (u.text || "").replace(/\n/g, " ").slice(0, 14))));
-      body.appendChild(sec("이 페이지의 말풍선 " + b.bubbles.length + "개", list));
-    }
-    body.appendChild(sec("페이지", h("div", { class: "row" },
-      h("button", { type: "button", class: "btn small", onclick: () => moveBlock(b.id, -1) }, "↑ 앞으로"),
-      h("button", { type: "button", class: "btn small", onclick: () => moveBlock(b.id, 1) }, "↓ 뒤로"),
-      h("button", { type: "button", class: "btn small", onclick: () => { const np = newPage(LAYOUT_FOR_N[P.settings.perPage] || "4b", []); insertAfter(b.id, np); select({ block: np.id, panel: 0 }, { reveal: true }); } }, "뒤에 새 페이지"),
-      h("button", { type: "button", class: "btn small", onclick: () => duplicateBlock(b) }, "페이지 복제"),
-      h("button", { type: "button", class: "btn small danger", onclick: () => deleteBlock(b.id) }, "페이지 지우기"))));
+    const pi = sel.panel, pk = b.id + ":" + pi;
+    if (pk !== lastPanelSel && pi != null) inspTab.page = "panel";
+    lastPanelSel = pk;
+    tabbed("page", [
+      ["panel", pi != null && pi < cnt ? "칸 " + (pi + 1) : "칸", () => {
+        if (pi != null && pi < cnt) {
+          b.panels = b.panels || [];
+          const pn = b.panels[pi], has = !!(pn && pn.img && images.has(pn.img));
+          body.appendChild(h("div", { class: "row" },
+            h("button", { type: "button", class: "btn small primary", onclick: () => { replaceTarget = b.id; replacePanel = pi; $("fileReplace").click(); } }, has ? "사진 바꾸기" : "사진 넣기"),
+            has ? h("button", { type: "button", class: "btn small", onclick: () => { b.panels[pi] = null; renderBlock(b.id); commit(); buildInspector(); } }, "사진 빼기") : null,
+            h("button", { type: "button", class: "btn small", onclick: () => addBubbleSmart(b) }, "+ 말풍선"),
+            h("button", { type: "button", class: "btn small", disabled: !b.bubbles.some((u) => u.panel === pi), onclick: () => { autoLayout(b, pi); renderBlock(b.id); commit(); toast("이 칸의 말풍선을 다시 놓았어요"); } }, "자동 배치")));
+          if (has) body.appendChild(h("div", { class: "grid2" },
+            slider("확대", 100, 300, 5, pn.zoom || 100, "%", (v) => { pn.zoom = v; renderSoon(b.id); }),
+            slider("가로 위치", 0, 100, 1, pn.fx == null ? 50 : pn.fx, "", (v) => { pn.fx = v; renderSoon(b.id); }),
+            slider("세로 위치", 0, 100, 1, pn.fy == null ? 50 : pn.fy, "", (v) => { pn.fy = v; renderSoon(b.id); })));
+          if (panelAiBox && has) { const box = panelAiBox(b, pi); if (box) body.appendChild(box); }
+          if (has) body.appendChild(lookSection(pn, (now) => { now ? renderBlock(b.id) : renderSoon(b.id); if (now) commit(); else commitSoon(); }, applyLookAll));
+        } else body.appendChild(h("p", { class: "hint", text: "그림에서 칸을 누르면 그 칸에 사진을 넣고 말풍선을 달 수 있어요." }));
+      }],
+      ["layout", "칸 나누기", () => {
+        const grid = h("div", { class: "layouts" });
+        Object.keys(LAYOUTS).forEach((l) => grid.appendChild(h("button", { type: "button", class: "layout-b", "aria-pressed": String(l === b.layout), "aria-label": panelCount(l) + "칸 배치",
+          onclick: () => { b.layout = l; const c = panelCount(l); b.bubbles.forEach((u) => { if (u.panel >= c) u.panel = c - 1; }); if (sel.panel != null && sel.panel >= c) sel.panel = c - 1; renderBlock(b.id); commit(); buildInspector(); } }, layoutSvg(l))));
+        body.appendChild(sec("지금 " + cnt + "칸", grid));
+      }],
+      ["bubbles", "말풍선", () => {
+        if (b.bubbles.length) {
+          const list = h("div", { class: "chips" });
+          b.bubbles.forEach((u) => list.appendChild(h("button", { type: "button", class: "chip-b", onclick: () => select({ block: b.id, bubble: u.id, panel: u.panel }, { reveal: true }) }, "칸" + ((u.panel || 0) + 1) + " · " + (u.text || "").replace(/\n/g, " ").slice(0, 14))));
+          body.appendChild(list);
+        } else body.appendChild(h("p", { class: "hint", text: "칸의 빈 곳을 두 번 누르면 말풍선이 생겨요." }));
+      }, b.bubbles.length || null],
+      ["page", "페이지", () => {
+        body.appendChild(h("div", { class: "row" },
+          h("button", { type: "button", class: "btn small", onclick: () => moveBlock(b.id, -1) }, "↑ 앞으로"),
+          h("button", { type: "button", class: "btn small", onclick: () => moveBlock(b.id, 1) }, "↓ 뒤로"),
+          h("button", { type: "button", class: "btn small", onclick: () => { const np = newPage(LAYOUT_FOR_N[P.settings.perPage] || "4b", []); insertAfter(b.id, np); select({ block: np.id, panel: 0 }, { reveal: true }); } }, "뒤에 새 페이지")));
+        body.appendChild(h("div", { class: "row" },
+          h("button", { type: "button", class: "btn small", onclick: () => duplicateBlock(b) }, "페이지 복제"),
+          h("button", { type: "button", class: "btn small danger", onclick: () => deleteBlock(b.id) }, "페이지 지우기")));
+      }],
+    ]);
   }
   function inspNarr(b) {
     setTitle("나레이션", "컷 사이 여백에 들어가는 글이에요");
-    body.appendChild(textArea("nText", b.text, "나레이션을 입력하세요", (v) => { b.text = v; renderBlock(b.id); }, 3));
-    body.appendChild(h("div", { class: "grid2" },
-      slider("글자 크기", 16, 56, 1, b.size, "", (v) => { b.size = v; renderSoon(b.id); }),
-      slider("위아래 여백", 20, 360, 10, b.pad, "", (v) => { b.pad = v; renderSoon(b.id); })));
-    body.appendChild(sec("정렬", seg([["center", "가운데"], ["left", "왼쪽"]], b.align, (v) => { b.align = v; renderBlock(b.id); commit(); })));
-    body.appendChild(sec("배경", seg(NBG, b.bgc || "", (v) => { b.bgc = v; renderBlock(b.id); commit(); })));
-    body.appendChild(sec("나레이션 글꼴 (전체)", fontGrid(P.settings.narrFont, (f) => { P.settings.narrFont = f; P.blocks.forEach((x) => x.type === "narration" && renderBlock(x.id)); commit(); })));
-    body.appendChild(h("div", { class: "row" },
-      h("button", { type: "button", class: "btn small", onclick: () => moveBlock(b.id, -1) }, "↑ 위로"),
-      h("button", { type: "button", class: "btn small", onclick: () => moveBlock(b.id, 1) }, "↓ 아래로"),
-      h("button", { type: "button", class: "btn small danger", onclick: () => deleteBlock(b.id) }, "지우기")));
+    tabbed("narr", [
+      ["text", "글", () => {
+        body.appendChild(textArea("nText", b.text, "나레이션을 입력하세요", (v) => { b.text = v; renderBlock(b.id); }, 3));
+        body.appendChild(h("div", { class: "grid2" },
+          slider("글자 크기", 16, 56, 1, b.size, "", (v) => { b.size = v; renderSoon(b.id); }),
+          slider("위아래 여백", 20, 360, 10, b.pad, "", (v) => { b.pad = v; renderSoon(b.id); })));
+        body.appendChild(sec("정렬", seg([["center", "가운데"], ["left", "왼쪽"]], b.align, (v) => { b.align = v; renderBlock(b.id); commit(); })));
+        body.appendChild(h("div", { class: "row" },
+          h("button", { type: "button", class: "btn small", onclick: () => moveBlock(b.id, -1) }, "↑ 위로"),
+          h("button", { type: "button", class: "btn small", onclick: () => moveBlock(b.id, 1) }, "↓ 아래로"),
+          h("button", { type: "button", class: "btn small danger", onclick: () => deleteBlock(b.id) }, "지우기")));
+      }],
+      ["bg", "배경", () => body.appendChild(seg(NBG, b.bgc || "", (v) => { b.bgc = v; renderBlock(b.id); commit(); }))],
+      ["font", "글꼴", () => { body.appendChild(h("p", { class: "hint", text: "나레이션 글꼴은 작품 전체에 같이 적용돼요." })); body.appendChild(fontGrid(P.settings.narrFont, (f) => { P.settings.narrFont = f; P.blocks.forEach((x) => x.type === "narration" && renderBlock(x.id)); commit(); })); }],
+    ]);
   }
   function inspSpace(b) {
     setTitle("빈 여백", "장면 전환이나 여운을 줄 때 써요");
     body.appendChild(slider("높이", 40, 1600, 20, b.h, "px", (v) => { b.h = v; renderSoon(b.id); }));
-    body.appendChild(sec("배경", seg(NBG, b.bgc || "", (v) => { b.bgc = v; renderBlock(b.id); commit(); })));
+    body.appendChild(sec("배경", seg(NBG, b.bgc || "", (v) => { b.bgc = v; refreshJoins(); commit(); })));
     body.appendChild(h("div", { class: "row" },
       h("button", { type: "button", class: "btn small", onclick: () => moveBlock(b.id, -1) }, "↑ 위로"),
       h("button", { type: "button", class: "btn small", onclick: () => moveBlock(b.id, 1) }, "↓ 아래로"),
@@ -2347,30 +2491,38 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   function inspSettings() {
     setTitle("전체 설정", isMobile() ? "컷을 누르면 편집, 빈 곳 두 번 누르면 말풍선" : "컷을 누르면 편집할 수 있어요");
     const st = P.settings;
-    if (isComic()) {
-      body.appendChild(sec("종이 색", seg(BGS, st.bg, (v) => { st.bg = v; renderStrip(); commit(); })));
-      body.appendChild(sec("페이지 비율", seg([["a4", "A4 세로"], ["ig", "4:5"], ["sq", "정사각"]], st.pageRatio, (v) => { st.pageRatio = v; renderStrip(); commit(); })));
-      body.appendChild(sec("새 페이지 칸 수", seg([[3, "3칸"], [4, "4칸"], [5, "5칸"], [6, "6칸"]], st.perPage, (v) => { st.perPage = Number(v); commit(); })));
-      body.appendChild(sec("읽는 방향", seg([["ltr", "왼쪽 → 오른쪽"], ["rtl", "오른쪽 → 왼쪽"]], st.rtl ? "rtl" : "ltr", (v) => { st.rtl = v === "rtl"; renderStrip(); commit(); })));
-    } else {
-      body.appendChild(sec("바탕색", seg(BGS, st.bg, (v) => { st.bg = v; renderStrip(); commit(); })));
-      body.appendChild(slider("컷 사이 여백", 0, 300, 10, st.gap, "", (v) => { st.gap = v; clearTimeout(gapT); gapT = setTimeout(renderStrip, 60); }));
-      body.appendChild(sec("컷 모양", seg([["full", "꽉 채우기"], ["border", "테두리 컷"]], st.frame, (v) => { st.frame = v; renderStrip(); commit(); })));
-    }
-    body.appendChild(sec("기본 말풍선", seg([["oval", "동그란 말풍선"], ["round", "둥근 네모"]], st.bubbleShape, (v) => { st.bubbleShape = v; commit(); })));
-    body.appendChild(sec("대사 글꼴", fontGrid(st.bubbleFont, (f) => { st.bubbleFont = f; commit(); }),
-      h("button", { type: "button", class: "btn small", onclick: () => { let n = 0; P.blocks.forEach((b) => hasBubbles(b) && b.bubbles.forEach((u) => { if (!SHAPES[u.shape].font) { u.font = st.bubbleFont; n++; } })); renderStrip(); commit(); toast("대사 " + n + "개에 적용했어요"); } }, "지금 있는 대사에도 적용")));
-    if (!isComic()) body.appendChild(sec("나레이션 글꼴", fontGrid(st.narrFont, (f) => { st.narrFont = f; renderStrip(); commit(); })));
-    const signIn = h("input", { type: "text", value: st.sign || "", maxlength: "30", placeholder: "예) @deca · 그림 정헌", "aria-label": "작가 서명" });
-    signIn.addEventListener("input", () => { st.sign = signIn.value; commitSoon(); });
-    body.appendChild(h("label", { class: "fld" }, h("span", { class: "fld-l", text: "작가 서명 (저장한 이미지 오른쪽 아래에 들어가요)" }), signIn));
-    body.appendChild(sec("폰 AI", h("div", { class: "row" }, h("button", { type: "button", class: "btn small", onclick: openEngine }, "폰 AI 상태 보기")),
+    tabbed("settings", [
+      ["look", "화면", () => {
+        if (isComic()) {
+          body.appendChild(sec("종이 색", seg(BGS, st.bg, (v) => { st.bg = v; renderStrip(); commit(); })));
+          body.appendChild(sec("페이지 비율", seg([["a4", "A4 세로"], ["ig", "4:5"], ["sq", "정사각"]], st.pageRatio, (v) => { st.pageRatio = v; renderStrip(); commit(); })));
+          body.appendChild(sec("새 페이지 칸 수", seg([[3, "3칸"], [4, "4칸"], [5, "5칸"], [6, "6칸"]], st.perPage, (v) => { st.perPage = Number(v); commit(); })));
+          body.appendChild(sec("읽는 방향", seg([["ltr", "왼쪽 → 오른쪽"], ["rtl", "오른쪽 → 왼쪽"]], st.rtl ? "rtl" : "ltr", (v) => { st.rtl = v === "rtl"; renderStrip(); commit(); })));
+        } else {
+          body.appendChild(sec("바탕색", seg(BGS, st.bg, (v) => { st.bg = v; renderStrip(); commit(); })));
+          body.appendChild(slider("컷 사이 여백", 0, 300, 10, st.gap, "", (v) => { st.gap = v; clearTimeout(gapT); gapT = setTimeout(refreshJoins, 60); }));
+          body.appendChild(sec("컷 모양", seg([["full", "꽉 채우기"], ["border", "테두리 컷"]], st.frame, (v) => { st.frame = v; renderStrip(); commit(); })));
+        }
+      }],
+      ["font", "글꼴", () => {
+        body.appendChild(sec("기본 말풍선", seg([["oval", "동그란 말풍선"], ["round", "둥근 네모"]], st.bubbleShape, (v) => { st.bubbleShape = v; commit(); })));
+        body.appendChild(sec("대사 글꼴", fontGrid(st.bubbleFont, (f) => { st.bubbleFont = f; commit(); }),
+          h("button", { type: "button", class: "btn small", onclick: () => { let n = 0; P.blocks.forEach((b) => hasBubbles(b) && b.bubbles.forEach((u) => { if (!SHAPES[u.shape].font) { u.font = st.bubbleFont; n++; } })); renderStrip(); commit(); toast("대사 " + n + "개에 적용했어요"); } }, "지금 있는 대사에도 적용")));
+        if (!isComic()) body.appendChild(sec("나레이션 글꼴", fontGrid(st.narrFont, (f) => { st.narrFont = f; renderStrip(); commit(); })));
+      }],
+      ["work", "작품", () => {
+        const signIn = h("input", { type: "text", value: st.sign || "", maxlength: "30", placeholder: "예) @deca · 그림 정헌", "aria-label": "작가 서명" });
+        signIn.addEventListener("input", () => { st.sign = signIn.value; commitSoon(); });
+        body.appendChild(h("label", { class: "fld" }, h("span", { class: "fld-l", text: "작가 서명 (저장한 이미지 오른쪽 아래에 들어가요)" }), signIn));
+        body.appendChild(sec("폰 AI", h("div", { class: "row" }, h("button", { type: "button", class: "btn small", onclick: openEngine }, "폰 AI 상태 보기")),
       h("p", { class: "hint", text: engine.ready ? "켜져 있어요 · " + curModel().label : engine.cached ? "받아 둠 · 쓸 때 자동으로 켜져요" : "아직 안 받았어요 (약 1GB)" })));
     body.appendChild(sec("작품", h("div", { class: "row" },
-      h("button", { type: "button", class: "btn small", onclick: openLib }, "보관함 열기"),
-      h("button", { type: "button", class: "btn small", onclick: openOrder }, "순서 정리"),
-      h("button", { type: "button", class: "btn small", onclick: () => newProject(false, P.mode) }, isComic() ? "+ 새 만화" : "+ 새 세로툰")),
-      h("p", { class: "hint", text: store.db ? "‘" + (P.title || "") + "’ · 작업은 자동으로 저장되고, 새 작품을 만들어도 예전 작품은 보관함에 남아요." : "이 화면에서는 자동 저장이 안 돼요. 다 만들면 이미지로 저장해 주세요." })));
+          h("button", { type: "button", class: "btn small", onclick: openLib }, "보관함 열기"),
+          h("button", { type: "button", class: "btn small", onclick: openOrder }, "순서 정리"),
+          h("button", { type: "button", class: "btn small", onclick: () => newProject(false, P.mode) }, isComic() ? "+ 새 만화" : "+ 새 세로툰")),
+          h("p", { class: "hint", text: store.db ? "‘" + (P.title || "") + "’ · 작업은 자동으로 저장되고, 새 작품을 만들어도 예전 작품은 보관함에 남아요." : "이 화면에서는 자동 저장이 안 돼요. 다 만들면 이미지로 저장해 주세요." })));
+      }],
+    ]);
   }
   let gapT;
 
@@ -2386,6 +2538,9 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   }
   $("fab").addEventListener("click", () => { buildInspector(); openSheet(); });
   $("inspDone").addEventListener("click", () => { if (isMobile()) closeSheet(); else select({}); });
+  const toggleTall = () => { const t = $("insp").classList.toggle("tall"); $("inspSize").textContent = t ? "작게" : "크게"; $("inspSize").setAttribute("aria-label", t ? "창 작게" : "창 크게"); updateSheetH(); setTimeout(() => { updateSheetH(); if (sel.block) reveal(); }, 220); };
+  $("inspSize").addEventListener("click", toggleTall);
+  $("inspGrab").addEventListener("click", toggleTall);
   window.addEventListener("resize", () => { if (!isMobile()) document.body.classList.remove("sheet-open"); else if (!$("insp").classList.contains("collapsed")) document.body.classList.add("sheet-open"); });
   function updateSheetH() { requestAnimationFrame(() => document.documentElement.style.setProperty("--sheet-h", sheetOpen() ? $("insp").offsetHeight + "px" : "0px")); }
   if (window.ResizeObserver) new ResizeObserver(updateSheetH).observe($("insp"));
@@ -3087,10 +3242,10 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
       if (b.type !== "image") return;
       const nx = P.blocks[i + 1], pv = P.blocks[i - 1];
       if (mode === "none") { b.tin = trDef(); b.tout = trDef(); return; }
-      if (mode === "fade") { if (b.tin && b.tin.kind === "mix") b.tin = trDef(); if (nx && nx.type === "image") { trSet(b, "tout", "fade", "bg", 16); trSet(nx, "tin", "fade", "bg", 16); n++; } }
-      if (mode === "mix" && pv && pv.type === "image") { trSet(b, "tin", "mix", "bg", 24); pv.tout = trDef(); n++; }
+      if (mode === "fade") { if (b.tin && b.tin.kind === "mix") b.tin = trDef(); if (nx && nx.type === "image") { trSet(b, "tout", "fade", "bg", 22); trSet(nx, "tin", "fade", "bg", 22); n++; } }
+      if (mode === "mix" && pv && pv.type === "image") { trSet(b, "tin", "mix", "bg", 32); pv.tout = trDef(); n++; }
     });
-    renderStrip(); commit(); syncInspector();
+    refreshJoins(); commit(); syncInspector();
     $("aStatus").textContent = mode === "none" ? "컷 이어짐을 모두 뺐어요." : n ? "컷 사이 " + n + "곳을 " + (mode === "mix" ? "겹쳐 녹였어요." : "스르륵 이었어요.") : "이어 줄 컷이 두 장 이상 있어야 해요.";
   }
   $("aTrFade").addEventListener("click", () => autoTrans("fade"));
