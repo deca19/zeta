@@ -69,6 +69,16 @@ button { font: inherit; color: inherit; }
 .lib-act { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 6px; }
 .lib-act .btn { flex: 1 1 auto; }
 .cur-tag { font-size: 11px; font-weight: 700; color: var(--accent); }
+.bar { height: 10px; border-radius: 99px; background: var(--line); overflow: hidden; }
+.bar i { display: block; height: 100%; width: 0; background: var(--accent); transition: width .35s ease; }
+.ord-list { display: flex; flex-direction: column; gap: 6px; }
+.ord-item { display: grid; grid-template-columns: 30px 48px minmax(0, 1fr) auto; gap: 8px; align-items: center; padding: 6px 8px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel-2); }
+.ord-item .no { font-family: var(--f-display); color: var(--accent); text-align: center; }
+.ord-thumb { width: 48px; height: 60px; border-radius: 6px; overflow: hidden; background: #0d0e11; display: grid; place-items: center; color: #9aa3b0; font-size: 10px; text-align: center; padding: 2px; }
+.ord-thumb img, .ord-thumb canvas { width: 100%; height: 100%; object-fit: cover; display: block; }
+.ord-item .t { min-width: 0; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ord-item .acts { display: flex; gap: 4px; }
+.ord-item .acts button { width: 36px; height: 36px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); cursor: pointer; padding: 0; font-size: 15px; }
 .mode-tag { display: inline-block; font-size: 11px; font-weight: 700; padding: 1px 7px; border-radius: 99px; background: var(--pencil); color: var(--ink); margin-right: 4px; vertical-align: 1px; }
 .layouts { display: grid; grid-template-columns: repeat(auto-fill, minmax(50px, 1fr)); gap: 6px; }
 .layout-b { height: 58px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel-2); display: grid; place-items: center; cursor: pointer; color: var(--ink); padding: 0; }
@@ -291,6 +301,14 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
 <input type="file" id="fileReplace" accept="image/*" hidden>
 <input type="file" id="fileQuick" accept="image/*" multiple hidden>
 
+<div class="modal" id="mOrder" hidden role="dialog" aria-modal="true" aria-labelledby="oTitle">
+  <div class="modal-card">
+    <div class="m-head"><h2 id="oTitle">순서 정리</h2><button class="btn small" type="button" data-close>완료</button></div>
+    <p class="m-sub">전체를 한눈에 보면서 순서를 바꾸거나 지울 수 있어요. 완료를 누르면 반영돼요.</p>
+    <div class="ord-list" id="oList"></div>
+  </div>
+</div>
+
 <div class="modal" id="mLib" hidden role="dialog" aria-modal="true" aria-labelledby="lTitle">
   <div class="modal-card">
     <div class="m-head"><h2 id="lTitle">보관함</h2><button class="btn small" type="button" data-close>닫기</button></div>
@@ -367,6 +385,11 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
       <h3>겹친 말풍선 정리</h3>
       <p>지금 위치는 최대한 그대로 두고, 서로 겹치거나 컷 밖으로 나간 말풍선만 밀어내요.</p>
       <button class="btn" type="button" id="aTidy">정리하기</button>
+    </div>
+    <div class="auto-card">
+      <h3>순서 정리</h3>
+      <p>컷이나 페이지를 한눈에 보면서 위아래로 옮기고 필요 없는 건 지워요.</p>
+      <button class="btn" type="button" id="aOrder">순서 정리 열기</button>
     </div>
     <div class="auto-card">
       <h3>대사 글자 크기 맞추기</h3>
@@ -747,6 +770,50 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   }
 
   // ---------- block drawing ----------
+  const NBG = [["", "기본"], ["#ffffff", "흰색"], ["#000000", "검정"], ["fade-w", "점점 밝게"], ["fade-b", "점점 어둡게"], ["sunset", "노을"], ["sky", "하늘"], ["night", "밤하늘"]];
+  function paintBg(ctx, b, W, H) {
+    const v = b.bgc; if (!v) return;
+    if (v[0] === "#") { ctx.fillStyle = v; ctx.fillRect(0, 0, W, H); return; }
+    const stops = { "fade-w": [P.settings.bg, "#ffffff"], "fade-b": [P.settings.bg, "#000000"], sunset: ["#2b1d3f", "#c4566b", "#f6b26b"], sky: ["#6fb7ff", "#d8eeff"], night: ["#05060f", "#1b1f4a"] }[v];
+    if (!stops) return;
+    const g = ctx.createLinearGradient(0, 0, 0, H); stops.forEach((c, i) => g.addColorStop(i / (stops.length - 1), c));
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    if (v === "night") { const R = rng(hashStr(b.id)), k = W / BASE; ctx.fillStyle = "#ffffff"; for (let i = 0; i < 70; i++) { ctx.globalAlpha = 0.3 + R() * 0.7; ctx.beginPath(); ctx.arc(R() * W, R() * H, (0.6 + R() * 1.8) * k, 0, Math.PI * 2); ctx.fill(); } ctx.globalAlpha = 1; }
+  }
+  function bgIsLight(b) {
+    const v = b.bgc; if (!v) return lightBg();
+    const m = { "#ffffff": true, "#000000": false, "fade-w": true, "fade-b": false, sunset: false, sky: true, night: false };
+    return v in m ? m[v] : lightBg();
+  }
+  // manga effect lines over a picture
+  const LINES = [["none", "없음"], ["focus", "집중선"], ["speed", "속도선"], ["sparkle", "반짝임"], ["rain", "비"]];
+  function star4(ctx, x, y, r) { ctx.beginPath(); ctx.moveTo(x, y - r); ctx.quadraticCurveTo(x, y, x + r, y); ctx.quadraticCurveTo(x, y, x, y + r); ctx.quadraticCurveTo(x, y, x - r, y); ctx.quadraticCurveTo(x, y, x, y - r); ctx.fill(); }
+  function drawFxLines(ctx, fx, x, y, w, hh, seed, k) {
+    if (!fx || !fx.kind || fx.kind === "none") return;
+    const R = rng(hashStr(seed + fx.kind)), amt = (fx.amt == null ? 50 : fx.amt) / 100, col = fx.color === "white" ? "#ffffff" : "#111111";
+    ctx.save(); ctx.beginPath(); ctx.rect(x, y, w, hh); ctx.clip(); ctx.fillStyle = col; ctx.strokeStyle = col;
+    if (fx.kind === "focus") {
+      const cx = x + w * (fx.cx == null ? 50 : fx.cx) / 100, cy = y + hh * (fx.cy == null ? 50 : fx.cy) / 100, rad = Math.hypot(w, hh) * 1.1;
+      const n = Math.round(60 + amt * 160), inner = Math.min(w, hh) * (0.46 - amt * 0.24);
+      for (let i = 0; i < n; i++) {
+        const a = R() * Math.PI * 2, r0 = inner * (0.8 + R() * 0.7), wd = (1.2 + R() * 4.5) * k * (0.6 + amt), ux = Math.cos(a), uy = Math.sin(a);
+        ctx.beginPath(); ctx.moveTo(cx + ux * r0, cy + uy * r0); ctx.lineTo(cx + ux * rad - uy * wd, cy + uy * rad + ux * wd); ctx.lineTo(cx + ux * rad + uy * wd, cy + uy * rad - ux * wd); ctx.closePath(); ctx.fill();
+      }
+    } else if (fx.kind === "speed") {
+      const n = Math.round(24 + amt * 80);
+      for (let i = 0; i < n; i++) {
+        const yy = y + R() * hh, len = w * (0.25 + R() * 0.65), th = (0.8 + R() * 3.2) * k * (0.6 + amt), left = R() < 0.5, x0 = left ? x - 10 : x + w + 10, x1 = left ? x0 + len : x0 - len;
+        ctx.beginPath(); ctx.moveTo(x0, yy - th); ctx.lineTo(x1, yy); ctx.lineTo(x0, yy + th); ctx.closePath(); ctx.fill();
+      }
+    } else if (fx.kind === "sparkle") {
+      const n = Math.round(6 + amt * 26);
+      for (let i = 0; i < n; i++) { const r = (6 + R() * 22) * k * (0.6 + amt); ctx.globalAlpha = 0.6 + R() * 0.4; star4(ctx, x + R() * w, y + R() * hh, r); }
+    } else if (fx.kind === "rain") {
+      ctx.lineWidth = 1.6 * k; ctx.globalAlpha = 0.65; const n = Math.round(60 + amt * 220);
+      for (let i = 0; i < n; i++) { const sx = x + R() * w * 1.2 - w * 0.1, sy = y + R() * hh, l = (14 + R() * 30) * k; ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(sx - l * 0.25, sy + l); ctx.stroke(); }
+    }
+    ctx.restore();
+  }
   function drawBlock(ctx, b, W, S, selInfo, preview) {
     ctx.fillStyle = P.settings.bg; ctx.fillRect(0, 0, W, S.h);
     if (b.type === "page") {
@@ -757,6 +824,7 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
         if (im) {
           const z = (pn.zoom || 100) / 100, sc = Math.max(r.w / im.w, r.h / im.h) * z, dw = im.w * sc, dh = im.h * sc;
           ctx.drawImage(lookSrc(pn.img, pn.look) || im.el, r.x + (r.w - dw) * (pn.fx == null ? 50 : pn.fx) / 100, r.y + (r.h - dh) * (pn.fy == null ? 50 : pn.fy) / 100, dw, dh);
+          drawFxLines(ctx, pn.fxl, r.x, r.y, r.w, r.h, b.id + ":" + i, k);
         } else if (preview) {
           ctx.fillStyle = dark ? "#2a2d33" : "#eceef1"; ctx.fillRect(r.x, r.y, r.w, r.h);
           ctx.fillStyle = "#8a919c"; ctx.font = fontCss("gothic", 24 * k); ctx.textAlign = "center"; ctx.textBaseline = "middle";
@@ -773,19 +841,22 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
       if (selInfo && selInfo.bubble) { const u = findBubble(b, selInfo.bubble); if (u) drawSelection(ctx, u, W, S.h, selInfo.hs); }
       return;
     }
+    if (b.type === "narration" || b.type === "space") paintBg(ctx, b, W, S.h);
     if (b.type === "narration") {
-      const L = S.L;
+      const L = S.L, lt = bgIsLight(b), grad = !!(b.bgc && b.bgc[0] !== "#");
       ctx.font = fontCss(P.settings.narrFont, L.px); ctx.textBaseline = "middle";
-      ctx.fillStyle = lightBg() ? "#151515" : "#f4f1ea";
       ctx.textAlign = b.align === "left" ? "left" : "center";
       const x = b.align === "left" ? W * 0.1 : W / 2;
       let y = S.h / 2 - L.lines.length * L.lh / 2 + L.lh / 2;
-      L.lines.forEach((ln) => { ctx.fillText(ln, x, y); y += L.lh; });
+      L.lines.forEach((ln) => {
+        if (grad) { ctx.lineJoin = "round"; ctx.lineWidth = L.px * 0.22; ctx.strokeStyle = lt ? "rgba(255,255,255,.85)" : "rgba(0,0,0,.6)"; ctx.strokeText(ln, x, y); }
+        ctx.fillStyle = lt ? "#151515" : "#f4f1ea"; ctx.fillText(ln, x, y); y += L.lh;
+      });
       return;
     }
     if (b.type !== "image") return;
     const im = images.get(b.img);
-    if (im) ctx.drawImage(lookSrc(b.img, b.look) || im.el, S.ix, S.iy, S.iw, S.ih);
+    if (im) { ctx.drawImage(lookSrc(b.img, b.look) || im.el, S.ix, S.iy, S.iw, S.ih); drawFxLines(ctx, b.fxl, S.ix, S.iy, S.iw, S.ih, b.id, W / BASE); }
     else {
       ctx.fillStyle = "#3a3d44"; ctx.fillRect(S.ix, S.iy, S.iw, S.ih);
       ctx.fillStyle = "#c9ced6"; ctx.font = fontCss("gothic", 26 * W / BASE); ctx.textAlign = "center"; ctx.textBaseline = "middle";
@@ -1034,6 +1105,14 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     sel = { block: null, bubble: null };
     renderStrip(); commit(); select({});
     toast("블록을 지웠어요. 되돌리기로 살릴 수 있어요.");
+  }
+  function duplicateBlock(b) {
+    const c = JSON.parse(JSON.stringify(b));
+    c.id = nid(b.type === "page" ? "g" : "b");
+    (c.bubbles || []).forEach((u) => { u.id = nid("u"); });
+    insertAfter(b.id, c);
+    select({ block: c.id, panel: b.type === "page" ? 0 : null }, { reveal: true });
+    toast(b.type === "page" ? "페이지를 복제했어요" : "컷을 복제했어요");
   }
   function insertAfter(id, block) {
     const i = P.blocks.findIndex((b) => b.id === id);
@@ -1628,7 +1707,7 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     if (!look || ((look.f || "none") === "none" && !look.br && !look.ct)) return im.el;
     const ck = key + "|" + (look.f || "none") + "|" + (look.br || 0) + "|" + (look.ct || 0);
     if (lookCache.has(ck)) return lookCache.get(ck);
-    const sc = Math.min(1, 1400 / Math.max(im.w, im.h)), w = Math.max(1, Math.round(im.w * sc)), hh = Math.max(1, Math.round(im.h * sc));
+    const sc = Math.min(1, 1200 / Math.max(im.w, im.h)), w = Math.max(1, Math.round(im.w * sc)), hh = Math.max(1, Math.round(im.h * sc));
     const c = document.createElement("canvas"); c.width = w; c.height = hh;
     const g = c.getContext("2d"); g.drawImage(im.el, 0, 0, w, hh);
     let data; try { data = g.getImageData(0, 0, w, hh); } catch (e) { return im.el; }
@@ -1682,6 +1761,15 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
         slider("밝기", -50, 50, 5, L.br || 0, "", (v) => { L.br = v; onChange(false); }),
         slider("대비", -50, 50, 5, L.ct || 0, "", (v) => { L.ct = v; onChange(false); })),
       onAll ? h("div", { class: "row" }, h("button", { type: "button", class: "btn small", onclick: () => onAll(JSON.parse(JSON.stringify(L))) }, "모든 사진에 같은 효과")) : null);
+    const LX = target.fxl || (target.fxl = { kind: "none", color: "black", amt: 50, cx: 50, cy: 50 });
+    wrap.appendChild(h("div", { class: "sec-l", text: "효과선", style: "margin-top:6px" }));
+    wrap.appendChild(seg(LINES, LX.kind || "none", (v) => { LX.kind = v; if (v === "sparkle" || v === "rain") LX.color = "white"; else if (v === "focus" || v === "speed") LX.color = "black"; onChange(true); buildInspector(); }, "효과선"));
+    if (LX.kind && LX.kind !== "none") {
+      wrap.appendChild(seg([["black", "검은 선"], ["white", "흰 선"]], LX.color || "black", (v) => { LX.color = v; onChange(true); }, "선 색"));
+      const sl = h("div", { class: "grid2" }, slider("양", 0, 100, 5, LX.amt == null ? 50 : LX.amt, "", (v) => { LX.amt = v; onChange(false); }));
+      if (LX.kind === "focus") { sl.appendChild(slider("중심 가로", 0, 100, 2, LX.cx == null ? 50 : LX.cx, "", (v) => { LX.cx = v; onChange(false); })); sl.appendChild(slider("중심 세로", 0, 100, 2, LX.cy == null ? 50 : LX.cy, "", (v) => { LX.cy = v; onChange(false); })); }
+      wrap.appendChild(sl);
+    }
     return wrap;
   }
   function applyLookAll(look) {
@@ -1861,6 +1949,7 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
       h("button", { type: "button", class: "btn small", onclick: () => moveBlock(b.id, 1) }, "↓ 아래로")),
       h("div", { class: "row" },
         h("button", { type: "button", class: "btn small", onclick: () => { const n = makeNarr("나레이션"); insertAfter(b.id, n); select({ block: n.id }, { focus: true, selectAll: true, reveal: true }); } }, "아래에 나레이션"),
+        h("button", { type: "button", class: "btn small", onclick: () => duplicateBlock(b) }, "컷 복제"),
         h("button", { type: "button", class: "btn small danger", onclick: () => deleteBlock(b.id) }, "컷 지우기"))));
   }
   let panelAiBox = null;
@@ -1909,6 +1998,7 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
       h("button", { type: "button", class: "btn small", onclick: () => moveBlock(b.id, -1) }, "↑ 앞으로"),
       h("button", { type: "button", class: "btn small", onclick: () => moveBlock(b.id, 1) }, "↓ 뒤로"),
       h("button", { type: "button", class: "btn small", onclick: () => { const np = newPage(LAYOUT_FOR_N[P.settings.perPage] || "4b", []); insertAfter(b.id, np); select({ block: np.id, panel: 0 }, { reveal: true }); } }, "뒤에 새 페이지"),
+      h("button", { type: "button", class: "btn small", onclick: () => duplicateBlock(b) }, "페이지 복제"),
       h("button", { type: "button", class: "btn small danger", onclick: () => deleteBlock(b.id) }, "페이지 지우기"))));
   }
   function inspNarr(b) {
@@ -1918,6 +2008,7 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
       slider("글자 크기", 16, 56, 1, b.size, "", (v) => { b.size = v; renderSoon(b.id); }),
       slider("위아래 여백", 20, 360, 10, b.pad, "", (v) => { b.pad = v; renderSoon(b.id); })));
     body.appendChild(sec("정렬", seg([["center", "가운데"], ["left", "왼쪽"]], b.align, (v) => { b.align = v; renderBlock(b.id); commit(); })));
+    body.appendChild(sec("배경", seg(NBG, b.bgc || "", (v) => { b.bgc = v; renderBlock(b.id); commit(); })));
     body.appendChild(sec("나레이션 글꼴 (전체)", fontGrid(P.settings.narrFont, (f) => { P.settings.narrFont = f; P.blocks.forEach((x) => x.type === "narration" && renderBlock(x.id)); commit(); })));
     body.appendChild(h("div", { class: "row" },
       h("button", { type: "button", class: "btn small", onclick: () => moveBlock(b.id, -1) }, "↑ 위로"),
@@ -1927,6 +2018,7 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   function inspSpace(b) {
     setTitle("빈 여백", "장면 전환이나 여운을 줄 때 써요");
     body.appendChild(slider("높이", 40, 1600, 20, b.h, "px", (v) => { b.h = v; renderSoon(b.id); }));
+    body.appendChild(sec("배경", seg(NBG, b.bgc || "", (v) => { b.bgc = v; renderBlock(b.id); commit(); })));
     body.appendChild(h("div", { class: "row" },
       h("button", { type: "button", class: "btn small", onclick: () => moveBlock(b.id, -1) }, "↑ 위로"),
       h("button", { type: "button", class: "btn small", onclick: () => moveBlock(b.id, 1) }, "↓ 아래로"),
@@ -1957,6 +2049,7 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
       h("p", { class: "hint", text: engine.ready ? "켜져 있어요 · " + curModel().label : engine.cached ? "받아 둠 · 쓸 때 자동으로 켜져요" : "아직 안 받았어요 (약 1GB)" })));
     body.appendChild(sec("작품", h("div", { class: "row" },
       h("button", { type: "button", class: "btn small", onclick: openLib }, "보관함 열기"),
+      h("button", { type: "button", class: "btn small", onclick: openOrder }, "순서 정리"),
       h("button", { type: "button", class: "btn small", onclick: () => newProject(false, P.mode) }, isComic() ? "+ 새 만화" : "+ 새 세로툰")),
       h("p", { class: "hint", text: store.db ? "‘" + (P.title || "") + "’ · 작업은 자동으로 저장되고, 새 작품을 만들어도 예전 작품은 보관함에 남아요." : "이 화면에서는 자동 저장이 안 돼요. 다 만들면 이미지로 저장해 주세요." })));
   }
@@ -1987,7 +2080,7 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   let modelKey = "base";
   try { const m = localStorage.getItem("sedo-model"); if (MODELS[m]) modelKey = m; } catch (e) { /* default */ }
   const curModel = () => MODELS[modelKey];
-  const engine = { tf: null, processor: null, model: null, ready: false, loading: null, cached: false, device: "", pct: 0, busy: false, err: "" };
+  const engine = { tf: null, processor: null, model: null, worker: null, useWorker: typeof Worker !== "undefined", mode: "", ready: false, loading: null, cached: false, device: "", pct: 0, busy: false, err: "" };
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   const hasGPU = () => !!(navigator.gpu);
   const llmReady = () => engine.ready;
@@ -2003,28 +2096,91 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     } catch (e) { /* storage not available */ }
     return false;
   }
+  // The model runs in a background worker so the screen never freezes or flickers while the AI thinks.
+  const WORKER_SRC = [
+    "let tf = null, processor = null, model = null;",
+    "self.onmessage = async (e) => {",
+    "  const m = e.data, id = m.id;",
+    "  try {",
+    "    if (m.type === 'load') {",
+    "      tf = tf || await import(m.tfUrl);",
+    "      tf.env.allowLocalModels = false;",
+    "      const progress = (p) => { if (p && p.status === 'progress' && p.total) self.postMessage({ id, type: 'progress', file: p.file, loaded: p.loaded || 0, total: p.total }); };",
+    "      processor = await tf.AutoProcessor.from_pretrained(m.model, { progress_callback: progress });",
+    "      model = await tf.Qwen3_5ForConditionalGeneration.from_pretrained(m.model, { dtype: m.dtype, device: m.device, progress_callback: progress });",
+    "      self.postMessage({ id, type: 'done' });",
+    "    } else if (m.type === 'gen') {",
+    "      const content = m.image ? [{ type: 'image' }, { type: 'text', text: m.prompt }] : [{ type: 'text', text: m.prompt }];",
+    "      const text = processor.apply_chat_template([{ role: 'user', content }], { add_generation_prompt: true, enable_thinking: false });",
+    "      let image = null;",
+    "      if (m.image) { image = await tf.RawImage.fromBlob(m.image); const s = Math.min(1, m.maxSide / Math.max(image.width, image.height)); if (s < 1) image = await image.resize(Math.round(image.width * s), Math.round(image.height * s)); }",
+    "      const inputs = image ? await processor(text, image) : await processor(text);",
+    "      let acc = '', last = 0;",
+    "      const streamer = new tf.TextStreamer(processor.tokenizer, { skip_prompt: true, skip_special_tokens: true, callback_function: (piece) => { acc += piece; const now = Date.now(); if (now - last > 200) { last = now; self.postMessage({ id, type: 'piece', text: acc }); } } });",
+    "      const out = await model.generate({ ...inputs, max_new_tokens: m.maxTokens, do_sample: true, temperature: 0.7, top_p: 0.9, top_k: 40, repetition_penalty: 1.1, streamer });",
+    "      const decoded = processor.batch_decode(out.slice(null, [inputs.input_ids.dims.at(-1), null]), { skip_special_tokens: true });",
+    "      self.postMessage({ id, type: 'done', text: decoded[0] || acc });",
+    "    }",
+    "  } catch (err) { self.postMessage({ id, type: 'error', message: String((err && err.message) || err) }); }",
+    "};"
+  ].join("\n");
+  let reqId = 0; const pending = new Map();
+  function getWorker() {
+    if (engine.worker) return engine.worker;
+    const url = URL.createObjectURL(new Blob([WORKER_SRC], { type: "text/javascript" }));
+    const w = new Worker(url, { type: "module" });
+    w.onmessage = (e) => {
+      const m = e.data, p = pending.get(m.id); if (!p) return;
+      if (m.type === "progress") { if (p.onProgress) p.onProgress(m); return; }
+      if (m.type === "piece") { if (p.onPiece) p.onPiece(m.text); return; }
+      pending.delete(m.id);
+      if (m.type === "error") p.reject(new Error(m.message)); else p.resolve(m);
+    };
+    w.onerror = (e) => { pending.forEach((p) => p.reject(new Error((e && e.message) || "worker_failed"))); pending.clear(); try { w.terminate(); } catch (er) { /* gone */ } engine.worker = null; };
+    engine.worker = w; return w;
+  }
+  function callWorker(msg, handlers) {
+    let w; try { w = getWorker(); } catch (e) { return Promise.reject(new Error("worker_unavailable")); }
+    const id = ++reqId;
+    return new Promise((resolve, reject) => { pending.set(id, Object.assign({ resolve, reject }, handlers || {})); w.postMessage(Object.assign({ id }, msg)); });
+  }
+  function stopWorker() { if (engine.worker) { try { engine.worker.terminate(); } catch (e) { /* gone */ } engine.worker = null; } pending.clear(); }
+  // progress shown without rebuilding the screen (the old way redrew the whole panel on every byte and made it flicker)
+  const files = new Map(); let progT = 0;
+  function onProgress(p) {
+    files.set(p.file, [p.loaded || 0, p.total]); let a = 0, t = 0; files.forEach(([x, y]) => { a += x; t += y; });
+    engine.pct = t ? Math.round(a / t * 100) : 0;
+    const now = Date.now(); if (now - progT < 250) return; progT = now;
+    const bar = document.getElementById("engBar"), pct = document.getElementById("engPct");
+    if (bar) bar.style.width = engine.pct + "%";
+    if (pct) pct.textContent = "받는 중… " + engine.pct + "%";
+  }
   async function loadModel() {
     if (engine.ready) return true;
     if (engine.loading) return engine.loading;
-    engine.err = ""; engine.pct = 0;
+    engine.err = ""; engine.pct = 0; files.clear();
     engine.loading = (async () => {
       try {
-        if (window.__SEDO_MOCK__) { engine.device = "mock"; await sleep(50); engine.ready = true; return true; }
-        try { await navigator.storage && navigator.storage.persist && navigator.storage.persist(); } catch (e) { /* optional */ }
+        if (window.__SEDO_MOCK__) { engine.device = "mock"; engine.mode = "mock"; await sleep(50); engine.ready = true; return true; }
+        try { if (navigator.storage && navigator.storage.persist) await navigator.storage.persist(); } catch (e) { /* optional */ }
+        engine.device = hasGPU() ? "webgpu" : "wasm";
+        const MODEL_ID = curModel().id, dtype = { embed_tokens: "q4", vision_encoder: engine.device === "webgpu" ? "fp16" : "q8", decoder_model_merged: "q4" };
+        if (engine.useWorker) {
+          try {
+            await callWorker({ type: "load", tfUrl: TF_URL, model: MODEL_ID, device: engine.device, dtype }, { onProgress });
+            engine.mode = "worker"; engine.ready = true; engine.cached = true; engine.pct = 100; return true;
+          } catch (e) {
+            stopWorker();
+            if (/memory|OOM|allocation|Out of/i.test(String(e.message))) throw e;
+            engine.useWorker = false; // fall back to running on the page itself
+          }
+        }
         const tf = engine.tf || (engine.tf = await import(TF_URL));
         tf.env.allowLocalModels = false;
-        const files = new Map();
-        const progress = (p) => {
-          if (p && p.status === "progress" && p.total) { files.set(p.file, [p.loaded || 0, p.total]); let a = 0, t = 0; files.forEach(([x, y]) => { a += x; t += y; }); engine.pct = t ? Math.round(a / t * 100) : 0; engineUI(); }
-        };
-        engine.device = hasGPU() ? "webgpu" : "wasm";
-        const MODEL_ID = curModel().id;
+        const progress = (p) => { if (p && p.status === "progress" && p.total) onProgress(p); };
         engine.processor = await tf.AutoProcessor.from_pretrained(MODEL_ID, { progress_callback: progress });
-        engine.model = await tf.Qwen3_5ForConditionalGeneration.from_pretrained(MODEL_ID, {
-          dtype: { embed_tokens: "q4", vision_encoder: engine.device === "webgpu" ? "fp16" : "q8", decoder_model_merged: "q4" },
-          device: engine.device, progress_callback: progress
-        });
-        engine.ready = true; engine.cached = true; engine.pct = 100;
+        engine.model = await tf.Qwen3_5ForConditionalGeneration.from_pretrained(MODEL_ID, { dtype, device: engine.device, progress_callback: progress });
+        engine.mode = "page"; engine.ready = true; engine.cached = true; engine.pct = 100;
         return true;
       } catch (e) {
         const m = String((e && e.message) || e);
@@ -2043,17 +2199,27 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     if (ok) { closeModal("mEngine"); toast("폰 AI 준비 완료"); }
     return ok;
   }
+  function unloadModel() {
+    stopWorker();
+    try { engine.model && engine.model.dispose && engine.model.dispose(); } catch (e) { /* ignore */ }
+    engine.model = null; engine.processor = null; engine.ready = false; engine.mode = "";
+  }
   function cleanOut(t) { return String(t || "").replace(/<think>[\s\S]*?<\/think>/g, "").replace(/<\/?think>/g, "").replace(/<\|[^|]*\|>/g, "").trim(); }
   async function runLLM(prompt, blob, maxTokens, onPiece) {
     if (window.__SEDO_MOCK__) return cleanOut(await window.__SEDO_MOCK__(prompt, !!blob));
+    const maxSide = modelKey === "pro" ? 640 : 512;
+    if (engine.mode === "worker") {
+      const r = await callWorker({ type: "gen", prompt, image: blob || null, maxTokens: maxTokens || 220, maxSide }, { onPiece });
+      return cleanOut(r.text);
+    }
     const tf = engine.tf;
     const content = blob ? [{ type: "image" }, { type: "text", text: prompt }] : [{ type: "text", text: prompt }];
     const text = engine.processor.apply_chat_template([{ role: "user", content }], { add_generation_prompt: true, enable_thinking: false });
     let image = null;
     if (blob) {
       image = await tf.RawImage.fromBlob(blob);
-      const s = Math.min(1, (modelKey === "pro" ? 640 : 512) / Math.max(image.width, image.height));
-      if (s < 1) image = await image.resize(Math.round(image.width * s), Math.round(image.height * s));
+      const sc = Math.min(1, maxSide / Math.max(image.width, image.height));
+      if (sc < 1) image = await image.resize(Math.round(image.width * sc), Math.round(image.height * sc));
     }
     const inputs = image ? await engine.processor(text, image) : await engine.processor(text);
     let acc = "";
@@ -2403,24 +2569,24 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     const q = $("qAutoStatus");
     if (q && !q.dataset.busy) { q.classList.remove("err"); q.textContent = engine.ready ? "대사를 직접 쓴 컷은 그대로 두고, 빈 컷만 폰 AI가 사진을 보고 채워요." : "처음 한 번 폰 AI(약 1GB)를 받으면 그다음부터는 인터넷 없이도 돼요."; }
   }
-  async function renderEngine() {
+  let lastEst = null;
+  function renderEngine() {
     const b = $("engBody"); b.innerHTML = "";
-    let est = null; try { est = navigator.storage && navigator.storage.estimate ? await navigator.storage.estimate() : null; } catch (e) { est = null; }
-    if ($("engBody") !== b) return;
-    b.innerHTML = "";
+    const est = lastEst;
+    if (navigator.storage && navigator.storage.estimate) navigator.storage.estimate().then((e) => { lastEst = e; const el = document.getElementById("engStore"); if (el && e && e.quota) el.textContent = "이 앱 저장 공간: " + (e.usage / 1e9).toFixed(2) + "GB 사용 · 최대 " + (e.quota / 1e9).toFixed(1) + "GB"; }).catch(() => {});
     b.append(stRow(hasGPU() ? "ok" : "part", "그래픽 가속 (WebGPU)", hasGPU() ? "지원돼요. 폰 AI가 빠르게 돌아가요." : ENG_MSG.no_gpu));
     b.append(h("div", { class: "fld" }, h("span", { class: "fld-l", text: "AI 성능" }), seg(Object.entries(MODELS).map(([k, m]) => [k, m.label + " (" + m.size + ")"]), modelKey, (v) => {
       if (v === modelKey || engine.loading) return;
       modelKey = v; try { localStorage.setItem("sedo-model", v); } catch (e) { /* ignore */ }
-      try { engine.model && engine.model.dispose && engine.model.dispose(); } catch (e) { /* ignore */ }
-      engine.model = null; engine.processor = null; engine.ready = false; engine.err = "";
+      unloadModel(); engine.err = "";
       refreshEngine().then(renderEngine);
     }), h("p", { class: "hint", text: curModel().note })));
-    const state = engine.ready ? ["ok", "준비됐어요 · " + curModel().label + " (그림 보기 + 한국어)"] : engine.loading ? ["part", "받는 중… " + engine.pct + "%"] : engine.cached ? ["part", "폰에 받아 뒀어요. 쓸 때 자동으로 켜져요."] : ["off", "아직 안 받았어요. 처음 한 번 " + curModel().size + "를 받아요 (와이파이 추천)."];
-    b.append(stRow(state[0], "폰 AI", state[1]));
+    const state = engine.ready ? ["ok", "준비됐어요 · " + curModel().label + (engine.mode === "worker" ? " · 백그라운드 실행" : "")] : engine.loading ? ["part", "받는 중… " + engine.pct + "%"] : engine.cached ? ["part", "폰에 받아 뒀어요. 쓸 때 자동으로 켜져요."] : ["off", "아직 안 받았어요. 처음 한 번 " + curModel().size + "를 받아요 (와이파이 추천)."];
+    const row = stRow(state[0], "폰 AI", state[1]); const pEl = row.querySelector("p"); if (pEl && engine.loading) pEl.id = "engPct";
+    b.append(row);
     if (engine.err) b.append(h("p", { class: "status err", text: ENG_MSG[engine.err] || "AI를 켜지 못했어요: " + engine.err }));
     if (engine.loading) {
-      const bar = h("div", { class: "bar" }, h("i", { style: "width:" + engine.pct + "%" }));
+      const bar = h("div", { class: "bar" }, h("i", { id: "engBar", style: "width:" + engine.pct + "%" }));
       b.append(bar, h("p", { class: "hint", text: "화면을 켜 둔 채로 기다려 주세요. 받은 뒤에는 인터넷이 없어도 돼요." }));
     } else if (!engine.ready) {
       b.append(h("button", { type: "button", class: "btn primary wide", onclick: () => loadModel() }, engine.cached ? "폰 AI 켜기" : "폰 AI 받기 (" + curModel().size + ")"));
@@ -2428,12 +2594,12 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     const pre = h("input", { type: "checkbox", id: "preloadAI" }); pre.checked = preloadOn();
     pre.addEventListener("change", () => { try { localStorage.setItem("sedo-preload", pre.checked ? "1" : "0"); } catch (e) { /* ignore */ } if (pre.checked && engine.cached && !engine.ready) loadModel(); });
     b.append(h("label", { class: "switch" }, h("span", { text: "앱을 열 때 폰 AI 미리 켜 두기 (첫 대사가 빨라져요)" }), pre));
-    if (est && est.quota) b.append(h("p", { class: "hint", text: "이 앱 저장 공간: " + (est.usage / 1e9).toFixed(2) + "GB 사용 · 최대 " + (est.quota / 1e9).toFixed(1) + "GB" }));
+    b.append(h("p", { class: "hint", id: "engStore", text: est && est.quota ? "이 앱 저장 공간: " + (est.usage / 1e9).toFixed(2) + "GB 사용 · 최대 " + (est.quota / 1e9).toFixed(1) + "GB" : "" }));
     b.append(h("div", { class: "sec" }, h("div", { class: "sec-l", text: "그림은 폰 그림 앱으로" }),
       h("p", { class: "hint", text: "그림도 폰 안에서 무료로 뽑을 수 있어요. 안드로이드는 Local Dream, 아이폰은 Draw Things 앱에서 콘티의 프롬프트를 붙여 넣고 뽑은 다음, 이 앱으로 가져오면 돼요. 안드로이드는 갤러리에서 ‘공유 → 세로툰’으로 바로 보낼 수도 있어요." })));
     if (engine.cached && !engine.loading) b.append(h("button", { type: "button", class: "btn small danger", onclick: async () => {
       try { for (const n of await caches.keys()) if (/transformers/i.test(n)) await caches.delete(n); } catch (e) { /* ignore */ }
-      engine.cached = false; engine.ready = false; engine.model = null; engine.processor = null; renderEngine(); engineUI(); toast("폰 AI를 지웠어요");
+      unloadModel(); engine.cached = false; renderEngine(); engineUI(); toast("폰 AI를 지웠어요");
     } }, "폰 AI 지우기 (저장 공간 비우기)"));
   }
   const preloadOn = () => { try { return localStorage.getItem("sedo-preload") === "1"; } catch (e) { return false; } };
@@ -2467,7 +2633,28 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   function onlySamples() { return P.blocks.every((b) => blockImgs(b).every((k) => k.startsWith("sample"))); }
   function existingKeys() { return [].concat(...P.blocks.map(blockImgs)).filter((k) => images.has(k)); }
   function openModal(id) { const m = $(id); m.hidden = false; document.body.style.overflow = "hidden"; const f = m.querySelector("textarea, button"); if (f && !isMobile()) f.focus({ preventScroll: true }); }
-  function closeModal(id) { $(id).hidden = true; if (![...document.querySelectorAll(".modal")].some((m) => !m.hidden)) document.body.style.overflow = ""; }
+  let orderDirty = false;
+  function openOrder() { orderDirty = false; renderOrder(); openModal("mOrder"); }
+  function renderOrder() {
+    const box = $("oList"); box.innerHTML = "";
+    const W = P.settings.width;
+    if (!P.blocks.length) { box.appendChild(h("p", { class: "hint", text: "아직 아무것도 없어요." })); return; }
+    P.blocks.forEach((b, i) => {
+      let thumb, label;
+      if (b.type === "image") { const im = images.get(b.img); thumb = im ? h("img", { src: im.el.src, alt: "" }) : h("span", { text: "사진 없음" }); label = "컷 · 말풍선 " + b.bubbles.length + "개" + (b.bubbles[0] ? " · " + b.bubbles[0].text.replace(/\n/g, " ") : ""); }
+      else if (b.type === "page") { const S = blockSize(b, W), c = document.createElement("canvas"); c.width = 48; c.height = Math.round(48 * S.h / W); const g = c.getContext("2d"); g.scale(48 / W, 48 / W); drawBlock(g, b, W, S, null, false); thumb = c; label = "페이지 · " + S.rects.length + "칸 · 말풍선 " + b.bubbles.length + "개"; }
+      else if (b.type === "narration") { thumb = h("span", { text: "글" }); label = "나레이션 · " + b.text.replace(/\n/g, " "); }
+      else { thumb = h("span", { text: "여백" }); label = "빈 여백"; }
+      const mv = (d) => { const j = i + d; if (j < 0 || j >= P.blocks.length) return; [P.blocks[i], P.blocks[j]] = [P.blocks[j], P.blocks[i]]; orderDirty = true; renderOrder(); };
+      box.appendChild(h("div", { class: "ord-item" }, h("span", { class: "no", text: String(i + 1) }), h("div", { class: "ord-thumb" }, thumb), h("span", { class: "t", text: label }),
+        h("div", { class: "acts" },
+          h("button", { type: "button", "aria-label": (i + 1) + "번 위로", onclick: () => mv(-1) }, "↑"),
+          h("button", { type: "button", "aria-label": (i + 1) + "번 아래로", onclick: () => mv(1) }, "↓"),
+          h("button", { type: "button", "aria-label": (i + 1) + "번 지우기", onclick: () => { P.blocks.splice(i, 1); orderDirty = true; renderOrder(); } }, "✕"))));
+    });
+  }
+  function closeModal(id) { $(id).hidden = true;
+    if (id === "mOrder" && orderDirty) { orderDirty = false; sel = { block: null, bubble: null }; renderStrip(); commit(); select({}); toast("순서를 바꿨어요. 되돌리기로 돌아갈 수 있어요."); } if (![...document.querySelectorAll(".modal")].some((m) => !m.hidden)) document.body.style.overflow = ""; }
   document.querySelectorAll(".modal").forEach((m) => {
     m.addEventListener("click", (e) => { if (e.target === m || e.target.closest("[data-close]")) closeModal(m.id); });
   });
@@ -2580,6 +2767,7 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     list.forEach((b) => autoLayout(b)); renderStrip(); commit(); syncInspector();
     $("aStatus").textContent = "컷 " + list.length + "개의 말풍선을 다시 놓았어요.";
   });
+  $("aOrder").addEventListener("click", () => { closeModal("mAuto"); openOrder(); });
   $("aTidy").addEventListener("click", () => {
     const list = P.blocks.filter((b) => hasBubbles(b) && b.bubbles.length);
     list.forEach((b) => resolveOverlaps(b)); renderStrip(); commit();
