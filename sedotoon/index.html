@@ -69,6 +69,12 @@ button { font: inherit; color: inherit; }
 .lib-act { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 6px; }
 .lib-act .btn { flex: 1 1 auto; }
 .cur-tag { font-size: 11px; font-weight: 700; color: var(--accent); }
+.mode-tag { display: inline-block; font-size: 11px; font-weight: 700; padding: 1px 7px; border-radius: 99px; background: var(--pencil); color: var(--ink); margin-right: 4px; vertical-align: 1px; }
+.layouts { display: grid; grid-template-columns: repeat(auto-fill, minmax(50px, 1fr)); gap: 6px; }
+.layout-b { height: 58px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel-2); display: grid; place-items: center; cursor: pointer; color: var(--ink); padding: 0; }
+.layout-b[aria-pressed="true"] { border-color: var(--accent); box-shadow: inset 0 0 0 1.5px var(--accent); background: var(--pencil); }
+.strip.comic { box-shadow: none; overflow: visible; border-radius: 0; }
+.strip.comic .blk { box-shadow: var(--shadow); }
 .brand small { font-family: var(--f-body); font-size: 12px; color: var(--muted); margin-left: 8px; font-weight: 500; }
 .tb { display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 0 11px; border-radius: 9px; border: 1px solid var(--line); background: var(--panel); cursor: pointer; font-weight: 600; white-space: nowrap; }
 .tb svg { width: 18px; height: 18px; flex: none; }
@@ -270,6 +276,7 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
       <button class="btn" type="button" id="addPhotos">+ 컷 사진</button>
       <button class="btn" type="button" id="addNarr">+ 나레이션</button>
       <button class="btn" type="button" id="addSpace">+ 빈 여백</button>
+      <button class="btn" type="button" id="addPage" hidden>+ 새 페이지</button>
     </div>
   </main>
   <aside class="insp collapsed" id="insp" aria-label="편집 도구">
@@ -289,7 +296,8 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     <div class="m-head"><h2 id="lTitle">보관함</h2><button class="btn small" type="button" data-close>닫기</button></div>
     <p class="m-sub">작품마다 따로 저장돼요. 새 작품을 만들어도 예전 작품은 그대로 남아 있어요.</p>
     <label class="fld"><span class="fld-l">지금 작품 이름</span><input type="text" id="lName" maxlength="40" autocomplete="off"></label>
-    <div class="row"><button class="btn primary" type="button" id="lNew">+ 새 작품</button><button class="btn" type="button" id="lSample">예시로 새 작품</button></div>
+    <div class="seg" id="lTabs" role="tablist"></div>
+    <div class="row"><button class="btn primary" type="button" id="lNew">+ 새 세로툰</button><button class="btn" type="button" id="lSample">예시로 새 세로툰</button></div>
     <div class="lib-list" id="lList"></div>
     <p class="hint" id="lHint"></p>
   </div>
@@ -333,6 +341,7 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
       <div class="m-step"><span class="n">3</span>만들기</div>
       <div class="fld"><span class="fld-l">지금 있는 내용은</span><div class="seg" id="qMode"></div></div>
       <div class="fld"><span class="fld-l">기본 말풍선 모양</span><div class="seg" id="qShape"></div></div>
+      <div class="fld" id="qPerWrap" hidden><span class="fld-l">한 페이지 칸 수</span><div class="seg" id="qPer"></div></div>
       <button class="btn primary wide" type="button" id="qBuild">컷 이어 붙이기</button>
       <p class="status" id="qStatus"></p>
     </section>
@@ -468,7 +477,7 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     red: { fill: "#e5392f", ink: "#ffffff", line: "#111111", label: "빨강" }
   };
   const BGS = [["#000000", "검정"], ["#17181c", "먹색"], ["#ffffff", "흰색"], ["#f4efe6", "종이"]];
-  const DEF = { width: 720, bg: "#000000", gap: 60, frame: "full", narrFont: "myeongjo", bubbleFont: "gothic", bubbleShape: "oval", parts: 1, format: "png" };
+  const DEF = { width: 720, bg: "#000000", gap: 60, frame: "full", narrFont: "myeongjo", bubbleFont: "gothic", bubbleShape: "oval", parts: 1, format: "png", pageRatio: "a4", perPage: 4, rtl: false, comicJoin: false };
 
   let P = { v: 2, settings: Object.assign({}, DEF), blocks: [] };
   const images = new Map(); // key -> {el, blob, w, h}
@@ -541,7 +550,40 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     const lines = wrapGreedy(b.text || " ", W * 0.8);
     return { px, lh, lines, h: Math.round(b.pad * k * 2 + lines.length * lh) };
   }
+  const LAYOUTS = { "1": [[1]], "2v": [[1], [1]], "2h": [[1, 1]], "3a": [[1], [1, 1]], "3b": [[1, 1], [1]], "3r": [[1], [1], [1]], "4g": [[1, 1], [1, 1]], "4b": [[1], [1, 1], [1]], "4m": [[2, 1], [1, 2]], "5a": [[1, 1], [1], [1, 1]], "5m": [[2, 1], [1], [1, 2]], "6": [[1, 1], [1, 1], [1, 1]] };
+  const LAYOUT_H = { "3a": [1.25, 1], "3b": [1, 1.25], "4b": [1, 1.2, 1], "5a": [1, 1.25, 1], "5m": [1, 1.1, 1] };
+  const LAYOUT_FOR_N = { 1: "1", 2: "2v", 3: "3a", 4: "4b", 5: "5a", 6: "6" };
+  const RATIOS = { a4: 1.414, ig: 1.25, sq: 1 };
+  const isComic = () => P.mode === "comic";
+  const hasBubbles = (b) => !!b && (b.type === "image" || b.type === "page");
+  function panelCount(l) { return (LAYOUTS[l] || LAYOUTS["4b"]).reduce((a, r) => a + r.length, 0); }
+  function blockImgs(b) { return b.type === "image" ? [b.img] : b.type === "page" ? (b.panels || []).map((p) => p && p.img).filter(Boolean) : []; }
+  function newPage(layout, keys) { return { id: nid("g"), type: "page", layout: layout || "4b", panels: (keys || []).map((k) => (k ? { img: k, zoom: 100, fx: 50, fy: 50 } : null)), bubbles: [] }; }
+  function pageRects(b, W) {
+    const H = Math.round(W * (RATIOS[P.settings.pageRatio] || 1.414)), k = W / BASE;
+    const rows = LAYOUTS[b.layout] || LAYOUTS["4b"], hw = LAYOUT_H[b.layout] || rows.map(() => 1), hsum = hw.reduce((a, c) => a + c, 0);
+    const mx = 40 * k, my = 44 * k, g = 16 * k, availH = H - 2 * my - g * (rows.length - 1);
+    let y = my; const rects = [];
+    rows.forEach((cols, ri) => {
+      const rh = availH * hw[ri] / hsum, cs = cols.reduce((a, c) => a + c, 0), availW = W - 2 * mx - g * (cols.length - 1);
+      let x = mx; const row = cols.map((cw) => { const w = availW * cw / cs, r = { x, y, w, h: rh }; x += w + g; return r; });
+      if (P.settings.rtl) row.reverse();
+      rects.push(...row); y += rh + g;
+    });
+    return { H, rects };
+  }
+  function panelAt(b, x, y) {
+    const S = blockSize(b, P.settings.width); let best = 0, bd = Infinity;
+    S.rects.forEach((r, i) => { const dx = Math.max(r.x - x, 0, x - (r.x + r.w)), dy = Math.max(r.y - y, 0, y - (r.y + r.h)), d = Math.hypot(dx, dy); if (d < bd) { bd = d; best = i; } });
+    return best;
+  }
+  function regionOf(b, u) {
+    const S = blockSize(b, P.settings.width);
+    if (b.type === "page") { const r = S.rects[u && u.panel != null ? u.panel : 0] || S.rects[0]; return { ix: r.x, iy: r.y, iw: r.w, ih: r.h, S }; }
+    return { ix: S.ix, iy: S.iy, iw: S.iw, ih: S.ih, S };
+  }
   function blockSize(b, W) {
+    if (b.type === "page") { const L = pageRects(b, W); return { h: L.H, rects: L.rects, ix: 0, iy: 0, iw: W, ih: L.H }; }
     if (b.type === "image") {
       const im = images.get(b.img), fm = frameMetrics(W), iw = W - 2 * fm.mx;
       const ih = Math.round(im ? iw * im.h / im.w : iw * 0.6);
@@ -703,8 +745,32 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   }
 
   // ---------- block drawing ----------
-  function drawBlock(ctx, b, W, S, selInfo) {
+  function drawBlock(ctx, b, W, S, selInfo, preview) {
     ctx.fillStyle = P.settings.bg; ctx.fillRect(0, 0, W, S.h);
+    if (b.type === "page") {
+      const k = W / BASE, dark = !lightBg(), line = dark ? "#e9e9e9" : "#111111";
+      S.rects.forEach((r, i) => {
+        const pn = (b.panels || [])[i], im = pn && pn.img && images.get(pn.img);
+        ctx.save(); ctx.beginPath(); ctx.rect(r.x, r.y, r.w, r.h); ctx.clip();
+        if (im) {
+          const z = (pn.zoom || 100) / 100, sc = Math.max(r.w / im.w, r.h / im.h) * z, dw = im.w * sc, dh = im.h * sc;
+          ctx.drawImage(im.el, r.x + (r.w - dw) * (pn.fx == null ? 50 : pn.fx) / 100, r.y + (r.h - dh) * (pn.fy == null ? 50 : pn.fy) / 100, dw, dh);
+        } else if (preview) {
+          ctx.fillStyle = dark ? "#2a2d33" : "#eceef1"; ctx.fillRect(r.x, r.y, r.w, r.h);
+          ctx.fillStyle = "#8a919c"; ctx.font = fontCss("gothic", 24 * k); ctx.textAlign = "center"; ctx.textBaseline = "middle";
+          ctx.fillText("칸 " + (i + 1), r.x + r.w / 2, r.y + r.h / 2);
+        }
+        ctx.restore();
+        ctx.lineWidth = Math.max(2, 3 * k); ctx.strokeStyle = line; ctx.strokeRect(r.x, r.y, r.w, r.h);
+        if (preview && selInfo && selInfo.panel === i && !selInfo.bubble) {
+          ctx.save(); ctx.setLineDash([8 / selInfo.hs, 6 / selInfo.hs]); ctx.lineWidth = 3 / selInfo.hs; ctx.strokeStyle = "#2f7bf5";
+          ctx.strokeRect(r.x + 5 / selInfo.hs, r.y + 5 / selInfo.hs, r.w - 10 / selInfo.hs, r.h - 10 / selInfo.hs); ctx.restore();
+        }
+      });
+      b.bubbles.forEach((u) => drawBubble(ctx, u, W, S.h));
+      if (selInfo && selInfo.bubble) { const u = findBubble(b, selInfo.bubble); if (u) drawSelection(ctx, u, W, S.h, selInfo.hs); }
+      return;
+    }
     if (b.type === "narration") {
       const L = S.L;
       ctx.font = fontCss(P.settings.narrFont, L.px); ctx.textBaseline = "middle";
@@ -736,9 +802,15 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     strip.innerHTML = "";
     const W = P.settings.width;
     $("stage").querySelectorAll(".empty").forEach((n) => n.remove());
+    modeUI();
     if (!P.blocks.length) {
       strip.hidden = true;
-      const empty = h("div", { class: "empty" },
+      const empty = isComic() ? h("div", { class: "empty" },
+        h("h2", { text: "첫 페이지를 만들어 볼까요" }),
+        h("p", { text: "페이지를 만들고 칸마다 사진을 넣으면 일반 만화처럼 꾸며져요. 대본이 있으면 만들기가 더 편해요." }),
+        h("div", { class: "row", style: "justify-content:center" },
+          h("button", { class: "btn primary", type: "button", onclick: () => $("addPage").click() }, "+ 새 페이지"),
+          h("button", { class: "btn", type: "button", onclick: () => openQuick() }, "만들기"))) : h("div", { class: "empty" },
         h("h2", { text: "사진부터 올려 볼까요" }),
         h("p", { text: "글자 없는 컷 사진을 올리면 여기에 세로로 이어져요. 대본이 있으면 빠른 만들기가 더 편해요." }),
         h("div", { class: "row", style: "justify-content:center" },
@@ -749,11 +821,13 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
       return;
     }
     strip.hidden = false;
-    strip.style.background = P.settings.bg;
-    const sc = cssScale(), gapCss = P.settings.gap * W / BASE * sc;
+    strip.style.background = isComic() ? "transparent" : P.settings.bg;
+    strip.classList.toggle("comic", isComic());
+    const sc = cssScale(), gapCss = isComic() ? 18 : P.settings.gap * W / BASE * sc;
+    let pageNo = 0;
     P.blocks.forEach((b, i) => {
       const wrap = h("div", { class: "blk", "data-id": b.id });
-      const cv = h("canvas", { "aria-label": b.type === "image" ? "컷 " + (i + 1) : b.type === "narration" ? "나레이션" : "빈 여백" });
+      const cv = h("canvas", { "aria-label": b.type === "page" ? "페이지 " + (++pageNo) : b.type === "image" ? "컷 " + (i + 1) : b.type === "narration" ? "나레이션" : "빈 여백" });
       wrap.appendChild(cv);
       strip.appendChild(wrap);
       canvasMap.set(b.id, cv);
@@ -777,7 +851,7 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     cv.style.height = (S.h * cssW / W) + "px";
     const ctx = cv.getContext("2d");
     ctx.setTransform(s, 0, 0, s, 0, 0);
-    drawBlock(ctx, b, W, S, sel.block === id ? { bubble: sel.bubble, hs: cssW / W } : null);
+    drawBlock(ctx, b, W, S, sel.block === id ? { bubble: sel.bubble, panel: sel.panel, hs: cssW / W } : null, true);
     cv.parentElement.classList.toggle("sel", sel.block === id && !sel.bubble);
   }
   const rafSet = new Set(); let rafOn = false;
@@ -787,7 +861,7 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   function select(next, opts) {
     opts = opts || {};
     const prev = sel.block;
-    sel = { block: next.block || null, bubble: next.bubble || null };
+    sel = { block: next.block || null, bubble: next.bubble || null, panel: next.panel == null ? null : next.panel };
     if (prev && prev !== sel.block) renderBlock(prev);
     if (sel.block) renderBlock(sel.block);
     buildInspector();
@@ -836,12 +910,12 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
       const b = findBlock(id); if (!b || e.touches.length !== 1) return;
       const t = e.touches[0];
       const dblSoon = lastTap && lastTap.id === id && performance.now() - lastTap.t < 380 && Math.hypot(t.clientX - lastTap.x, t.clientY - lastTap.y) < 30;
-      if (dblSoon || (b.type === "image" && hitTest(b, localPt(cv, b, t.clientX, t.clientY)))) e.preventDefault();
+      if (dblSoon || (hasBubbles(b) && hitTest(b, localPt(cv, b, t.clientX, t.clientY)))) e.preventDefault();
     }, { passive: false });
     cv.addEventListener("pointerdown", (e) => {
       if (e.button && e.button !== 0) return;
       const b = findBlock(id); if (!b) return;
-      if (b.type === "image") {
+      if (hasBubbles(b)) {
         const pt = localPt(cv, b, e.clientX, e.clientY), hit = hitTest(b, pt);
         if (hit) {
           e.preventDefault();
@@ -851,7 +925,7 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
           lastTap = { id, t: now, x: e.clientX, y: e.clientY, bubble: hit.u.id };
           const tx = hit.u.tail ? hit.u.tail.x / 100 * pt.W : 0, ty = hit.u.tail ? hit.u.tail.y / 100 * pt.H : 0;
           drag = { id, cv, u: hit.u, kind: hit.kind, pid: e.pointerId, sx: e.clientX, sy: e.clientY, ox: G.cx - pt.x, oy: G.cy - pt.y, tox: tx - pt.x, toy: ty - pt.y, cx0: G.cx, cy0: G.cy, size0: hit.u.size, d0: Math.max(10, Math.hypot(pt.x - G.cx, pt.y - G.cy)), moved: false, dbl };
-          if (sel.bubble !== hit.u.id) select({ block: id, bubble: hit.u.id });
+          if (sel.bubble !== hit.u.id) select({ block: id, bubble: hit.u.id, panel: hit.u.panel });
           return;
         }
       }
@@ -889,9 +963,10 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     const now = performance.now();
     const dbl = !!(lastTap && lastTap.id === id && !lastTap.bubble && now - lastTap.t < 380 && Math.hypot(e.clientX - lastTap.x, e.clientY - lastTap.y) < 30);
     lastTap = dbl ? null : { id, t: now, x: e.clientX, y: e.clientY, bubble: null };
-    if (b.type === "image") {
-      if (dbl) { const pt = localPt(cv, b, e.clientX, e.clientY); addBubbleAt(b, pt.x / pt.W * 100, pt.y / pt.H * 100); return; }
-      select({ block: id });
+    if (hasBubbles(b)) {
+      const pt = localPt(cv, b, e.clientX, e.clientY);
+      if (dbl) { addBubbleAt(b, pt.x / pt.W * 100, pt.y / pt.H * 100); return; }
+      select({ block: id, panel: b.type === "page" ? panelAt(b, pt.x, pt.y) : null });
     } else select({ block: id }, dbl ? { open: true, focus: true } : {});
   }
   function normalizeBubble(b, u) { const W = P.settings.width, S = blockSize(b, W), G = bubbleGeo(u, W, S.h); u.x = round1(G.cx / W * 100); u.y = round1(G.cy / S.h * 100); }
@@ -915,12 +990,19 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   function makeNarr(text) { return { id: nid("n"), type: "narration", text, size: 28, pad: 110, align: "center" }; }
   function addBubbleAt(b, x, y) {
     const u = makeBubble(P.settings.bubbleShape || "oval", "대사", x, y);
+    if (b.type === "page") u.panel = panelAt(b, x / 100 * P.settings.width, y / 100 * blockSize(b, P.settings.width).h);
     b.bubbles.push(u); normalizeBubble(b, u);
     renderBlock(b.id); commit();
-    select({ block: b.id, bubble: u.id }, { open: true, focus: true, selectAll: true, reveal: true });
+    select({ block: b.id, bubble: u.id, panel: u.panel }, { open: true, focus: true, selectAll: true, reveal: true });
   }
   function addBubbleSmart(b) {
     const W = P.settings.width, S = blockSize(b, W);
+    if (b.type === "page") {
+      const i = sel.panel != null ? sel.panel : 0, r = S.rects[i] || S.rects[0], mine = b.bubbles.filter((u) => u.panel === i);
+      let yy = r.y + r.h * 0.18, xx = r.x + r.w * 0.32;
+      if (mine.length) { const last = mine[mine.length - 1], G = bubbleGeo(last, W, S.h); yy = Math.min(r.y + r.h * 0.85, G.cy + G.ey + r.h * 0.14); xx = G.cx < r.x + r.w / 2 ? r.x + r.w * 0.68 : r.x + r.w * 0.32; }
+      addBubbleAt(b, xx / W * 100, yy / S.h * 100); return;
+    }
     let y = 14, x = 30;
     if (b.bubbles.length) {
       const last = b.bubbles[b.bubbles.length - 1], G = bubbleGeo(last, W, S.h);
@@ -947,12 +1029,34 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   }
 
   // ---------- auto layout (rules) ----------
-  function autoLayout(b) {
-    const W = P.settings.width, S = blockSize(b, W), H = S.h, list = b.bubbles;
+  function autoLayout(b, onlyPanel) {
+    if (!hasBubbles(b) || !b.bubbles.length) return;
+    if (b.type === "page") {
+      const S = blockSize(b, P.settings.width), groups = {};
+      b.bubbles.forEach((u) => { if (u.panel == null || u.panel >= S.rects.length) u.panel = Math.max(0, Math.min(S.rects.length - 1, u.panel || 0)); (groups[u.panel] = groups[u.panel] || []).push(u); });
+      Object.keys(groups).forEach((k) => {
+        if (onlyPanel != null && Number(k) !== onlyPanel) return;
+        const r = S.rects[k], R = { ix: r.x, iy: r.y, iw: r.w, ih: r.h }, list = groups[k];
+        layoutList(b, list, R);
+        for (let pass = 0; pass < 6; pass++) {
+          resolveRegion(b, list, R);
+          if (groupFits(b, list, R)) break;
+          list.forEach((u) => { u.size = Math.max(13, Math.round(u.size * 0.88)); });
+          layoutList(b, list, R);
+        }
+        list.forEach((u) => { autoTail(b, u); delete u._side; });
+      });
+      return;
+    }
+    layoutList(b, b.bubbles, blockSize(b, P.settings.width));
+    fitPass(b, b.bubbles);
+  }
+  function layoutList(b, list, R) {
+    const W = P.settings.width, H = blockSize(b, W).h;
     if (!list.length) return;
     const sides = {}; let named = 0, prev = "R", altText = 0;
     const order = ["L", "R", "C"];
-    const yTop = (S.iy + S.ih * 0.13) / H, step = Math.min(0.26, 0.7 / list.length) * S.ih / H;
+    const yTop = (R.iy + R.ih * 0.13) / H, step = Math.min(0.26, 0.7 / list.length) * R.ih / H;
     list.forEach((u, i) => {
       let side;
       if (u.shape === "sfx" || u.shape === "plain") side = (altText++ % 2) ? "L" : "R";
@@ -962,11 +1066,39 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
       if (u.shape !== "sfx" && u.shape !== "plain") prev = side;
       u._side = side;
       const xs = { L: 0.27, R: 0.73, C: 0.5 };
-      u.x = (S.ix + S.iw * xs[side]) / W * 100;
+      u.x = (R.ix + R.iw * xs[side]) / W * 100;
       u.y = (yTop + step * i) * 100;
-      if (u.shape === "box") { u.x = (S.ix + S.iw * 0.3) / W * 100; if (i === 0) u.y = (S.iy + S.ih * 0.04) / H * 100; }
+      if (u.shape === "box") { u.x = (R.ix + R.iw * 0.3) / W * 100; if (i === 0) u.y = (R.iy + R.ih * 0.04) / H * 100; }
       if (u.shape === "sfx") u.rot = side === "L" ? -9 : 8;
     });
+  }
+  function groupFits(b, list, R) {
+    const W = P.settings.width, H = blockSize(b, W).h, m = 6 * W / BASE, gs = list.map((u) => bubbleGeo(u, W, H));
+    for (const g of gs) if (g.ex * 2 > R.iw + m || g.ey * 2 > R.ih + m) return false;
+    for (let i = 0; i < gs.length; i++) for (let j = 0; j < i; j++) if (overlap(gs[i], gs[j], m)) return false;
+    return true;
+  }
+  function resolveRegion(b, list, R) {
+    const W = P.settings.width, H = blockSize(b, W).h, m = 8 * W / BASE;
+    for (let iter = 0; iter < 10; iter++) {
+      const gs = list.map((u) => bubbleGeo(u, W, H)); let moved = false;
+      gs.forEach((g) => {
+        const x0 = R.ix + g.ex + m / 2, x1 = R.ix + R.iw - g.ex - m / 2, y0 = R.iy + g.ey + m / 2, y1 = R.iy + R.ih - g.ey - m / 2;
+        const nx = x1 < x0 ? R.ix + R.iw / 2 : clamp(g.cx, x0, x1), ny = y1 < y0 ? R.iy + R.ih / 2 : clamp(g.cy, y0, y1);
+        if (Math.abs(nx - g.cx) > 0.5 || Math.abs(ny - g.cy) > 0.5) { g.cx = nx; g.cy = ny; moved = true; }
+      });
+      for (let i = 1; i < gs.length; i++) for (let j = 0; j < i; j++) {
+        if (!overlap(gs[i], gs[j], m)) continue;
+        const down = gs[j].cy + gs[j].ey + gs[i].ey + m;
+        if (down + gs[i].ey <= R.iy + R.ih) gs[i].cy = down;
+        else gs[i].cx = gs[j].cx < R.ix + R.iw / 2 ? R.ix + R.iw - gs[i].ex - m : R.ix + gs[i].ex + m;
+        moved = true;
+      }
+      gs.forEach((g, i) => { list[i].x = g.cx / W * 100; list[i].y = g.cy / H * 100; });
+      if (!moved) break;
+    }
+  }
+  function fitPass(b, list) {
     for (let pass = 0; pass < 4; pass++) {
       resolveOverlaps(b);
       if (!hasOverlap(b)) break;
@@ -982,7 +1114,9 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     u.tail = u.tail || { on: true };
     u.tail.on = true;
     u.tail.x = round1(clamp((G.cx + dx * W) / W * 100, 3, 97));
-    u.tail.y = round1(clamp((G.cy + G.ey + Math.max(S.ih * 0.08, 44 * W / BASE)) / S.h * 100, 3, 97));
+    const RG = regionOf(b, u);
+    u.tail.y = round1(clamp((G.cy + G.ey + Math.max(RG.ih * 0.08, 44 * W / BASE)) / S.h * 100, 3, 97));
+    if (b.type === "page") { u.tail.y = round1(Math.min(u.tail.y, (RG.iy + RG.ih - 6 * W / BASE) / S.h * 100)); u.tail.x = round1(clamp(u.tail.x, (RG.ix + 6) / W * 100, (RG.ix + RG.iw - 6) / W * 100)); }
   }
   function tailInfo(b, u) {
     const W = P.settings.width, S = blockSize(b, W), G = bubbleGeo(u, W, S.h), k = W / BASE;
@@ -1060,7 +1194,23 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     const shape = it.kind === "speech" ? (P.settings.bubbleShape || "oval") : it.kind;
     return makeBubble(shape, it.text, 50, 20, it.speaker);
   }
+  function buildComic(sections, keys) {
+    const per = Math.max(1, Math.min(6, Number(P.settings.perPage) || 4)), items = [], n = Math.max(sections.length, keys.length);
+    for (let i = 0; i < n; i++) {
+      const sec = sections[i] || { before: [], items: [], after: [] };
+      const box = (t) => ({ kind: "box", text: t, speaker: "" });
+      items.push({ img: keys[i] || null, lines: [].concat(sec.before.map(box), sec.items, sec.after.map(box)) });
+    }
+    const pages = []; let bubbles = 0;
+    for (let i = 0; i < items.length; i += per) {
+      const chunk = items.slice(i, i + per), pg = newPage(LAYOUT_FOR_N[chunk.length], chunk.map((c) => c.img));
+      chunk.forEach((c, pi) => c.lines.forEach((l) => { const u = itemToBubble(l); u.panel = pi; pg.bubbles.push(u); bubbles++; }));
+      pages.push(pg);
+    }
+    return { blocks: pages, bubbles };
+  }
   function buildBlocks(sections, keys) {
+    if (isComic()) return buildComic(sections, keys);
     const out = [], n = Math.max(sections.length, keys.length);
     let bubbles = 0;
     for (let i = 0; i < n; i++) {
@@ -1157,12 +1307,12 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     }
   }
   const SAMPLE_SCRIPT = "> 제국 북부 최전선, 회색 성벽. / 마수 대침공의 새벽.\n(효과) 콰아아—\n병사: 하, 하늘에서 빛이……!!\n---\n> 빛이 걷힌 자리. / 처음 보는 아가씨가 대검을 쥐고 있었다.\n카일: ……단장님?\n(생각) 저 검 쥐는 법은 분명히……\n---\n[칸] 손등에는 금빛 성녀의 문장.\n아델라: 첫 번째. / 성녀는 대검을 들지 않습니다.";
-  async function loadSample() {
+  async function loadSample(mode) {
     await ensureSamples();
-    P = { v: 2, settings: Object.assign({}, DEF, { bg: P.settings.bg, width: P.settings.width }), blocks: [] };
+    P = { v: 2, mode: mode || "webtoon", settings: Object.assign({}, DEF, mode === "comic" ? { bg: "#ffffff" } : { bg: P.settings.bg, width: P.settings.width }), blocks: [] };
     const r = buildBlocks(parseScript(SAMPLE_SCRIPT), ["sample1", "sample2", "sample3"]);
     P.blocks = r.blocks;
-    P.blocks.filter((b) => b.type === "image").forEach(autoLayout);
+    P.blocks.filter(hasBubbles).forEach((b) => autoLayout(b));
   }
 
   // ---------- undo / autosave ----------
@@ -1219,8 +1369,15 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   const projKey = (id) => "proj:" + id;
   const libEntry = (id) => lib.find((x) => x.id === id);
   function makeThumb() {
-    const b = P.blocks.find((x) => x.type === "image" && images.has(x.img));
+    const b = P.blocks.find((x) => blockImgs(x).some((k) => images.has(k)));
     if (!b) return "";
+    if (b.type === "page") {
+      if (thumbFor === "page:" + b.id + ":" + JSON.stringify(b.panels).length && libEntry(curId) && libEntry(curId).thumb) return libEntry(curId).thumb;
+      const W = P.settings.width, S = blockSize(b, W), c = document.createElement("canvas"); c.width = 112; c.height = Math.round(112 * S.h / W);
+      const g = c.getContext("2d"); g.scale(112 / W, 112 / W); drawBlock(g, b, W, S, null, false);
+      thumbFor = "page:" + b.id + ":" + JSON.stringify(b.panels).length;
+      try { return c.toDataURL("image/jpeg", 0.72); } catch (e) { return ""; }
+    }
     if (thumbFor === b.img && libEntry(curId) && libEntry(curId).thumb) return libEntry(curId).thumb;
     const im = images.get(b.img), c = document.createElement("canvas"); c.width = 112; c.height = 144;
     const g = c.getContext("2d"), s = Math.max(112 / im.w, 144 / im.h);
@@ -1230,15 +1387,15 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   }
   async function saveNow() {
     if (!store.db || !curId) return;
-    for (const b of P.blocks) {
-      if (b.type !== "image" || b.img.startsWith("sample") || savedImgs.has(b.img)) continue;
-      const im = images.get(b.img); if (!im || !im.blob) continue;
-      if (await store.run("img", "readwrite", (st) => st.put(im.blob, b.img))) savedImgs.add(b.img);
+    for (const b of P.blocks) for (const key of blockImgs(b)) {
+      if (key.startsWith("sample") || savedImgs.has(key)) continue;
+      const im = images.get(key); if (!im || !im.blob) continue;
+      if (await store.run("img", "readwrite", (st) => st.put(im.blob, key))) savedImgs.add(key);
     }
     await store.run("kv", "readwrite", (st) => st.put(JSON.stringify(P), projKey(curId)));
     let e = libEntry(curId);
     if (!e) { e = { id: curId }; lib.unshift(e); }
-    Object.assign(e, { title: P.title || "제목 없는 작품", updated: Date.now(), cuts: P.blocks.filter((x) => x.type === "image").length, thumb: makeThumb() });
+    Object.assign(e, { title: P.title || "제목 없는 작품", updated: Date.now(), cuts: P.blocks.filter((x) => x.type === (isComic() ? "page" : "image")).length, mode: P.mode || "webtoon", thumb: makeThumb() });
     await store.run("kv", "readwrite", (st) => st.put(JSON.stringify(lib), "library"));
     await store.run("kv", "readwrite", (st) => st.put(curId, "current"));
     if (!$("mLib").hidden) renderLib();
@@ -1248,13 +1405,13 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     if (!raw) return null;
     let p; try { p = JSON.parse(raw); } catch (e) { return null; }
     if (!p || !Array.isArray(p.blocks)) return null;
-    for (const b of p.blocks) {
-      if (b.type !== "image" || images.has(b.img)) continue;
-      if (b.img.startsWith("sample")) { await ensureSamples(); continue; }
-      const blob = await store.run("img", "readonly", (st) => st.get(b.img));
-      if (blob) { try { await addBlob(blob, b.img); savedImgs.add(b.img); } catch (e) { /* missing image */ } }
+    for (const b of p.blocks) for (const key of blockImgs(b)) {
+      if (images.has(key)) continue;
+      if (key.startsWith("sample")) { await ensureSamples(); continue; }
+      const blob = await store.run("img", "readonly", (st) => st.get(key));
+      if (blob) { try { await addBlob(blob, key); savedImgs.add(key); } catch (e) { /* missing image */ } }
     }
-    return { v: 2, settings: Object.assign({}, DEF, p.settings || {}), blocks: p.blocks, title: p.title || (libEntry(id) || {}).title || "제목 없는 작품" };
+    return { v: 2, mode: p.mode || "webtoon", settings: Object.assign({}, DEF, p.settings || {}), blocks: p.blocks, title: p.title || (libEntry(id) || {}).title || "제목 없는 작품" };
   }
   async function restoreSaved() {
     if (!store.db) return false;
@@ -1290,16 +1447,18 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     closeModal("mLib");
     await afterSwitch("‘" + P.title + "’을 열었어요");
   }
-  async function newProject(withSample) {
+  async function newProject(withSample, mode) {
     clearTimeout(saveTimer); await saveNow();
-    const title = "새 작품 " + (lib.length + 1);
-    if (withSample) await loadSample();
-    else P = { v: 2, settings: Object.assign({}, DEF, { bg: P.settings.bg, width: P.settings.width }), blocks: [] };
-    P.title = withSample ? "예시 작품" : title;
+    const m = mode === "comic" ? "comic" : "webtoon";
+    const same = lib.filter((x) => (x.mode || "webtoon") === m).length + 1;
+    if (withSample) await loadSample(m);
+    else P = { v: 2, mode: m, settings: Object.assign({}, DEF, m === "comic" ? { bg: "#ffffff" } : { bg: P.settings.bg, width: P.settings.width }), blocks: [] };
+    if (!withSample && m === "comic") P.blocks = [newPage(LAYOUT_FOR_N[P.settings.perPage] || "4b", [])];
+    P.title = withSample ? (m === "comic" ? "예시 만화" : "예시 세로툰") : (m === "comic" ? "새 만화 " : "새 세로툰 ") + same;
     curId = nid("p"); thumbFor = "";
-    lib.unshift({ id: curId, title: P.title, updated: Date.now(), cuts: 0, thumb: "" });
+    lib.unshift({ id: curId, title: P.title, updated: Date.now(), cuts: 0, thumb: "", mode: m });
     closeModal("mLib");
-    await afterSwitch("새 작품을 만들었어요. 지난 작품은 보관함에 그대로 있어요.");
+    await afterSwitch((m === "comic" ? "새 만화를" : "새 세로툰을") + " 만들었어요. 지난 작품은 보관함에 그대로 있어요.");
     await saveNow();
   }
   async function duplicateProject(id) {
@@ -1331,7 +1490,7 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   async function cleanImages() {
     if (!store.db) return;
     const used = new Set();
-    const add = (o) => { if (o && Array.isArray(o.blocks)) o.blocks.forEach((b) => b.type === "image" && used.add(b.img)); if (o && Array.isArray(o.cuts)) o.cuts.forEach((c) => c.img && used.add(c.img)); };
+    const add = (o) => { if (o && Array.isArray(o.blocks)) o.blocks.forEach((b) => blockImgs(b).forEach((k) => used.add(k))); if (o && Array.isArray(o.cuts)) o.cuts.forEach((c) => c.img && used.add(c.img)); };
     add(P);
     for (const e of lib) {
       try { add(JSON.parse((await store.run("kv", "readonly", (st) => st.get(projKey(e.id)))) || "{}")); } catch (er) { /* skip */ }
@@ -1349,22 +1508,29 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     const box = $("lList"); box.innerHTML = "";
     if (!store.db) { $("lHint").textContent = "이 화면에서는 저장 공간을 쓸 수 없어서 보관함이 꺼져 있어요. 다 만들면 이미지로 저장해 주세요."; return; }
     $("lHint").textContent = "작품 " + lib.length + "개 · 이 기기의 브라우저에 저장돼요. 브라우저 데이터를 지우면 같이 지워지니, 다 만든 작품은 이미지로도 저장해 두세요.";
-    lib.forEach((e) => {
+    const tabs = $("lTabs"); tabs.innerHTML = "";
+    tabs.appendChild(seg([["webtoon", "세로툰 " + lib.filter((x) => (x.mode || "webtoon") === "webtoon").length], ["comic", "만화 " + lib.filter((x) => x.mode === "comic").length]], libTab, (v) => { libTab = v; renderLib(); }));
+    $("lNew").textContent = libTab === "comic" ? "+ 새 만화" : "+ 새 세로툰";
+    $("lSample").textContent = libTab === "comic" ? "예시로 새 만화" : "예시로 새 세로툰";
+    const shown = lib.filter((x) => (x.mode || "webtoon") === libTab);
+    if (!shown.length) box.appendChild(h("p", { class: "hint", text: libTab === "comic" ? "아직 만화가 없어요. ‘+ 새 만화’로 일반 만화처럼 페이지를 나눠 만들어 보세요." : "아직 세로툰이 없어요. ‘+ 새 세로툰’으로 시작해 보세요." }));
+    shown.forEach((e) => {
       const cur = e.id === curId;
       const del = h("button", { type: "button", class: "btn small danger" }, delArm === e.id ? "정말 지우기" : "삭제");
       del.addEventListener("click", () => { if (delArm !== e.id) { delArm = e.id; renderLib(); setTimeout(() => { if (delArm === e.id) { delArm = null; renderLib(); } }, 4000); return; } delArm = null; deleteProject(e.id); });
       box.appendChild(h("div", { class: "lib-item" + (cur ? " cur" : "") },
         h("div", { class: "lib-thumb" }, e.thumb ? h("img", { src: e.thumb, alt: "" }) : h("span", { text: "빈 작품" })),
-        h("div", { class: "lib-info" }, h("b", { text: e.title || "제목 없는 작품" }), h("span", { text: (cur ? "지금 작품 · " : "") + "컷 " + (e.cuts || 0) + "개 · " + fmtDate(e.updated) })),
+        h("div", { class: "lib-info" }, h("b", { text: e.title || "제목 없는 작품" }), h("span", {}, h("span", { class: "mode-tag", text: e.mode === "comic" ? "만화" : "세로툰" }), (cur ? "지금 작품 · " : "") + (e.mode === "comic" ? "페이지 " + (e.cuts || 0) + "장" : "컷 " + (e.cuts || 0) + "개") + " · " + fmtDate(e.updated))),
         h("div", { class: "lib-act" },
           cur ? h("span", { class: "cur-tag", text: "편집 중" }) : h("button", { type: "button", class: "btn small primary", onclick: () => openProject(e.id) }, "열기"),
           h("button", { type: "button", class: "btn small", onclick: () => duplicateProject(e.id) }, "복제"), del)));
     });
   }
-  function openLib() { delArm = null; renderLib(); openModal("mLib"); }
+  let libTab = "webtoon";
+  function openLib() { delArm = null; libTab = isComic() ? "comic" : "webtoon"; renderLib(); openModal("mLib"); }
   $("bLib").addEventListener("click", openLib);
-  $("lNew").addEventListener("click", () => newProject(false));
-  $("lSample").addEventListener("click", () => newProject(true));
+  $("lNew").addEventListener("click", () => newProject(false, libTab));
+  $("lSample").addEventListener("click", () => newProject(true, libTab));
   $("lName").addEventListener("input", (e) => { P.title = e.target.value.trim() || "제목 없는 작품"; updateTitle(); const en = libEntry(curId); if (en) en.title = P.title; scheduleSave(); });
 
   // ---------- fonts ----------
@@ -1372,7 +1538,7 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     if (!document.fonts || !document.fonts.load) return;
     const want = new Map(), add = (f, t) => want.set(f, (want.get(f) || "") + t);
     add(P.settings.narrFont, "가나다");
-    P.blocks.forEach((b) => { if (b.type === "narration") add(P.settings.narrFont, b.text); if (b.type === "image") b.bubbles.forEach((u) => add(u.font, u.text)); });
+    P.blocks.forEach((b) => { if (b.type === "narration") add(P.settings.narrFont, b.text); if (hasBubbles(b)) b.bubbles.forEach((u) => add(u.font, u.text)); });
     const jobs = [...want].map(([f, t]) => document.fonts.load(fontCss(f, 40), (t || "가").slice(0, 600)).catch(() => null));
     await Promise.race([Promise.all(jobs), new Promise((r) => setTimeout(r, 5000))]);
   }
@@ -1440,6 +1606,7 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     $("inspDone").hidden = isMobile() ? false : !sel.block;
     $("inspDone").textContent = isMobile() ? "접기" : "완료";
     if (u) inspBubble(b, u);
+    else if (b && b.type === "page") inspPage(b);
     else if (b && b.type === "image") inspImage(b);
     else if (b && b.type === "narration") inspNarr(b);
     else if (b) inspSpace(b);
@@ -1540,12 +1707,59 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
       body.appendChild(sec("이 컷의 말풍선 " + b.bubbles.length + "개", chips));
     }
     body.appendChild(sec("컷", h("div", { class: "row" },
-      h("button", { type: "button", class: "btn small", onclick: () => { replaceTarget = b.id; $("fileReplace").click(); } }, "사진 바꾸기"),
+      h("button", { type: "button", class: "btn small", onclick: () => { replaceTarget = b.id; replacePanel = null; $("fileReplace").click(); } }, "사진 바꾸기"),
       h("button", { type: "button", class: "btn small", onclick: () => moveBlock(b.id, -1) }, "↑ 위로"),
       h("button", { type: "button", class: "btn small", onclick: () => moveBlock(b.id, 1) }, "↓ 아래로")),
       h("div", { class: "row" },
         h("button", { type: "button", class: "btn small", onclick: () => { const n = makeNarr("나레이션"); insertAfter(b.id, n); select({ block: n.id }, { focus: true, selectAll: true, reveal: true }); } }, "아래에 나레이션"),
         h("button", { type: "button", class: "btn small danger", onclick: () => deleteBlock(b.id) }, "컷 지우기"))));
+  }
+  let panelAiBox = null;
+  function layoutSvg(l) {
+    const rows = LAYOUTS[l], hw = LAYOUT_H[l] || rows.map(() => 1), hsum = hw.reduce((a, c) => a + c, 0), W = 30, H = 40, m = 2, g = 2;
+    const availH = H - 2 * m - g * (rows.length - 1); let y = m, out = "";
+    rows.forEach((cols, ri) => {
+      const rh = availH * hw[ri] / hsum, cs = cols.reduce((a, c) => a + c, 0), availW = W - 2 * m - g * (cols.length - 1); let x = m;
+      cols.forEach((cw) => { const w = availW * cw / cs; out += '<rect x="' + x.toFixed(1) + '" y="' + y.toFixed(1) + '" width="' + w.toFixed(1) + '" height="' + rh.toFixed(1) + '" rx="1"/>'; x += w + g; });
+      y += rh + g;
+    });
+    const sp = document.createElement("span");
+    sp.innerHTML = '<svg viewBox="0 0 30 40" width="30" height="40" fill="currentColor" fill-opacity=".16" stroke="currentColor" stroke-width="1.3" aria-hidden="true">' + out + "</svg>";
+    return sp.firstChild;
+  }
+  function inspPage(b) {
+    const W = P.settings.width, S = blockSize(b, W), pages = P.blocks.filter((x) => x.type === "page"), cnt = S.rects.length;
+    setTitle("페이지 " + (pages.indexOf(b) + 1), "칸을 누르면 고를 수 있어요 · 빈 곳을 두 번 누르면 말풍선");
+    const grid = h("div", { class: "layouts" });
+    Object.keys(LAYOUTS).forEach((l) => grid.appendChild(h("button", { type: "button", class: "layout-b", "aria-pressed": String(l === b.layout), "aria-label": panelCount(l) + "칸 배치",
+      onclick: () => { b.layout = l; const c = panelCount(l); b.bubbles.forEach((u) => { if (u.panel >= c) u.panel = c - 1; }); if (sel.panel != null && sel.panel >= c) sel.panel = c - 1; renderBlock(b.id); commit(); buildInspector(); } }, layoutSvg(l))));
+    body.appendChild(sec("칸 나누기 · 지금 " + cnt + "칸", grid));
+    const pi = sel.panel;
+    if (pi != null && pi < cnt) {
+      b.panels = b.panels || [];
+      const pn = b.panels[pi], has = !!(pn && pn.img && images.has(pn.img));
+      const parts = [h("div", { class: "row" },
+        h("button", { type: "button", class: "btn small primary", onclick: () => { replaceTarget = b.id; replacePanel = pi; $("fileReplace").click(); } }, has ? "사진 바꾸기" : "사진 넣기"),
+        has ? h("button", { type: "button", class: "btn small", onclick: () => { b.panels[pi] = null; renderBlock(b.id); commit(); buildInspector(); } }, "사진 빼기") : null,
+        h("button", { type: "button", class: "btn small", onclick: () => addBubbleSmart(b) }, "+ 말풍선"),
+        h("button", { type: "button", class: "btn small", disabled: !b.bubbles.some((u) => u.panel === pi), onclick: () => { autoLayout(b, pi); renderBlock(b.id); commit(); toast("이 칸의 말풍선을 다시 놓았어요"); } }, "자동 배치"))];
+      if (has) parts.push(h("div", { class: "grid2" },
+        slider("확대", 100, 300, 5, pn.zoom || 100, "%", (v) => { pn.zoom = v; renderSoon(b.id); }),
+        slider("가로 위치", 0, 100, 1, pn.fx == null ? 50 : pn.fx, "", (v) => { pn.fx = v; renderSoon(b.id); }),
+        slider("세로 위치", 0, 100, 1, pn.fy == null ? 50 : pn.fy, "", (v) => { pn.fy = v; renderSoon(b.id); })));
+      if (panelAiBox && has) { const box = panelAiBox(b, pi); if (box) parts.push(box); }
+      body.appendChild(sec("칸 " + (pi + 1), ...parts));
+    } else body.appendChild(h("p", { class: "hint", text: "그림에서 칸을 누르면 그 칸에 사진을 넣고 말풍선을 달 수 있어요." }));
+    if (b.bubbles.length) {
+      const list = h("div", { class: "chips" });
+      b.bubbles.forEach((u) => list.appendChild(h("button", { type: "button", class: "chip-b", onclick: () => select({ block: b.id, bubble: u.id, panel: u.panel }, { reveal: true }) }, "칸" + ((u.panel || 0) + 1) + " · " + (u.text || "").replace(/\n/g, " ").slice(0, 14))));
+      body.appendChild(sec("이 페이지의 말풍선 " + b.bubbles.length + "개", list));
+    }
+    body.appendChild(sec("페이지", h("div", { class: "row" },
+      h("button", { type: "button", class: "btn small", onclick: () => moveBlock(b.id, -1) }, "↑ 앞으로"),
+      h("button", { type: "button", class: "btn small", onclick: () => moveBlock(b.id, 1) }, "↓ 뒤로"),
+      h("button", { type: "button", class: "btn small", onclick: () => { const np = newPage(LAYOUT_FOR_N[P.settings.perPage] || "4b", []); insertAfter(b.id, np); select({ block: np.id, panel: 0 }, { reveal: true }); } }, "뒤에 새 페이지"),
+      h("button", { type: "button", class: "btn small danger", onclick: () => deleteBlock(b.id) }, "페이지 지우기"))));
   }
   function inspNarr(b) {
     setTitle("나레이션", "컷 사이 여백에 들어가는 글이에요");
@@ -1572,18 +1786,25 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   function inspSettings() {
     setTitle("전체 설정", isMobile() ? "컷을 누르면 편집, 빈 곳 두 번 누르면 말풍선" : "컷을 누르면 편집할 수 있어요");
     const st = P.settings;
-    body.appendChild(sec("바탕색", seg(BGS, st.bg, (v) => { st.bg = v; renderStrip(); commit(); })));
-    body.appendChild(slider("컷 사이 여백", 0, 300, 10, st.gap, "", (v) => { st.gap = v; clearTimeout(gapT); gapT = setTimeout(renderStrip, 60); }));
-    body.appendChild(sec("컷 모양", seg([["full", "꽉 채우기"], ["border", "테두리 컷"]], st.frame, (v) => { st.frame = v; renderStrip(); commit(); })));
+    if (isComic()) {
+      body.appendChild(sec("종이 색", seg(BGS, st.bg, (v) => { st.bg = v; renderStrip(); commit(); })));
+      body.appendChild(sec("페이지 비율", seg([["a4", "A4 세로"], ["ig", "4:5"], ["sq", "정사각"]], st.pageRatio, (v) => { st.pageRatio = v; renderStrip(); commit(); })));
+      body.appendChild(sec("새 페이지 칸 수", seg([[3, "3칸"], [4, "4칸"], [5, "5칸"], [6, "6칸"]], st.perPage, (v) => { st.perPage = Number(v); commit(); })));
+      body.appendChild(sec("읽는 방향", seg([["ltr", "왼쪽 → 오른쪽"], ["rtl", "오른쪽 → 왼쪽"]], st.rtl ? "rtl" : "ltr", (v) => { st.rtl = v === "rtl"; renderStrip(); commit(); })));
+    } else {
+      body.appendChild(sec("바탕색", seg(BGS, st.bg, (v) => { st.bg = v; renderStrip(); commit(); })));
+      body.appendChild(slider("컷 사이 여백", 0, 300, 10, st.gap, "", (v) => { st.gap = v; clearTimeout(gapT); gapT = setTimeout(renderStrip, 60); }));
+      body.appendChild(sec("컷 모양", seg([["full", "꽉 채우기"], ["border", "테두리 컷"]], st.frame, (v) => { st.frame = v; renderStrip(); commit(); })));
+    }
     body.appendChild(sec("기본 말풍선", seg([["oval", "동그란 말풍선"], ["round", "둥근 네모"]], st.bubbleShape, (v) => { st.bubbleShape = v; commit(); })));
     body.appendChild(sec("대사 글꼴", fontGrid(st.bubbleFont, (f) => { st.bubbleFont = f; commit(); }),
-      h("button", { type: "button", class: "btn small", onclick: () => { let n = 0; P.blocks.forEach((b) => b.type === "image" && b.bubbles.forEach((u) => { if (!SHAPES[u.shape].font) { u.font = st.bubbleFont; n++; } })); renderStrip(); commit(); toast("대사 " + n + "개에 적용했어요"); } }, "지금 있는 대사에도 적용")));
-    body.appendChild(sec("나레이션 글꼴", fontGrid(st.narrFont, (f) => { st.narrFont = f; renderStrip(); commit(); })));
+      h("button", { type: "button", class: "btn small", onclick: () => { let n = 0; P.blocks.forEach((b) => hasBubbles(b) && b.bubbles.forEach((u) => { if (!SHAPES[u.shape].font) { u.font = st.bubbleFont; n++; } })); renderStrip(); commit(); toast("대사 " + n + "개에 적용했어요"); } }, "지금 있는 대사에도 적용")));
+    if (!isComic()) body.appendChild(sec("나레이션 글꼴", fontGrid(st.narrFont, (f) => { st.narrFont = f; renderStrip(); commit(); })));
     body.appendChild(sec("폰 AI", h("div", { class: "row" }, h("button", { type: "button", class: "btn small", onclick: openEngine }, "폰 AI 상태 보기")),
       h("p", { class: "hint", text: engine.ready ? "켜져 있어요 · " + curModel().label : engine.cached ? "받아 둠 · 쓸 때 자동으로 켜져요" : "아직 안 받았어요 (약 1GB)" })));
     body.appendChild(sec("작품", h("div", { class: "row" },
       h("button", { type: "button", class: "btn small", onclick: openLib }, "보관함 열기"),
-      h("button", { type: "button", class: "btn small", onclick: () => newProject(false) }, "+ 새 작품")),
+      h("button", { type: "button", class: "btn small", onclick: () => newProject(false, P.mode) }, isComic() ? "+ 새 만화" : "+ 새 세로툰")),
       h("p", { class: "hint", text: store.db ? "‘" + (P.title || "") + "’ · 작업은 자동으로 저장되고, 새 작품을 만들어도 예전 작품은 보관함에 남아요." : "이 화면에서는 자동 저장이 안 돼요. 다 만들면 이미지로 저장해 주세요." })));
   }
   let gapT;
@@ -1594,7 +1815,7 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   function closeSheet() { $("insp").classList.add("collapsed"); document.body.classList.remove("sheet-open"); updateSheetH(); }
   function updateFab() {
     const b = findBlock(sel.block), u = findBubble(b, sel.bubble), tag = $("fabTag");
-    const t = u ? "말풍선" : b ? (b.type === "image" ? "컷" : b.type === "narration" ? "글" : "여백") : "";
+    const t = u ? "말풍선" : b ? (b.type === "page" ? (sel.panel != null ? "칸 " + (sel.panel + 1) : "페이지") : b.type === "image" ? "컷" : b.type === "narration" ? "글" : "여백") : "";
     tag.textContent = t; tag.hidden = !t;
     $("fab").setAttribute("aria-label", t ? t + " 편집 도구 열기" : "설정 열기");
   }
@@ -1774,6 +1995,38 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     if (r.before && !(P.blocks[i - 1] && P.blocks[i - 1].type === "narration")) P.blocks.splice(i, 0, makeNarr(r.before));
     return true;
   }
+  function panelSeq() { const seq = []; P.blocks.forEach((pg) => { if (pg.type !== "page") return; const c = panelCount(pg.layout); for (let i = 0; i < c; i++) seq.push([pg, i]); }); return seq; }
+  async function autoLinesForPanel(b, pi, statusEl) {
+    const pn = (b.panels || [])[pi];
+    if (!pn || !pn.img || !images.has(pn.img)) return false;
+    if (!(await ensureLLM())) return false;
+    const seq = panelSeq(), idx = seq.findIndex(([pg, i]) => pg === b && i === pi);
+    const prev = seq.slice(Math.max(0, idx - 2), idx).map(([pg, i]) => sectionToScript({ items: pg.bubbles.filter((u) => u.panel === i).map(bubbleToLine) })).filter(Boolean).join("\n");
+    const blob = await panelBlob(pn.img, 640);
+    if (!blob) return false;
+    const r = await engRun(() => autoLinesFor(blob, { i: idx + 1, n: seq.length, story: sb.story || "", chars: sb.chars || "", prev }), statusEl);
+    if (!r) return false;
+    b.bubbles = b.bubbles.filter((u) => u.panel !== pi);
+    (r.before ? [{ kind: "box", speaker: "", text: r.before }] : []).concat(r.lines).forEach((l) => { const u = itemToBubble(l); u.panel = pi; b.bubbles.push(u); });
+    autoLayout(b, pi);
+    return true;
+  }
+  function autoTargets() {
+    if (isComic()) { const out = []; panelSeq().forEach(([pg, i]) => { const pn = (pg.panels || [])[i]; if (pn && pn.img && images.has(pn.img) && !pg.bubbles.some((u) => u.panel === i)) out.push({ b: pg, pi: i }); }); return out; }
+    return imageBlocks().filter((b) => !b.bubbles.length && images.has(b.img)).map((b) => ({ b, pi: null }));
+  }
+  const autoTarget = (t, st) => (t.pi == null ? autoLinesForBlock(t.b, st) : autoLinesForPanel(t.b, t.pi, st));
+  panelAiBox = (b, pi) => {
+    const has = b.bubbles.some((u) => u.panel === pi);
+    return h("div", { class: "ai-box" }, h("div", { class: "sec-l", text: "대사 자동완성 · 폰 AI" }),
+      h("div", { class: "row" }, h("button", { type: "button", class: "btn ai", onclick: async (e) => {
+        const btn = e.currentTarget, label = btn.textContent; btn.disabled = true; btn.textContent = "그림 보고 쓰는 중…";
+        const ok = await autoLinesForPanel(b, pi);
+        if (ok) { renderBlock(b.id); commit(); buildInspector(); toast("대사를 넣었어요. 마음에 안 들면 되돌리기를 누르세요."); }
+        else { btn.disabled = false; btn.textContent = label; }
+      } }, has ? "대사 다시 쓰기" : "그림 보고 대사 쓰기")),
+      h("p", { class: "hint", text: has ? "이 칸의 말풍선을 지우고 새로 써요." : "앞 칸 흐름을 이어서 대사 1~3개를 넣어요." }));
+  };
   function aiPolishBox(b, u, ta) {
     const out = h("div", { class: "chips", style: "flex-direction:column;align-items:stretch" });
     const go = async (style) => {
@@ -1977,7 +2230,7 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
       const r = buildBlocks(sections, keys);
       if (sb.mode === "replace") P.blocks = r.blocks; else P.blocks = P.blocks.concat(r.blocks);
       await ensureFonts();
-      r.blocks.filter((b) => b.type === "image").forEach(autoLayout);
+      r.blocks.filter(hasBubbles).forEach((b) => autoLayout(b));
       sel = { block: null, bubble: null };
       renderStrip(); commit(); select({});
       btn.disabled = false; st.textContent = "";
@@ -2051,8 +2304,8 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
 
   // ---------- quick build ----------
   const qb = { src: "new", photos: [], mode: "replace" };
-  function onlySamples() { return P.blocks.every((b) => b.type !== "image" || b.img.startsWith("sample")); }
-  function existingKeys() { return P.blocks.filter((b) => b.type === "image" && images.has(b.img)).map((b) => b.img); }
+  function onlySamples() { return P.blocks.every((b) => blockImgs(b).every((k) => k.startsWith("sample"))); }
+  function existingKeys() { return [].concat(...P.blocks.map(blockImgs)).filter((k) => images.has(k)); }
   function openModal(id) { const m = $(id); m.hidden = false; document.body.style.overflow = "hidden"; const f = m.querySelector("textarea, button"); if (f && !isMobile()) f.focus({ preventScroll: true }); }
   function closeModal(id) { $(id).hidden = true; if (![...document.querySelectorAll(".modal")].some((m) => !m.hidden)) document.body.style.overflow = ""; }
   document.querySelectorAll(".modal").forEach((m) => {
@@ -2085,6 +2338,8 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     th.hidden = !keys.length;
     const mode = $("qMode"); mode.innerHTML = "";
     mode.appendChild(seg(qb.src === "existing" ? [["replace", "대사를 새로 넣기"]] : [["replace", "지우고 새로 만들기"], ["append", "맨 뒤에 이어 붙이기"]], qb.mode, (v) => { qb.mode = v; }));
+    $("qPerWrap").hidden = !isComic();
+    if (isComic()) { const qp = $("qPer"); qp.innerHTML = ""; qp.appendChild(seg([[3, "3칸"], [4, "4칸"], [5, "5칸"], [6, "6칸"]], P.settings.perPage, (v) => { P.settings.perPage = Number(v); })); }
     const shp = $("qShape"); shp.innerHTML = "";
     shp.appendChild(seg([["oval", "동그란 말풍선"], ["round", "둥근 네모"]], P.settings.bubbleShape, (v) => { P.settings.bubbleShape = v; }));
     engineUI();
@@ -2108,13 +2363,13 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     const r = buildBlocks(sections, keys);
     if (qb.mode === "replace") P.blocks = r.blocks; else P.blocks = P.blocks.concat(r.blocks);
     await ensureFonts();
-    r.blocks.filter((b) => b.type === "image").forEach(autoLayout);
+    r.blocks.filter(hasBubbles).forEach((b) => autoLayout(b));
     sel = { block: null, bubble: null };
     renderStrip(); commit(); select({});
     closeModal("mQuick");
     if (qb.src === "new") qb.photos = [];
     const cuts = r.blocks.filter((b) => b.type === "image").length;
-    toast("컷 " + cuts + "개, 말풍선 " + r.bubbles + "개를 이어 붙였어요." + (sections.length > keys.length && keys.length ? " 사진보다 대본 컷이 많아서 남은 줄은 나레이션으로 넣었어요." : ""));
+    toast((isComic() ? "페이지 " + r.blocks.length + "장" : "컷 " + cuts + "개") + ", 말풍선 " + r.bubbles + "개를 만들었어요." + (sections.length > keys.length && keys.length ? " 사진보다 대본 컷이 많아서 남은 줄은 나레이션으로 넣었어요." : ""));
     const first = r.blocks[0]; if (first) { const cv = canvasMap.get(first.id); if (cv) cv.scrollIntoView({ block: "start", behavior: "smooth" }); }
   });
   function cutsToScript(cuts) {
@@ -2161,34 +2416,34 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   // ---------- auto modal ----------
   $("bAuto").addEventListener("click", () => { engineUI(); $("aStatus").textContent = ""; openModal("mAuto"); });
   $("aPlace").addEventListener("click", () => {
-    const list = P.blocks.filter((b) => b.type === "image" && b.bubbles.length);
-    list.forEach(autoLayout); renderStrip(); commit(); syncInspector();
+    const list = P.blocks.filter((b) => hasBubbles(b) && b.bubbles.length);
+    list.forEach((b) => autoLayout(b)); renderStrip(); commit(); syncInspector();
     $("aStatus").textContent = "컷 " + list.length + "개의 말풍선을 다시 놓았어요.";
   });
   $("aTidy").addEventListener("click", () => {
-    const list = P.blocks.filter((b) => b.type === "image" && b.bubbles.length);
-    list.forEach(resolveOverlaps); renderStrip(); commit();
+    const list = P.blocks.filter((b) => hasBubbles(b) && b.bubbles.length);
+    list.forEach((b) => resolveOverlaps(b)); renderStrip(); commit();
     $("aStatus").textContent = "겹친 말풍선을 정리했어요.";
   });
   $("aUnify").addEventListener("click", () => {
-    const sp = []; P.blocks.forEach((b) => b.type === "image" && b.bubbles.forEach((u) => { if (!["sfx", "plain", "box"].includes(u.shape)) sp.push(u); }));
+    const sp = []; P.blocks.forEach((b) => hasBubbles(b) && b.bubbles.forEach((u) => { if (!["sfx", "plain", "box"].includes(u.shape)) sp.push(u); }));
     if (!sp.length) { $("aStatus").textContent = "맞출 대사가 없어요."; return; }
     const sizes = sp.map((u) => u.size).sort((a, c) => a - c), med = sizes[Math.floor(sizes.length / 2)];
     sp.forEach((u) => { u.size = u.shape === "shout" ? Math.round(med * 1.15) : med; u.cols = 9; });
-    P.blocks.forEach((b) => b.type === "image" && b.bubbles.length && resolveOverlaps(b));
+    P.blocks.forEach((b) => hasBubbles(b) && b.bubbles.length && resolveOverlaps(b));
     renderStrip(); commit(); syncInspector();
     $("aStatus").textContent = "대사 " + sp.length + "개를 글자 크기 " + med + "로 맞췄어요.";
   });
   $("aAutoLines").addEventListener("click", async (e) => {
     const st = $("aStatus"), btn = e.currentTarget;
     st.classList.remove("err");
-    const todo = imageBlocks().filter((b) => !b.bubbles.length && images.has(b.img));
+    const todo = autoTargets();
     if (!todo.length) { st.textContent = "말풍선이 없는 컷이 없어요."; return; }
     if (!(await ensureLLM())) return;
     btn.disabled = true; let done = 0;
-    for (const b of todo) {
+    for (const t of todo) {
       st.innerHTML = ""; st.append(h("span", { class: "spin" }), " 컷 " + (done + 1) + " / " + todo.length + " 대사 쓰는 중…");
-      if (!(await autoLinesForBlock(b, st))) break;
+      if (!(await autoTarget(t, st))) break;
       done++; renderStrip();
     }
     btn.disabled = false;
@@ -2197,7 +2452,7 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
 
   // ---------- export ----------
   function stripLayout(W) {
-    const gap = Math.round(P.settings.gap * W / BASE); let y = 0;
+    const gap = Math.round((isComic() ? 40 : P.settings.gap) * W / BASE); let y = 0;
     const items = P.blocks.map((b, i) => { const S = blockSize(b, W), it = { b, S, y }; y += S.h + (i < P.blocks.length - 1 ? gap : 0); return it; });
     return { items, total: Math.max(1, y), gap };
   }
@@ -2217,17 +2472,23 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     }
     return out;
   }
-  function exportPlan() { const W = P.settings.width, lay = stripLayout(W), maxH = Math.floor(16000000 / W), parts = splitParts(lay, P.settings.parts, maxH); return { W, lay, parts }; }
+  function exportPlan() {
+    const W = P.settings.width, lay = stripLayout(W), maxH = Math.floor(16000000 / W);
+    const parts = isComic() && !P.settings.comicJoin ? lay.items.map((it) => [it.y, it.y + it.S.h]) : splitParts(lay, isComic() ? 1 : P.settings.parts, maxH);
+    return { W, lay, parts };
+  }
   function renderExportUI() {
     const st = P.settings;
-    $("eParts").innerHTML = ""; $("eParts").appendChild(seg([[1, "한 장으로"], [2, "2장"], [3, "3장"], [4, "4장"], [5, "5장"]], st.parts, (v) => { st.parts = Number(v); exportInfo(); scheduleSave(); }));
+    $("eParts").innerHTML = "";
+    if (isComic()) $("eParts").appendChild(seg([["pages", "페이지마다 따로"], ["join", "모두 이어서 한 장"]], st.comicJoin ? "join" : "pages", (v) => { st.comicJoin = v === "join"; exportInfo(); scheduleSave(); }));
+    else $("eParts").appendChild(seg([[1, "한 장으로"], [2, "2장"], [3, "3장"], [4, "4장"], [5, "5장"]], st.parts, (v) => { st.parts = Number(v); exportInfo(); scheduleSave(); }));
     $("eWidth").innerHTML = ""; $("eWidth").appendChild(seg([[720, "720px"], [800, "800px"], [1080, "1080px"]], st.width, (v) => { st.width = Number(v); renderStrip(); exportInfo(); commit(); }));
     $("eFormat").innerHTML = ""; $("eFormat").appendChild(seg([["png", "PNG 선명하게"], ["jpg", "JPG 가볍게"]], st.format, (v) => { st.format = v; scheduleSave(); }));
     exportInfo();
   }
   function exportInfo() {
     const { W, lay, parts } = exportPlan();
-    const forced = parts.length > P.settings.parts;
+    const forced = !isComic() && parts.length > P.settings.parts;
     $("eInfo").innerHTML = "";
     $("eInfo").append("전체 ", h("b", { text: W + " × " + lay.total.toLocaleString() + "px" }), " · ", h("b", { text: parts.length + "장" }), "으로 저장 (" + parts.map((p) => (p[1] - p[0]).toLocaleString()).join(" / ") + "px)" + (forced ? " · 휴대폰에서도 열리도록 길이 제한에 맞춰 더 나눴어요" : ""));
   }
@@ -2279,7 +2540,7 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   });
 
   // ---------- add bar, files, drag-drop ----------
-  let replaceTarget = null;
+  let replaceTarget = null, replacePanel = null;
   $("addPhotos").addEventListener("click", () => $("filePanels").click());
   $("filePanels").addEventListener("change", async (e) => {
     const files = Array.from(e.target.files || []); e.target.value = "";
@@ -2291,6 +2552,20 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     toast("사진 읽는 중…");
     const keys = await importFiles(files);
     if (!keys.length) return;
+    if (isComic()) {
+      if (P.blocks.some((b) => blockImgs(b).some((k) => k.startsWith("sample")))) P.blocks = [];
+      const q = keys.slice(), per = Number(P.settings.perPage) || 4;
+      for (const pg of P.blocks) {
+        if (pg.type !== "page") continue;
+        pg.panels = pg.panels || [];
+        const c = panelCount(pg.layout);
+        for (let i = 0; i < c && q.length; i++) if (!(pg.panels[i] && pg.panels[i].img)) pg.panels[i] = { img: q.shift(), zoom: 100, fx: 50, fy: 50 };
+      }
+      while (q.length) P.blocks.push(newPage(LAYOUT_FOR_N[per] || "4b", q.splice(0, per)));
+      renderStrip(); commit();
+      toast("사진 " + keys.length + "장을 빈 칸에 차례로 넣었어요. 칸을 누르면 확대·위치를 바꿀 수 있어요.");
+      return;
+    }
     if (onlySamples() && P.blocks.length) P.blocks = [];
     keys.forEach((k) => P.blocks.push({ id: nid("b"), type: "image", img: k, bubbles: [] }));
     renderStrip(); commit();
@@ -2300,9 +2575,16 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     const f = e.target.files && e.target.files[0]; e.target.value = "";
     const b = findBlock(replaceTarget); if (!f || !b) return;
     const [k] = await importFiles([f]); if (!k) return;
+    if (b.type === "page" && replacePanel != null) { b.panels = b.panels || []; b.panels[replacePanel] = { img: k, zoom: 100, fx: 50, fy: 50 }; renderBlock(b.id); commit(); buildInspector(); toast("칸에 사진을 넣었어요"); replacePanel = null; return; }
     b.img = k; renderStrip(); commit(); toast("사진을 바꿨어요");
   });
   $("addNarr").addEventListener("click", () => { const n = makeNarr("나레이션"); P.blocks.push(n); renderStrip(); commit(); select({ block: n.id }, { open: true, focus: true, selectAll: true, reveal: true }); });
+  $("addPage").addEventListener("click", () => { const np = newPage(LAYOUT_FOR_N[P.settings.perPage] || "4b", []); P.blocks.push(np); renderStrip(); commit(); select({ block: np.id, panel: 0 }, { reveal: true }); toast("새 페이지를 만들었어요. 칸을 눌러 사진을 넣으세요."); });
+  function modeUI() {
+    const c = isComic();
+    $("addNarr").hidden = c; $("addSpace").hidden = c; $("addPage").hidden = !c;
+    $("addPhotos").textContent = c ? "+ 사진" : "+ 컷 사진";
+  }
   $("addSpace").addEventListener("click", () => { const s = { id: nid("s"), type: "space", h: 240 }; P.blocks.push(s); renderStrip(); commit(); select({ block: s.id }, { open: true, reveal: true }); });
   const stage = $("stage");
   stage.addEventListener("dragover", (e) => { if (e.dataTransfer && [...e.dataTransfer.types].includes("Files")) { e.preventDefault(); stage.classList.add("dropping"); } });
