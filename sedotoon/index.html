@@ -1,0 +1,2119 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>세로툰</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#15171c">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="세로툰">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Do+Hyeon&family=Gaegu:wght@700&family=IBM+Plex+Sans+KR:wght@400;500;600&family=Jua&family=Nanum+Myeongjo:wght@800&family=Nanum+Pen+Script&family=Noto+Sans+KR:wght@700;900&display=swap">
+<style>
+/* Lettering desk: the strip itself is the canvas you touch; tools live in a side panel (desktop) or a bottom sheet (phone). Ink + non-photo-blue pencil. */
+:root {
+  --bg: #eceef1; --panel: #ffffff; --panel-2: #f5f6f8; --ink: #15171c; --muted: #5d6573; --line: #d3d8df;
+  --accent: #1d63c9; --accent-ink: #ffffff; --pencil: #dbe9fb; --warn: #b4441f; --ai: #6b3fd1; --ai-soft: #efe8ff; --ok: #2e9d5b; --part: #c98a12; --off: #c4472b;
+  --shadow: 0 1px 2px rgba(20,24,32,.06), 0 8px 24px rgba(20,24,32,.08);
+  --f-display: "Black Han Sans", "Noto Sans KR", sans-serif;
+  --f-body: "IBM Plex Sans KR", "Noto Sans KR", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #111317; --panel: #1b1e24; --panel-2: #22262d; --ink: #e8ebf0; --muted: #9aa3b0; --line: #2e333c;
+    --accent: #5d9cf5; --accent-ink: #0d1118; --pencil: #1c2b42; --warn: #f08a62; --ai: #b69bff; --ai-soft: #2a2140; --ok: #4cc77f; --part: #e3b04a; --off: #f07a5c;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.35);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #111317; --panel: #1b1e24; --panel-2: #22262d; --ink: #e8ebf0; --muted: #9aa3b0; --line: #2e333c;
+  --accent: #5d9cf5; --accent-ink: #0d1118; --pencil: #1c2b42; --warn: #f08a62; --ai: #b69bff; --ai-soft: #2a2140; --ok: #4cc77f; --part: #e3b04a; --off: #f07a5c;
+  --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.35);
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { background: var(--bg); color: var(--ink); }
+body { margin: 0; }
+img { max-width: 100%; }
+:root { padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+body { font-family: var(--f-body); font-size: 14px; line-height: 1.5; -webkit-text-size-adjust: 100%; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 21; background: var(--bg); }
+button { font: inherit; color: inherit; }
+.top {
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; background: color-mix(in srgb, var(--bg) 92%, transparent);
+  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border-bottom: 1px solid var(--line);
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 8px;
+}
+.top-in { max-width: 1180px; margin: 0 auto; display: flex; align-items: center; gap: 6px; }
+.brand { font-family: var(--f-display); font-size: 22px; line-height: 1; margin: 0 auto 0 0; white-space: nowrap; font-weight: 400; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.brand .bshort { display: none; }
+.brand small { font-family: var(--f-body); font-size: 12px; color: var(--muted); margin-left: 8px; font-weight: 500; }
+.tb { display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 0 11px; border-radius: 9px; border: 1px solid var(--line); background: var(--panel); cursor: pointer; font-weight: 600; white-space: nowrap; }
+.tb svg { width: 18px; height: 18px; flex: none; }
+.tb.icon { padding: 0; width: 40px; justify-content: center; }
+.tb.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.tb[disabled] { opacity: .38; cursor: default; }
+.tb .short { display: none; }
+.btn { white-space: nowrap; display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 40px; padding: 0 13px; border-radius: 9px; border: 1px solid var(--line); background: var(--panel); cursor: pointer; font-weight: 600; text-align: center; }
+.btn:hover, .tb:hover:not([disabled]) { border-color: var(--accent); }
+.btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.btn.ai { background: var(--ai-soft); color: var(--ai); border-color: color-mix(in srgb, var(--ai) 35%, transparent); }
+.btn.danger { color: var(--warn); }
+.btn.small { min-height: 34px; padding: 0 10px; font-size: 13px; font-weight: 500; }
+.btn.wide { width: 100%; min-height: 48px; font-size: 15px; }
+.btn[disabled] { opacity: .45; cursor: default; }
+:is(button, input, select, textarea, canvas):focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.app {
+  max-width: 1180px; margin: 0 auto; display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 24px; align-items: start;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 18px 48px;
+}
+.stage { display: flex; flex-direction: column; align-items: center; gap: 14px; min-width: 0; }
+.strip { width: min(100%, 500px); border-radius: 6px; overflow: hidden; box-shadow: var(--shadow); user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+.blk { position: relative; }
+.blk canvas { display: block; width: 100%; touch-action: manipulation; cursor: default; }
+.blk.sel::after { content: ""; position: absolute; inset: 0; border: 2px solid var(--accent); pointer-events: none; }
+.gap { width: 100%; }
+.empty { width: min(100%, 500px); border: 2px dashed var(--line); border-radius: 12px; padding: 36px 20px; display: flex; flex-direction: column; align-items: center; gap: 12px; text-align: center; background: var(--panel); }
+.empty h2 { margin: 0; font-family: var(--f-display); font-weight: 400; font-size: 24px; }
+.empty p { margin: 0; color: var(--muted); max-width: 32ch; }
+.addbar { width: min(100%, 500px); display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+.dropping .strip, .dropping .empty { outline: 3px dashed var(--accent); outline-offset: 4px; }
+
+/* inspector */
+.insp { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 74px); max-height: calc(100vh - 96px); display: flex; flex-direction: column; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--shadow); min-width: 0; }
+.insp-head { display: flex; align-items: center; gap: 8px; padding: 12px 14px 10px; border-bottom: 1px solid var(--line); }
+.insp-title { font-weight: 700; font-size: 15px; margin-right: auto; min-width: 0; }
+.insp-hint { color: var(--muted); font-size: 12px; font-weight: 500; display: block; }
+.grab { display: none; }
+.insp-body { overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 16px; overscroll-behavior: contain; }
+.sec { display: flex; flex-direction: column; gap: 8px; }
+.sec-l { font-size: 11px; letter-spacing: .08em; color: var(--muted); font-weight: 600; }
+.fld { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.fld-l { font-size: 12px; color: var(--muted); font-weight: 500; display: flex; justify-content: space-between; gap: 8px; }
+.fld-l output { color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; }
+textarea, input[type="text"], input[type="password"], select { font: inherit; font-size: 16px; color: var(--ink); background: var(--panel-2); border: 1px solid var(--line); border-radius: 9px; padding: 9px 11px; width: 100%; min-width: 0; }
+textarea { resize: vertical; line-height: 1.5; min-height: 60px; }
+input[type="range"] { width: 100%; accent-color: var(--accent); height: 28px; }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.row > .btn { flex: 1 1 auto; }
+.grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 14px; }
+.seg { display: flex; flex-wrap: wrap; gap: 6px; }
+.seg-b { min-height: 36px; padding: 0 12px; border-radius: 99px; border: 1px solid var(--line); background: var(--panel); cursor: pointer; font-weight: 500; }
+.seg-b[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.shapes { display: grid; grid-template-columns: repeat(auto-fill, minmax(70px, 1fr)); gap: 6px; }
+.shape-b { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 4px 5px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel-2); cursor: pointer; font-size: 11.5px; font-weight: 500; }
+.shape-b img { width: 56px; height: 42px; display: block; }
+.shape-b[aria-pressed="true"] { border-color: var(--accent); box-shadow: inset 0 0 0 1.5px var(--accent); background: var(--pencil); }
+.fonts { display: grid; grid-template-columns: repeat(auto-fill, minmax(78px, 1fr)); gap: 6px; }
+.font-b { display: flex; flex-direction: column; align-items: center; padding: 6px 4px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel-2); cursor: pointer; }
+.font-b b { font-size: 19px; line-height: 1.3; font-weight: inherit; }
+.font-b span { font-size: 11px; color: var(--muted); font-family: var(--f-body); }
+.font-b[aria-pressed="true"] { border-color: var(--accent); box-shadow: inset 0 0 0 1.5px var(--accent); background: var(--pencil); }
+.tones { display: flex; flex-wrap: wrap; gap: 8px; }
+.tone-b { width: 34px; height: 34px; border-radius: 50%; border: 2px solid var(--line); cursor: pointer; padding: 0; }
+.tone-b[aria-pressed="true"] { border-color: var(--accent); box-shadow: 0 0 0 2px var(--panel), 0 0 0 4px var(--accent); }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip-b { max-width: 100%; min-height: 32px; padding: 4px 10px; border-radius: 99px; border: 1px solid var(--line); background: var(--panel-2); cursor: pointer; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.chip-b.on { border-color: var(--accent); background: var(--pencil); }
+.ai-box { border: 1px solid color-mix(in srgb, var(--ai) 30%, transparent); background: var(--ai-soft); border-radius: 12px; padding: 10px; display: flex; flex-direction: column; gap: 8px; }
+.ai-box .sec-l { color: var(--ai); }
+.ai-box .chip-b { background: var(--panel); }
+.sugg { text-align: left; white-space: normal; border-radius: 10px; padding: 8px 10px; border: 1px solid var(--line); background: var(--panel); cursor: pointer; font-size: 14px; }
+.hint { margin: 0; font-size: 12.5px; color: var(--muted); }
+.kbd { font-size: 11px; color: var(--muted); }
+.switch { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 36px; }
+.switch input { width: 44px; height: 24px; accent-color: var(--accent); }
+
+/* toast */
+.toast { position: fixed; left: 50%; transform: translateX(-50%) translateY(10px); bottom: calc(var(--sheet-h, 0px) + 16px + env(safe-area-inset-bottom, 0px)); z-index: 60; background: var(--ink); color: var(--bg); padding: 10px 14px; border-radius: 10px; max-width: calc(100% - 32px); width: max-content; font-weight: 500; opacity: 0; pointer-events: none; transition: opacity .18s, transform .18s; }
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+.toast.err { background: var(--warn); color: #fff; }
+
+/* modals */
+.modal { position: fixed; inset: 0; z-index: 50; background: rgba(10, 12, 16, .55); display: flex; align-items: center; justify-content: center;
+  padding: max(16px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) max(16px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); }
+.modal-card { background: var(--panel); width: min(620px, 100%); max-height: 100%; overflow-y: auto; border-radius: 16px; padding: 18px; display: flex; flex-direction: column; gap: 16px; box-shadow: var(--shadow); overscroll-behavior: contain; }
+.m-head { display: flex; align-items: center; gap: 10px; }
+.m-head h2 { margin: 0 auto 0 0; font-family: var(--f-display); font-weight: 400; font-size: 24px; }
+.m-sub { margin: -8px 0 0; color: var(--muted); }
+.m-sec { display: flex; flex-direction: column; gap: 10px; }
+.m-step { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 15px; }
+.m-step .n { display: inline-grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: var(--ink); color: var(--bg); font-size: 13px; font-family: var(--f-display); font-weight: 400; }
+.thumbs { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; }
+.thumb { position: relative; flex: none; width: 74px; display: flex; flex-direction: column; gap: 4px; }
+.thumb img { width: 74px; height: 92px; object-fit: cover; border-radius: 8px; border: 1px solid var(--line); background: #000; }
+.thumb .num { position: absolute; top: 4px; left: 4px; background: rgba(0,0,0,.7); color: #fff; font-size: 11px; font-weight: 700; border-radius: 6px; padding: 1px 6px; }
+.thumb .tctl { display: flex; gap: 4px; }
+.thumb .tctl button { flex: 1; min-height: 28px; border-radius: 7px; border: 1px solid var(--line); background: var(--panel-2); cursor: pointer; font-size: 12px; padding: 0; }
+details.help { border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px; background: var(--panel-2); }
+details.help summary { cursor: pointer; font-weight: 600; }
+details.help ul { margin: 8px 0 2px; padding-left: 18px; display: flex; flex-direction: column; gap: 4px; }
+details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12.5px; background: var(--pencil); padding: 1px 5px; border-radius: 5px; }
+.auto-card { border: 1px solid var(--line); border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 8px; background: var(--panel-2); }
+.auto-card h3 { margin: 0; font-size: 15px; }
+.auto-card p { margin: 0; color: var(--muted); font-size: 13px; }
+.auto-card.ai { background: var(--ai-soft); border-color: color-mix(in srgb, var(--ai) 30%, transparent); }
+.auto-card.ai h3 { color: var(--ai); }
+.stat { font-variant-numeric: tabular-nums; color: var(--muted); font-size: 13px; }
+.stat b { color: var(--ink); }
+.results { display: flex; flex-direction: column; gap: 10px; }
+.results img { width: 100%; border-radius: 8px; border: 1px solid var(--line); }
+.status { margin: 0; font-size: 13px; min-height: 1.4em; color: var(--muted); }
+.status.err { color: var(--warn); }
+.spin { display: inline-block; width: 14px; height: 14px; border-radius: 50%; border: 2px solid currentColor; border-right-color: transparent; animation: spin .8s linear infinite; vertical-align: -2px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+
+.tb { position: relative; }
+.tb .dot { position: absolute; top: 5px; right: 5px; width: 9px; height: 9px; border-radius: 50%; border: 2px solid var(--panel); }
+[data-s="ok"] { background: var(--ok); } [data-s="part"] { background: var(--part); } [data-s="off"] { background: var(--off); }
+.eng-row { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel-2); }
+.eng-dot { width: 10px; height: 10px; border-radius: 50%; margin-top: 6px; flex: none; }
+.eng-txt { min-width: 0; } .eng-txt p { margin: 2px 0 0; }
+.modal-card.wide { width: min(780px, 100%); }
+.cuts { display: flex; flex-direction: column; gap: 10px; }
+.cut-card { border: 1px solid var(--line); border-radius: 12px; padding: 10px; display: flex; flex-direction: column; gap: 8px; background: var(--panel-2); }
+.cut-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.cut-top .row > .btn { flex: none; }
+.cut-body { display: grid; grid-template-columns: 104px minmax(0, 1fr); gap: 10px; }
+.cut-thumb { width: 104px; aspect-ratio: 3 / 4; border-radius: 8px; background: #0d0e11; color: #9aa3b0; display: grid; place-items: center; font-size: 12px; overflow: hidden; position: relative; text-align: center; }
+.cut-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.cut-spin { position: absolute; bottom: 8px; color: #9aa3b0; }
+.cut-fields { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.cut-fields textarea { min-height: 46px; }
+.check { display: flex; align-items: center; gap: 8px; font-size: 14px; }
+.check input { width: 20px; height: 20px; accent-color: var(--accent); }
+@media (max-width: 560px) { .cut-body { grid-template-columns: 74px minmax(0, 1fr); } .cut-thumb { width: 74px; } .tb.hide-sm { display: none; } }
+@media (max-width: 860px) {
+  .app { grid-template-columns: minmax(0, 1fr); padding-bottom: calc(var(--sheet-h, 0px) + 28px); }
+  .strip, .empty, .addbar { width: 100%; }
+  .insp { position: fixed; left: 0; right: 0; bottom: 0; top: auto; z-index: 30; max-height: 56vh; border-radius: 16px 16px 0 0; border-bottom: 0;
+    padding-bottom: env(safe-area-inset-bottom, 0px); padding-left: env(safe-area-inset-left, 0px); padding-right: env(safe-area-inset-right, 0px); box-shadow: 0 -8px 30px rgba(0,0,0,.18); }
+  .grab { display: block; position: absolute; top: 5px; left: 50%; width: 38px; height: 4px; border-radius: 4px; background: var(--line); transform: translateX(-50%); }
+  .insp-head { position: relative; padding: 14px 16px 10px; cursor: pointer; }
+  .insp-body { padding: 12px 16px 16px; }
+  .insp.collapsed .insp-body { display: none; }
+  .insp.collapsed .insp-head { border-bottom: 0; }
+  .modal { align-items: flex-end; padding-left: 0; padding-right: 0; padding-bottom: 0; }
+  .modal-card { border-radius: 16px 16px 0 0; max-height: 92vh; padding: 16px max(16px, env(safe-area-inset-right, 0px)) calc(16px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); }
+}
+@media (max-width: 560px) {
+  .tb .full { display: none; }
+  .tb .short { display: inline; }
+  .tb { padding: 0 9px; }
+  .brand small, .brand .bfull { display: none; }
+  .brand .bshort { display: inline; }
+  .brand { font-size: 19px; }
+  .tb:not(.primary):not(.icon) svg { display: none; }
+  .top-in { gap: 5px; }
+}
+@media (max-width: 380px) { .tb.hide-xs { display: none; } }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation-duration: 0s !important; scroll-behavior: auto !important; } }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="top-in">
+    <h1 class="brand"><span class="bfull">세로툰</span><span class="bshort">세로툰</span><small>폰 AI · 무료</small></h1>
+    <button class="tb icon hide-xs" id="bUndo" type="button" aria-label="되돌리기" title="되돌리기 (Ctrl+Z)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg></button>
+    <button class="tb icon hide-xs hide-sm" id="bRedo" type="button" aria-label="다시 하기" title="다시 하기 (Ctrl+Shift+Z)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 14 5-5-5-5"/><path d="M20 9H9.5a5.5 5.5 0 0 0 0 11H13"/></svg></button>
+    <button class="tb icon" id="bEngine" type="button" aria-label="폰 AI" title="폰 AI" data-engine><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="6" width="12" height="12" rx="2"/><path d="M9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4"/></svg><span class="dot" id="engDot" data-s="off"></span></button>
+    <button class="tb" id="bQuick" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="8" rx="1.5"/><rect x="5" y="14" width="14" height="8" rx="1.5"/><path d="M12 10v4"/></svg><span class="full">빠른 만들기</span><span class="short">만들기</span></button>
+    <button class="tb" id="bAuto" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m4 20 10-10"/><path d="m14 4 1.2 2.8L18 8l-2.8 1.2L14 12l-1.2-2.8L10 8l2.8-1.2z"/><path d="M19 14v4M17 16h4"/></svg><span class="full">자동 도우미</span><span class="short">자동</span></button>
+    <button class="tb primary" id="bExport" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg><span class="full">이미지 저장</span><span class="short">저장</span></button>
+  </div>
+</header>
+
+<div class="app" id="app">
+  <main class="stage" id="stage">
+    <div class="strip" id="strip" aria-label="세로 웹툰 편집 화면"></div>
+    <div class="addbar" id="addbar">
+      <button class="btn" type="button" id="addPhotos">+ 컷 사진</button>
+      <button class="btn" type="button" id="addNarr">+ 나레이션</button>
+      <button class="btn" type="button" id="addSpace">+ 빈 여백</button>
+    </div>
+  </main>
+  <aside class="insp collapsed" id="insp" aria-label="편집 도구">
+    <div class="insp-head" id="inspHead"><span class="grab"></span><div class="insp-title" id="inspTitle"></div><button class="btn small" type="button" id="inspDone" hidden>완료</button></div>
+    <div class="insp-body" id="inspBody"></div>
+  </aside>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<input type="file" id="filePanels" accept="image/*" multiple hidden>
+<input type="file" id="fileReplace" accept="image/*" hidden>
+<input type="file" id="fileQuick" accept="image/*" multiple hidden>
+
+<div class="modal" id="mQuick" hidden role="dialog" aria-modal="true" aria-labelledby="qTitle">
+  <div class="modal-card">
+    <div class="m-head"><h2 id="qTitle">빠른 만들기</h2><button class="btn small" type="button" data-close>닫기</button></div>
+    <div class="seg"><button type="button" class="seg-b" aria-pressed="true">사진 + 대본</button><button type="button" class="seg-b" id="toStory" aria-pressed="false">설명으로 그림 뽑기</button></div>
+    <p class="m-sub" style="margin-top:0">사진 고르고 대본을 넣으면, 컷을 순서대로 이어 붙이고 말풍선까지 알아서 놓아요. 대본이 없는 컷은 자동완성으로 채울 수 있어요.</p>
+    <section class="m-sec">
+      <div class="m-step"><span class="n">1</span>컷 사진</div>
+      <div class="seg" id="qSrc"></div>
+      <div class="row" id="qPickRow"><button class="btn" type="button" id="qPick">사진 고르기</button><span class="hint" id="qCount"></span></div>
+      <div class="thumbs" id="qThumbs"></div>
+    </section>
+    <section class="m-sec">
+      <div class="m-step"><span class="n">2</span>대본</div>
+      <div class="ai-box">
+        <div class="sec-l">대사 자동완성 · 폰 AI</div>
+        <textarea id="qStory" rows="2" placeholder="줄거리나 분위기 (안 써도 돼요)&#10;예) 기사단장이 성녀로 각성한 첫날. 코믹하게"></textarea>
+        <div class="row"><button class="btn ai" type="button" id="qAuto">빈 컷 대사 자동완성</button><button class="btn small" type="button" data-engine>폰 AI</button></div>
+        <p class="hint" id="qAutoStatus"></p>
+      </div>
+      <textarea id="qScript" rows="9" placeholder="카일: ……단장님?&#10;(효과) 콰아아—&#10;---&#10;> 컷 사이 나레이션&#10;아델라: 첫 번째. 성녀는 대검을 들지 않습니다."></textarea>
+      <div class="row"><button class="btn small" type="button" id="qExample">예시 대본 넣기</button><button class="btn small" type="button" id="qClear">대본 지우기</button></div>
+      <details class="help">
+        <summary>대본 쓰는 법</summary>
+        <ul>
+          <li>컷은 <code>---</code> 줄로 나눠요. <code>---</code>가 없으면 빈 줄로 나눠요.</li>
+          <li><code>이름: 대사</code> → 말풍선. 같은 사람은 같은 쪽에 놓여요.</li>
+          <li><code>&gt; 문장</code> → 컷 사이 여백에 들어가는 나레이션</li>
+          <li><code>[칸] 문장</code> → 컷 안의 나레이션 칸</li>
+          <li><code>(효과) 쾅</code> → 효과음. <code>(생각)</code> <code>(속삭임)</code> <code>(떨림)</code> <code>(외침)</code>도 돼요.</li>
+          <li>느낌표 두 개(<code>!!</code>)가 있으면 외침 말풍선이 돼요.</li>
+          <li>문장 중간에 <code> / </code>를 넣으면 줄이 바뀌어요.</li>
+        </ul>
+      </details>
+    </section>
+    <section class="m-sec">
+      <div class="m-step"><span class="n">3</span>만들기</div>
+      <div class="fld"><span class="fld-l">지금 있는 내용은</span><div class="seg" id="qMode"></div></div>
+      <div class="fld"><span class="fld-l">기본 말풍선 모양</span><div class="seg" id="qShape"></div></div>
+      <button class="btn primary wide" type="button" id="qBuild">컷 이어 붙이기</button>
+      <p class="status" id="qStatus"></p>
+    </section>
+  </div>
+</div>
+
+<div class="modal" id="mAuto" hidden role="dialog" aria-modal="true" aria-labelledby="aTitle">
+  <div class="modal-card">
+    <div class="m-head"><h2 id="aTitle">자동 도우미</h2><button class="btn small" type="button" data-close>닫기</button></div>
+    <div class="auto-card ai">
+      <h3>빈 컷 대사 자동완성</h3>
+      <p>말풍선이 없는 컷을 폰 AI가 그림을 보고 대사를 써서 넣어요. 앞 컷 흐름도 이어서 써요.</p>
+      <div class="row"><button class="btn ai" type="button" id="aAutoLines">빈 컷 채우기</button><button class="btn small" type="button" data-engine>폰 AI</button></div>
+    </div>
+    <div class="auto-card">
+      <h3>말풍선 자동 배치</h3>
+      <p>대사 순서대로 위에서 아래로, 말하는 사람별로 좌우를 나눠 겹치지 않게 놓아요.</p>
+      <button class="btn" type="button" id="aPlace">모든 컷에 적용</button>
+    </div>
+    <div class="auto-card">
+      <h3>겹친 말풍선 정리</h3>
+      <p>지금 위치는 최대한 그대로 두고, 서로 겹치거나 컷 밖으로 나간 말풍선만 밀어내요.</p>
+      <button class="btn" type="button" id="aTidy">정리하기</button>
+    </div>
+    <div class="auto-card">
+      <h3>대사 글자 크기 맞추기</h3>
+      <p>일반 말풍선의 글자 크기와 줄 길이를 하나로 통일해서 읽기 편하게 해요.</p>
+      <button class="btn" type="button" id="aUnify">통일하기</button>
+    </div>
+    <p class="status" id="aStatus"></p>
+  </div>
+</div>
+
+<div class="modal" id="mExport" hidden role="dialog" aria-modal="true" aria-labelledby="eTitle">
+  <div class="modal-card">
+    <div class="m-head"><h2 id="eTitle">이미지 저장</h2><button class="btn small" type="button" data-close>닫기</button></div>
+    <div class="fld"><span class="fld-l">나눠 저장하기</span><div class="seg" id="eParts"></div></div>
+    <div class="fld"><span class="fld-l">가로 폭</span><div class="seg" id="eWidth"></div></div>
+    <div class="fld"><span class="fld-l">형식</span><div class="seg" id="eFormat"></div></div>
+    <p class="stat" id="eInfo"></p>
+    <p class="hint">제타 인트로에는 이미지를 5장까지 넣을 수 있어요. 나눌 때는 컷 중간을 자르지 않고 컷 사이 여백에서 끊어요.</p>
+    <button class="btn primary wide" type="button" id="eSave">저장하기</button>
+    <p class="status" id="eStatus" role="status"></p>
+    <div class="results" id="eResults" hidden></div>
+  </div>
+</div>
+
+<div class="modal" id="mStory" hidden role="dialog" aria-modal="true" aria-labelledby="sTitle">
+  <div class="modal-card wide">
+    <div class="m-head"><h2 id="sTitle">설명으로 만들기</h2><button class="btn small" type="button" data-engine>폰 AI</button><button class="btn small" type="button" data-close>닫기</button></div>
+    <div class="seg"><button type="button" class="seg-b" id="toQuick" aria-pressed="false">사진 + 대본</button><button type="button" class="seg-b" aria-pressed="true">설명으로 그림 뽑기</button></div>
+    <p class="m-sub" style="margin-top:0">어떻게 만들지 적으면 폰 AI가 콘티와 대사를 짜요. 그림은 폰 그림 앱에서 뽑아 넣고, 웹툰으로 이어 붙여요. 대사는 직접 써도 되고 비워 두면 자동완성돼요.</p>
+    <section class="m-sec">
+      <div class="m-step"><span class="n">1</span>어떻게 만들까요</div>
+      <textarea id="sStory" rows="4" placeholder="예) 최전선 기사단장이 성녀로 각성한 첫날. 부단장은 감격하고, 선배 성녀는 금지 목록을 쓰기 시작한다. 코믹하게."></textarea>
+      <textarea id="sChars" rows="3" placeholder="등장인물 외모 (그림 프롬프트에 그대로 들어가요, 안 써도 돼요)&#10;단장: 1girl, long black hair, red eyes, broken black armor&#10;아델라: 1girl, white hair, green eyes, white nun robe"></textarea>
+      <div class="grid2">
+        <label class="fld"><span class="fld-l">컷 수</span><select id="sN"><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>10</option><option>12</option></select></label>
+        <div class="fld"><span class="fld-l">그림 비율</span><div id="sAspect"></div></div>
+      </div>
+      <details class="help"><summary>그림체 · 빼고 싶은 것</summary>
+        <div class="m-sec" style="margin-top:8px">
+          <label class="fld"><span class="fld-l">그림체 (모든 컷 프롬프트 앞에 붙어요)</span><textarea id="sStyle" rows="2" spellcheck="false"></textarea></label>
+          <label class="fld"><span class="fld-l">빼고 싶은 것 (네거티브)</span><textarea id="sNeg" rows="2" spellcheck="false"></textarea></label>
+          <p class="hint">그림 앱에서 로라를 쓰면 트리거 단어를 그림체 칸에 넣어 두세요. 프롬프트 복사에 같이 들어가요.</p>
+        </div>
+      </details>
+      <div class="row"><button class="btn ai" type="button" id="sPlan">폰 AI로 콘티 짜기</button><button class="btn" type="button" id="sEmpty">빈 콘티 만들기</button></div>
+      <p class="status" id="sStatus"></p>
+    </section>
+    <section class="m-sec">
+      <div class="m-step"><span class="n">2</span>콘티 <span class="hint" id="sCount"></span></div>
+      <div class="cuts" id="sCuts"></div>
+      <div class="row"><button class="btn small" type="button" id="sAdd">+ 컷 추가</button></div>
+    </section>
+    <section class="m-sec">
+      <div class="m-step"><span class="n">3</span>그림 넣고 완성하기</div>
+      <p class="hint">그림은 폰 그림 앱에서 무료로 뽑아요. 안드로이드는 <b>Local Dream</b>, 아이폰은 <b>Draw Things</b>. 컷의 ‘프롬프트 복사’ → 그림 앱에 붙여 넣고 뽑기 → 컷의 ‘+ 그림 넣기’로 가져오세요. 안드로이드는 갤러리에서 ‘공유 → 세로툰’도 돼요.</p>
+      <div class="row"><button class="btn small" type="button" id="sCopyAll">모든 컷 프롬프트 복사</button><button class="btn small" type="button" id="sCopyNeg">빼고 싶은 것 복사</button></div>
+      <button class="btn ai wide" type="button" id="sPickAll">그림 여러 장 한 번에 넣기 (빈 컷 순서대로)</button>
+      <input type="file" id="fileCuts" accept="image/*" multiple hidden>
+      <input type="file" id="fileCut" accept="image/*" hidden>
+      <div class="fld"><span class="fld-l">지금 있는 내용은</span><div id="sMode"></div></div>
+      <label class="check"><input type="checkbox" id="sAuto"> 대사가 빈 컷은 그림을 보고 자동완성해서 넣기</label>
+      <button class="btn primary wide" type="button" id="sBuild">웹툰으로 만들기</button>
+      <p class="status" id="sStatus2"></p>
+    </section>
+  </div>
+</div>
+
+<div class="modal" id="mEngine" hidden role="dialog" aria-modal="true" aria-labelledby="engTitle">
+  <div class="modal-card">
+    <div class="m-head"><h2 id="engTitle">폰 AI</h2><button class="btn small" type="button" data-close>닫기</button></div>
+    <p class="m-sub">대사 AI가 이 폰 안에서 돌아가요. 서버도 결제도 없고, 처음 한 번 받은 뒤에는 인터넷 없이도 써요.</p>
+    <div class="m-sec" id="engBody"></div>
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  const BASE = 720;
+  const $ = (id) => document.getElementById(id);
+  const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
+
+  const FONTS = {
+    gothic: { fam: "Noto Sans KR", w: 700, label: "본고딕" },
+    heavy: { fam: "Noto Sans KR", w: 900, label: "굵은고딕" },
+    jua: { fam: "Jua", w: 400, label: "주아" },
+    dohyeon: { fam: "Do Hyeon", w: 400, label: "도현" },
+    impact: { fam: "Black Han Sans", w: 400, label: "검은고딕" },
+    myeongjo: { fam: "Nanum Myeongjo", w: 800, label: "명조" },
+    hand: { fam: "Gaegu", w: 700, label: "개구" },
+    pen: { fam: "Nanum Pen Script", w: 400, label: "손펜" }
+  };
+  const SHAPES = {
+    oval: { label: "말풍선", tail: true, font: null },
+    round: { label: "둥근 네모", tail: true, font: null },
+    shout: { label: "외침", tail: true, font: "impact" },
+    thought: { label: "생각", tail: true, font: "hand" },
+    whisper: { label: "속삭임", tail: true, font: null },
+    wobble: { label: "떨림", tail: true, font: null },
+    box: { label: "나레이션 칸", tail: false, font: "myeongjo" },
+    sfx: { label: "효과음", tail: false, font: "impact" },
+    plain: { label: "글자만", tail: false, font: "gothic" }
+  };
+  const TONES = {
+    white: { fill: "#ffffff", ink: "#111111", line: "#111111", label: "흰색" },
+    black: { fill: "#141416", ink: "#ffffff", line: "#141416", label: "검정" },
+    yellow: { fill: "#ffe55c", ink: "#111111", line: "#111111", label: "노랑" },
+    pink: { fill: "#ffd3e3", ink: "#111111", line: "#111111", label: "분홍" },
+    sky: { fill: "#cfe7ff", ink: "#111111", line: "#111111", label: "하늘" },
+    red: { fill: "#e5392f", ink: "#ffffff", line: "#111111", label: "빨강" }
+  };
+  const BGS = [["#000000", "검정"], ["#17181c", "먹색"], ["#ffffff", "흰색"], ["#f4efe6", "종이"]];
+  const DEF = { width: 720, bg: "#000000", gap: 60, frame: "full", narrFont: "myeongjo", bubbleFont: "gothic", bubbleShape: "oval", parts: 1, format: "png" };
+
+  let P = { v: 2, settings: Object.assign({}, DEF), blocks: [] };
+  const images = new Map(); // key -> {el, blob, w, h}
+  let sel = { block: null, bubble: null };
+  const canvasMap = new Map();
+  let uidN = 0;
+  const nid = (p) => p + Date.now().toString(36).slice(-5) + (uidN++).toString(36) + Math.random().toString(36).slice(2, 5);
+  const isMobile = () => window.matchMedia("(max-width: 860px)").matches;
+  const findBlock = (id) => P.blocks.find((b) => b.id === id);
+  const findBubble = (b, id) => (b && b.bubbles ? b.bubbles.find((u) => u.id === id) : null);
+  const lightBg = () => ["#ffffff", "#f4efe6"].includes(P.settings.bg);
+
+  // ---------- small helpers ----------
+  function h(tag, props) {
+    const e = document.createElement(tag);
+    if (props) for (const [k, v] of Object.entries(props)) {
+      if (v == null || v === false) continue;
+      if (k === "class") e.className = v;
+      else if (k === "text") e.textContent = v;
+      else if (k === "style") e.style.cssText = v;
+      else if (k.startsWith("on") && typeof v === "function") e.addEventListener(k.slice(2), v);
+      else e.setAttribute(k, v === true ? "" : v);
+    }
+    for (let i = 2; i < arguments.length; i++) {
+      const c = arguments[i];
+      (Array.isArray(c) ? c : [c]).forEach((x) => { if (x != null && x !== false) e.appendChild(typeof x === "string" ? document.createTextNode(x) : x); });
+    }
+    return e;
+  }
+  function hashStr(s) { let x = 2166136261; for (let i = 0; i < s.length; i++) { x ^= s.charCodeAt(i); x = Math.imul(x, 16777619); } return x >>> 0; }
+  function rng(seed) { let a = seed || 1; return function () { a |= 0; a = (a + 0x6d2b79f5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+  let toastTimer;
+  function toast(msg, err) { const t = $("toast"); t.textContent = msg; t.classList.toggle("err", !!err); t.classList.add("show"); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove("show"), err ? 4200 : 2800); }
+  function fontCss(key, px) { const f = FONTS[key] || FONTS.gothic; return f.w + " " + px + 'px "' + f.fam + '", "Noto Sans KR", sans-serif'; }
+  function defaultFontFor(shape) { return SHAPES[shape] && SHAPES[shape].font ? SHAPES[shape].font : (P.settings.bubbleFont || "gothic"); }
+
+  // ---------- text layout ----------
+  const mctx = document.createElement("canvas").getContext("2d");
+  function wrapGreedy(text, maxW) {
+    const out = [];
+    String(text).split("\n").forEach((para) => {
+      if (!para.trim()) { out.push(""); return; }
+      let line = "";
+      para.split(/ +/).forEach((word) => {
+        const cand = line ? line + " " + word : word;
+        if (mctx.measureText(cand).width <= maxW) { line = cand; return; }
+        if (line) out.push(line);
+        line = "";
+        if (mctx.measureText(word).width <= maxW) { line = word; return; }
+        for (const ch of word) { const t = line + ch; if (mctx.measureText(t).width > maxW && line) { out.push(line); line = ch; } else line = t; }
+      });
+      out.push(line);
+    });
+    while (out.length > 1 && out[out.length - 1] === "") out.pop();
+    return out.length ? out : [""];
+  }
+  function wrapBalanced(text, maxW) {
+    const base = wrapGreedy(text, maxW);
+    if (base.length < 2) return base;
+    let lo = maxW * 0.45, hi = maxW, best = base;
+    for (let i = 0; i < 7; i++) { const mid = (lo + hi) / 2; const t = wrapGreedy(text, mid); if (t.length <= base.length) { best = t; hi = mid; } else lo = mid; }
+    return best;
+  }
+
+  // ---------- geometry ----------
+  function frameMetrics(W) { const k = W / BASE; return P.settings.frame === "border" ? { mx: Math.round(34 * k), my: Math.round(16 * k), bw: Math.max(2, Math.round(3 * k)) } : { mx: 0, my: 0, bw: 0 }; }
+  function narrLayout(b, W) {
+    const k = W / BASE, px = b.size * k, lh = px * 1.75;
+    mctx.font = fontCss(P.settings.narrFont, px);
+    const lines = wrapGreedy(b.text || " ", W * 0.8);
+    return { px, lh, lines, h: Math.round(b.pad * k * 2 + lines.length * lh) };
+  }
+  function blockSize(b, W) {
+    if (b.type === "image") {
+      const im = images.get(b.img), fm = frameMetrics(W), iw = W - 2 * fm.mx;
+      const ih = Math.round(im ? iw * im.h / im.w : iw * 0.6);
+      return { h: ih + 2 * fm.my, ix: fm.mx, iy: fm.my, iw, ih, bw: fm.bw };
+    }
+    if (b.type === "narration") { const L = narrLayout(b, W); return { h: L.h, L }; }
+    return { h: Math.round((b.h || 200) * W / BASE) };
+  }
+  function bubbleGeo(u, W, H) {
+    const k = W / BASE, px = u.size * k, lh = px * 1.36;
+    mctx.font = fontCss(u.font, px);
+    const isText = u.shape === "sfx" || u.shape === "plain";
+    const lines = (isText ? wrapGreedy : wrapBalanced)(u.text && u.text.trim() ? u.text : "…", Math.max(px * 1.2, u.cols * px * 0.98));
+    let tw = 0; lines.forEach((l) => { tw = Math.max(tw, mctx.measureText(l).width); });
+    tw = Math.max(tw, px * 0.9);
+    const th = lines.length * lh, a = tw / 2, bb = th / 2;
+    let rx, ry, ex, ey;
+    switch (u.shape) {
+      case "thought": rx = a * 1.16 + px * 0.95; ry = bb * 1.26 + px * 0.85; ex = rx + px * 0.9; ey = ry + px * 0.9; break;
+      case "shout": rx = a * 1.2 + px * 1.0; ry = bb * 1.3 + px * 0.85; ex = rx * 1.3; ey = ry * 1.32; break;
+      case "round": rx = a + px * 0.85; ry = bb + px * 0.62; ex = rx; ey = ry; break;
+      case "box": rx = a + px * 0.8; ry = bb + px * 0.58; ex = rx; ey = ry; break;
+      case "sfx": case "plain": {
+        const st = px * (u.shape === "sfx" ? 0.16 : 0.1);
+        rx = a + st; ry = bb + st;
+        const r = (u.rot || 0) * Math.PI / 180, c = Math.abs(Math.cos(r)), s = Math.abs(Math.sin(r));
+        ex = rx * c + ry * s; ey = rx * s + ry * c; break;
+      }
+      default: rx = a * 1.18 + px * 0.88; ry = bb * 1.28 + px * 0.74; ex = rx; ey = ry;
+    }
+    const m = 6 * k;
+    const cl = (v, lo, hi) => (hi < lo ? (lo + hi) / 2 : clamp(v, lo, hi));
+    const cx = cl(u.x / 100 * W, ex + m, W - ex - m), cy = cl(u.y / 100 * H, ey + m, H - ey - m);
+    return { k, px, lh, lines, tw, th, rx, ry, ex, ey, cx, cy };
+  }
+
+  // ---------- bubble drawing ----------
+  function wobblePath(c, cx, cy, rx, ry, seed) {
+    const n = 120, ph = (seed % 100) / 16;
+    for (let i = 0; i <= n; i++) { const t = i / n * Math.PI * 2, r = 1 + 0.045 * Math.sin(t * 14 + ph); const x = cx + Math.cos(t) * rx * r, y = cy + Math.sin(t) * ry * r; i ? c.lineTo(x, y) : c.moveTo(x, y); }
+    c.closePath();
+  }
+  function spikePath(c, cx, cy, rx, ry, seed) {
+    const R = rng(seed), n = 15 + (seed % 5);
+    for (let i = 0; i < n * 2; i++) {
+      const t = (i + (R() - 0.5) * 0.35) / (n * 2) * Math.PI * 2;
+      const r = i % 2 === 0 ? 1.2 + R() * 0.14 : 0.93 + R() * 0.03;
+      const x = cx + Math.cos(t) * rx * r, y = cy + Math.sin(t) * ry * r;
+      i ? c.lineTo(x, y) : c.moveTo(x, y);
+    }
+    c.closePath();
+  }
+  function roundRectPath(c, x, y, w, hh, r) {
+    r = Math.min(r, w / 2, hh / 2);
+    c.moveTo(x + r, y); c.lineTo(x + w - r, y); c.quadraticCurveTo(x + w, y, x + w, y + r); c.lineTo(x + w, y + hh - r); c.quadraticCurveTo(x + w, y + hh, x + w - r, y + hh);
+    c.lineTo(x + r, y + hh); c.quadraticCurveTo(x, y + hh, x, y + hh - r); c.lineTo(x, y + r); c.quadraticCurveTo(x, y, x + r, y); c.closePath();
+  }
+  function tailPath(c, cx, cy, tx, ty, bw) {
+    const dx = tx - cx, dy = ty - cy, len = Math.hypot(dx, dy) || 1, nx = -dy / len, ny = dx / len;
+    c.moveTo(cx + nx * bw, cy + ny * bw);
+    c.quadraticCurveTo(cx + dx * 0.6 + nx * bw * 0.55, cy + dy * 0.6 + ny * bw * 0.55, tx, ty);
+    c.quadraticCurveTo(cx + dx * 0.6 - nx * bw * 0.08, cy + dy * 0.6 - ny * bw * 0.08, cx - nx * bw, cy - ny * bw);
+    c.closePath();
+  }
+  function cloudParts(parts, cx, cy, rx, ry, px, seed) {
+    const R = rng(seed);
+    parts.push((c) => c.ellipse(cx, cy, rx * 0.97, ry * 0.93, 0, 0, Math.PI * 2));
+    const per = Math.PI * (3 * (rx + ry) - Math.sqrt((3 * rx + ry) * (rx + 3 * ry)));
+    const n = Math.max(8, Math.round(per / (px * 1.5)));
+    const br = per / n * 0.6;
+    for (let i = 0; i < n; i++) {
+      const t = (i + R() * 0.3) / n * Math.PI * 2, r = br * (0.85 + R() * 0.3);
+      const x = cx + Math.cos(t) * rx * 0.95, y = cy + Math.sin(t) * ry * 0.92;
+      parts.push((c) => c.arc(x, y, r, 0, Math.PI * 2));
+    }
+  }
+  function drawBubble(ctx, u, W, H, G) {
+    G = G || bubbleGeo(u, W, H);
+    const T = TONES[u.tone] || TONES.white;
+    const { cx, cy, rx, ry, px, k } = G;
+    const lw = Math.max(1.2, 2.5 * k);
+    const seed = hashStr(u.id);
+    ctx.save();
+    ctx.lineJoin = "round"; ctx.lineCap = "round";
+    const parts = [];
+    const s = u.shape;
+    if (s === "oval" || s === "whisper") parts.push((c) => c.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2));
+    else if (s === "wobble") parts.push((c) => wobblePath(c, cx, cy, rx, ry, seed));
+    else if (s === "round") parts.push((c) => roundRectPath(c, cx - rx, cy - ry, rx * 2, ry * 2, Math.min(ry, px * 1.15)));
+    else if (s === "shout") parts.push((c) => spikePath(c, cx, cy, rx, ry, seed));
+    else if (s === "thought") cloudParts(parts, cx, cy, rx, ry, px, seed);
+    let trail = null;
+    if (SHAPES[s].tail && u.tail && u.tail.on) {
+      const tx = u.tail.x / 100 * W, ty = u.tail.y / 100 * H;
+      const nd = Math.pow((tx - cx) / rx, 2) + Math.pow((ty - cy) / ry, 2);
+      if (nd > 1.2) {
+        if (s === "thought") trail = { tx, ty };
+        else { const bw = Math.min(Math.min(rx, ry) * 0.34, px * 0.95); parts.push((c) => tailPath(c, cx, cy, tx, ty, bw)); }
+      }
+    }
+    if (s === "box") {
+      ctx.fillStyle = T.fill; ctx.fillRect(cx - rx, cy - ry, rx * 2, ry * 2);
+      ctx.lineWidth = Math.max(1, 1.8 * k); ctx.strokeStyle = u.tone === "black" ? "#e9e6df" : T.line;
+      ctx.strokeRect(cx - rx, cy - ry, rx * 2, ry * 2);
+    } else if (parts.length) {
+      ctx.strokeStyle = T.line; ctx.lineWidth = lw * 2;
+      if (s === "whisper") ctx.setLineDash([lw * 3.4, lw * 2.8]);
+      parts.forEach((p) => { ctx.beginPath(); p(ctx); ctx.stroke(); });
+      ctx.setLineDash([]);
+      ctx.fillStyle = T.fill;
+      parts.forEach((p) => { ctx.beginPath(); p(ctx); ctx.fill(); });
+      if (trail) {
+        const dx = trail.tx - cx, dy = trail.ty - cy, len = Math.hypot(dx, dy) || 1, ux = dx / len, uy = dy / len;
+        const de = 1 / Math.sqrt(Math.pow(ux / rx, 2) + Math.pow(uy / ry, 2)) + px * 0.7;
+        [[0.12, 0.5], [0.5, 0.36], [0.92, 0.24]].forEach(([f, r]) => {
+          const d = de + (len - de) * f, x = cx + ux * d, y = cy + uy * d, rr = px * r;
+          if (d > len + 1) return;
+          ctx.beginPath(); ctx.arc(x, y, rr, 0, Math.PI * 2); ctx.lineWidth = lw * 2; ctx.strokeStyle = T.line; ctx.stroke(); ctx.fillStyle = T.fill; ctx.fill();
+        });
+      }
+    }
+    // text
+    ctx.font = fontCss(u.font, px); ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    const isText = s === "sfx" || s === "plain";
+    ctx.translate(cx, cy);
+    if (isText && u.rot) ctx.rotate(u.rot * Math.PI / 180);
+    let y = -G.th / 2 + G.lh / 2 + px * 0.05;
+    G.lines.forEach((ln) => {
+      if (isText) {
+        const stroke = u.tone === "black" ? "#ffffff" : "#111111";
+        const fill = T.fill;
+        ctx.lineJoin = "round"; ctx.miterLimit = 2;
+        if (s === "sfx") { ctx.lineWidth = px * 0.2; ctx.strokeStyle = stroke; ctx.fillStyle = stroke; ctx.strokeText(ln, px * 0.06, y + px * 0.07); ctx.fillText(ln, px * 0.06, y + px * 0.07); }
+        ctx.lineWidth = px * (s === "sfx" ? 0.2 : 0.16); ctx.strokeStyle = stroke; ctx.strokeText(ln, 0, y);
+        ctx.fillStyle = fill; ctx.fillText(ln, 0, y);
+      } else { ctx.fillStyle = T.ink; ctx.fillText(ln, 0, y); }
+      y += G.lh;
+    });
+    ctx.restore();
+  }
+  function handlePos(G, W, H, hs) { const pad = 4 / hs; return { x: Math.min(W - 13 / hs, G.cx + G.ex + pad), y: Math.min(H - 13 / hs, G.cy + G.ey + pad) }; }
+  function drawSelection(ctx, u, W, H, hs) {
+    const G = bubbleGeo(u, W, H), pad = 5 / hs, r = 10 / hs;
+    ctx.save();
+    ctx.setLineDash([6 / hs, 4 / hs]); ctx.lineWidth = 1.6 / hs; ctx.strokeStyle = "#2f7bf5";
+    ctx.strokeRect(G.cx - G.ex - pad, G.cy - G.ey - pad, (G.ex + pad) * 2, (G.ey + pad) * 2);
+    ctx.setLineDash([]);
+    const rh = handlePos(G, W, H, hs);
+    ctx.beginPath(); ctx.arc(rh.x, rh.y, r, 0, Math.PI * 2); ctx.fillStyle = "#ffffff"; ctx.fill(); ctx.lineWidth = 2.4 / hs; ctx.strokeStyle = "#2f7bf5"; ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(rh.x - r * 0.45, rh.y + r * 0.45); ctx.lineTo(rh.x + r * 0.45, rh.y - r * 0.45); ctx.stroke();
+    if (SHAPES[u.shape].tail && u.tail && u.tail.on) {
+      const tx = u.tail.x / 100 * W, ty = u.tail.y / 100 * H;
+      ctx.beginPath(); ctx.arc(tx, ty, r, 0, Math.PI * 2); ctx.fillStyle = "#2f7bf5"; ctx.fill(); ctx.lineWidth = 2.4 / hs; ctx.strokeStyle = "#ffffff"; ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  // ---------- block drawing ----------
+  function drawBlock(ctx, b, W, S, selInfo) {
+    ctx.fillStyle = P.settings.bg; ctx.fillRect(0, 0, W, S.h);
+    if (b.type === "narration") {
+      const L = S.L;
+      ctx.font = fontCss(P.settings.narrFont, L.px); ctx.textBaseline = "middle";
+      ctx.fillStyle = lightBg() ? "#151515" : "#f4f1ea";
+      ctx.textAlign = b.align === "left" ? "left" : "center";
+      const x = b.align === "left" ? W * 0.1 : W / 2;
+      let y = S.h / 2 - L.lines.length * L.lh / 2 + L.lh / 2;
+      L.lines.forEach((ln) => { ctx.fillText(ln, x, y); y += L.lh; });
+      return;
+    }
+    if (b.type !== "image") return;
+    const im = images.get(b.img);
+    if (im) ctx.drawImage(im.el, S.ix, S.iy, S.iw, S.ih);
+    else {
+      ctx.fillStyle = "#3a3d44"; ctx.fillRect(S.ix, S.iy, S.iw, S.ih);
+      ctx.fillStyle = "#c9ced6"; ctx.font = fontCss("gothic", 26 * W / BASE); ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      ctx.fillText("사진을 다시 올려 주세요", W / 2, S.h / 2);
+    }
+    if (S.bw) { ctx.lineWidth = S.bw; ctx.strokeStyle = lightBg() ? "#141414" : "#e9e9e9"; ctx.strokeRect(S.ix + S.bw / 2, S.iy + S.bw / 2, S.iw - S.bw, S.ih - S.bw); }
+    b.bubbles.forEach((u) => drawBubble(ctx, u, W, S.h));
+    if (selInfo && selInfo.bubble) { const u = findBubble(b, selInfo.bubble); if (u) drawSelection(ctx, u, W, S.h, selInfo.hs); }
+  }
+
+  // ---------- strip view ----------
+  const strip = $("strip");
+  function cssScale() { return (strip.clientWidth || 360) / P.settings.width; }
+  function renderStrip() {
+    canvasMap.clear();
+    strip.innerHTML = "";
+    const W = P.settings.width;
+    $("stage").querySelectorAll(".empty").forEach((n) => n.remove());
+    if (!P.blocks.length) {
+      strip.hidden = true;
+      const empty = h("div", { class: "empty" },
+        h("h2", { text: "사진부터 올려 볼까요" }),
+        h("p", { text: "글자 없는 컷 사진을 올리면 여기에 세로로 이어져요. 대본이 있으면 빠른 만들기가 더 편해요." }),
+        h("div", { class: "row", style: "justify-content:center" },
+          h("button", { class: "btn primary", type: "button", onclick: () => $("filePanels").click() }, "컷 사진 올리기"),
+          h("button", { class: "btn", type: "button", onclick: () => openQuick() }, "사진 + 대본"),
+          h("button", { class: "btn ai", type: "button", onclick: openStory }, "설명으로 그림부터")));
+      $("stage").insertBefore(empty, $("addbar"));
+      return;
+    }
+    strip.hidden = false;
+    strip.style.background = P.settings.bg;
+    const sc = cssScale(), gapCss = P.settings.gap * W / BASE * sc;
+    P.blocks.forEach((b, i) => {
+      const wrap = h("div", { class: "blk", "data-id": b.id });
+      const cv = h("canvas", { "aria-label": b.type === "image" ? "컷 " + (i + 1) : b.type === "narration" ? "나레이션" : "빈 여백" });
+      wrap.appendChild(cv);
+      strip.appendChild(wrap);
+      canvasMap.set(b.id, cv);
+      attachPointer(cv, b.id);
+      if (i < P.blocks.length - 1) {
+        const g = h("div", { class: "gap", style: "height:" + gapCss + "px" });
+        g.addEventListener("pointerdown", () => select({}));
+        strip.appendChild(g);
+      }
+      renderBlock(b.id);
+    });
+  }
+  function renderBlock(id) {
+    const b = findBlock(id), cv = canvasMap.get(id);
+    if (!b || !cv) return;
+    const W = P.settings.width, cssW = strip.clientWidth || 360, dpr = Math.min(2, window.devicePixelRatio || 1);
+    const S = blockSize(b, W), s = cssW * dpr / W;
+    const pw = Math.max(1, Math.round(W * s)), ph = Math.max(1, Math.round(S.h * s));
+    if (cv.width !== pw) cv.width = pw;
+    if (cv.height !== ph) cv.height = ph;
+    cv.style.height = (S.h * cssW / W) + "px";
+    const ctx = cv.getContext("2d");
+    ctx.setTransform(s, 0, 0, s, 0, 0);
+    drawBlock(ctx, b, W, S, sel.block === id ? { bubble: sel.bubble, hs: cssW / W } : null);
+    cv.parentElement.classList.toggle("sel", sel.block === id && !sel.bubble);
+  }
+  const rafSet = new Set(); let rafOn = false;
+  function renderSoon(id) { rafSet.add(id); if (rafOn) return; rafOn = true; requestAnimationFrame(() => { rafOn = false; const ids = [...rafSet]; rafSet.clear(); ids.forEach(renderBlock); }); }
+
+  // ---------- selection ----------
+  function select(next, opts) {
+    opts = opts || {};
+    const prev = sel.block;
+    sel = { block: next.block || null, bubble: next.bubble || null };
+    if (prev && prev !== sel.block) renderBlock(prev);
+    if (sel.block) renderBlock(sel.block);
+    buildInspector();
+    if (isMobile()) $("insp").classList.toggle("collapsed", !sel.block && !opts.open);
+    updateSheetH();
+    if (opts.focus) {
+      const ta = $("uText") || $("nText");
+      if (ta) { ta.focus({ preventScroll: true }); if (opts.selectAll) ta.select(); }
+    }
+    if (opts.reveal) reveal();
+  }
+  function reveal() {
+    requestAnimationFrame(() => {
+      const cv = canvasMap.get(sel.block); if (!cv) return;
+      const r = cv.getBoundingClientRect(), W = P.settings.width, sc = r.width / W;
+      let y1 = r.top, y2 = Math.min(r.bottom, r.top + 200);
+      const b = findBlock(sel.block), u = findBubble(b, sel.bubble);
+      if (u) { const S = blockSize(b, W), G = bubbleGeo(u, W, S.h); y1 = r.top + (G.cy - G.ey) * sc; y2 = r.top + (G.cy + G.ey) * sc; }
+      const top = document.querySelector(".top").getBoundingClientRect().bottom + 8;
+      const bottom = window.innerHeight - (isMobile() ? $("insp").offsetHeight : 0) - 10;
+      if (y2 > bottom) window.scrollBy({ top: y2 - bottom + 16, behavior: "smooth" });
+      else if (y1 < top) window.scrollBy({ top: y1 - top - 16, behavior: "smooth" });
+    });
+  }
+
+  // ---------- pointer editing ----------
+  let drag = null, lastTap = null, suppressTouch = false;
+  function localPt(cv, b, cx, cy) { const r = cv.getBoundingClientRect(), W = P.settings.width, S = blockSize(b, W); return { x: (cx - r.left) / r.width * W, y: (cy - r.top) / r.height * S.h, W, H: S.h, hs: r.width / W }; }
+  function hitTest(b, pt) {
+    const { W, H, hs } = pt, tol = 22 / hs;
+    const su = findBubble(b, sel.block === b.id ? sel.bubble : null);
+    if (su) {
+      if (SHAPES[su.shape].tail && su.tail && su.tail.on && Math.hypot(pt.x - su.tail.x / 100 * W, pt.y - su.tail.y / 100 * H) < tol) return { kind: "tail", u: su };
+      const G = bubbleGeo(su, W, H), rh = handlePos(G, W, H, hs);
+      if (Math.hypot(pt.x - rh.x, pt.y - rh.y) < tol) return { kind: "resize", u: su, G };
+    }
+    for (let i = b.bubbles.length - 1; i >= 0; i--) {
+      const u = b.bubbles[i], G = bubbleGeo(u, W, H), pad = 6 / hs;
+      if (Math.abs(pt.x - G.cx) <= G.ex + pad && Math.abs(pt.y - G.cy) <= G.ey + pad) return { kind: "move", u, G };
+    }
+    return null;
+  }
+  function attachPointer(cv, id) {
+    cv.addEventListener("touchstart", (e) => {
+      const b = findBlock(id); if (!b || e.touches.length !== 1) return;
+      if (b.type !== "image") { if (suppressTouch) e.preventDefault(); suppressTouch = false; return; }
+      const t = e.touches[0];
+      if (suppressTouch || hitTest(b, localPt(cv, b, t.clientX, t.clientY))) e.preventDefault();
+      suppressTouch = false;
+    }, { passive: false });
+    cv.addEventListener("pointerdown", (e) => {
+      if (e.button && e.button !== 0) return;
+      const b = findBlock(id); if (!b) return;
+      if (b.type !== "image") {
+        const again = lastTap && lastTap.id === id && performance.now() - lastTap.t < 380;
+        lastTap = { id, t: performance.now(), x: e.clientX, y: e.clientY };
+        if (again) { e.preventDefault(); suppressTouch = true; }
+        select({ block: id }, { focus: again, reveal: true });
+        return;
+      }
+      const pt = localPt(cv, b, e.clientX, e.clientY);
+      const hit = hitTest(b, pt);
+      const now = performance.now();
+      const dbl = lastTap && lastTap.id === id && now - lastTap.t < 380 && Math.hypot(e.clientX - lastTap.x, e.clientY - lastTap.y) < 30;
+      lastTap = { id, t: now, x: e.clientX, y: e.clientY, bubble: hit ? hit.u.id : null };
+      if (hit) {
+        e.preventDefault();
+        try { cv.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ }
+        const G = hit.G || bubbleGeo(hit.u, pt.W, pt.H);
+        drag = { id, cv, u: hit.u, kind: hit.kind, pid: e.pointerId, sx: e.clientX, sy: e.clientY, ox: G.cx - pt.x, oy: G.cy - pt.y, cx0: G.cx, cy0: G.cy, size0: hit.u.size, d0: Math.max(10, Math.hypot(pt.x - G.cx, pt.y - G.cy)), moved: false, dbl: dbl && lastTapBubbleWas(hit.u.id) };
+        if (sel.bubble !== hit.u.id) select({ block: id, bubble: hit.u.id });
+        return;
+      }
+      if (dbl) { e.preventDefault(); suppressTouch = true; lastTap = null; addBubbleAt(b, pt.x / pt.W * 100, pt.y / pt.H * 100); return; }
+      select({ block: id });
+    });
+    cv.addEventListener("pointermove", (e) => {
+      if (!drag || drag.pid !== e.pointerId) return;
+      const b = findBlock(drag.id); if (!b) return;
+      if (!drag.moved && Math.hypot(e.clientX - drag.sx, e.clientY - drag.sy) < 4) return;
+      drag.moved = true;
+      const pt = localPt(cv, b, e.clientX, e.clientY), u = drag.u;
+      if (drag.kind === "move") { u.x = (pt.x + drag.ox) / pt.W * 100; u.y = (pt.y + drag.oy) / pt.H * 100; }
+      else if (drag.kind === "tail") { u.tail.x = clamp(pt.x / pt.W * 100, 0, 100); u.tail.y = clamp(pt.y / pt.H * 100, 0, 100); }
+      else { const f = Math.hypot(pt.x - drag.cx0, pt.y - drag.cy0) / drag.d0; u.size = clamp(Math.round(drag.size0 * f), 12, 170); }
+      renderSoon(drag.id);
+    });
+    const end = (e) => {
+      if (!drag || drag.pid !== e.pointerId) return;
+      const d = drag; drag = null;
+      const b = findBlock(d.id); if (!b) return;
+      if (d.moved) { normalizeBubble(b, d.u); renderBlock(d.id); commit(); syncInspector(); }
+      else if (d.dbl) select({ block: d.id, bubble: d.u.id }, { focus: true, selectAll: false });
+      else reveal();
+    };
+    cv.addEventListener("pointerup", end);
+    cv.addEventListener("pointercancel", end);
+  }
+  function lastTapBubbleWas(uid) { return prevTapBubble === uid; }
+  let prevTapBubble = null;
+  document.addEventListener("pointerdown", () => { prevTapBubble = lastTap ? lastTap.bubble : null; }, true);
+  function normalizeBubble(b, u) { const W = P.settings.width, S = blockSize(b, W), G = bubbleGeo(u, W, S.h); u.x = round1(G.cx / W * 100); u.y = round1(G.cy / S.h * 100); }
+  const round1 = (v) => Math.round(v * 10) / 10;
+
+  // ---------- model ops ----------
+  function shapeDefaults(s) {
+    switch (s) {
+      case "sfx": return { size: 72, cols: 6, rot: -8 };
+      case "plain": return { size: 24, cols: 12, rot: 0 };
+      case "box": return { size: 22, cols: 15, rot: 0 };
+      case "shout": return { size: 30, cols: 8, rot: 0 };
+      default: return { size: 26, cols: 9, rot: 0 };
+    }
+  }
+  function makeBubble(shape, text, x, y, who) {
+    const d = shapeDefaults(shape);
+    return { id: nid("u"), text: text, shape, font: defaultFontFor(shape), size: d.size, cols: d.cols, rot: d.rot, tone: "white", x, y, who: who || "",
+      tail: { on: !!SHAPES[shape].tail, x: clamp(x + (x < 50 ? 9 : -9), 3, 97), y: clamp(y + 20, 3, 97) } };
+  }
+  function makeNarr(text) { return { id: nid("n"), type: "narration", text, size: 28, pad: 110, align: "center" }; }
+  function addBubbleAt(b, x, y) {
+    const u = makeBubble(P.settings.bubbleShape || "oval", "대사", x, y);
+    b.bubbles.push(u); normalizeBubble(b, u);
+    renderBlock(b.id); commit();
+    select({ block: b.id, bubble: u.id }, { focus: true, selectAll: true, reveal: true });
+  }
+  function addBubbleSmart(b) {
+    const W = P.settings.width, S = blockSize(b, W);
+    let y = 14, x = 30;
+    if (b.bubbles.length) {
+      const last = b.bubbles[b.bubbles.length - 1], G = bubbleGeo(last, W, S.h);
+      y = clamp((G.cy + G.ey) / S.h * 100 + 12, 10, 88); x = last.x < 50 ? 70 : 30;
+    }
+    addBubbleAt(b, x, y);
+  }
+  function moveBlock(id, d) {
+    const i = P.blocks.findIndex((b) => b.id === id), j = i + d;
+    if (i < 0 || j < 0 || j >= P.blocks.length) return;
+    [P.blocks[i], P.blocks[j]] = [P.blocks[j], P.blocks[i]];
+    renderStrip(); commit(); buildInspector(); reveal();
+  }
+  function deleteBlock(id) {
+    P.blocks = P.blocks.filter((b) => b.id !== id);
+    sel = { block: null, bubble: null };
+    renderStrip(); commit(); select({});
+    toast("블록을 지웠어요. 되돌리기로 살릴 수 있어요.");
+  }
+  function insertAfter(id, block) {
+    const i = P.blocks.findIndex((b) => b.id === id);
+    P.blocks.splice(i < 0 ? P.blocks.length : i + 1, 0, block);
+    renderStrip(); commit();
+  }
+
+  // ---------- auto layout (rules) ----------
+  function autoLayout(b) {
+    const W = P.settings.width, S = blockSize(b, W), H = S.h, list = b.bubbles;
+    if (!list.length) return;
+    const sides = {}; let named = 0, prev = "R", altText = 0;
+    const order = ["L", "R", "C"];
+    const yTop = (S.iy + S.ih * 0.13) / H, step = Math.min(0.26, 0.7 / list.length) * S.ih / H;
+    list.forEach((u, i) => {
+      let side;
+      if (u.shape === "sfx" || u.shape === "plain") side = (altText++ % 2) ? "L" : "R";
+      else if (u.shape === "box") side = "L";
+      else if (u.who) { if (!(u.who in sides)) sides[u.who] = order[Math.min(named++, 2)]; side = sides[u.who]; }
+      else side = prev === "L" ? "R" : "L";
+      if (u.shape !== "sfx" && u.shape !== "plain") prev = side;
+      u._side = side;
+      const xs = { L: 0.27, R: 0.73, C: 0.5 };
+      u.x = (S.ix + S.iw * xs[side]) / W * 100;
+      u.y = (yTop + step * i) * 100;
+      if (u.shape === "box") { u.x = (S.ix + S.iw * 0.3) / W * 100; if (i === 0) u.y = (S.iy + S.ih * 0.04) / H * 100; }
+      if (u.shape === "sfx") u.rot = side === "L" ? -9 : 8;
+    });
+    for (let pass = 0; pass < 4; pass++) {
+      resolveOverlaps(b);
+      if (!hasOverlap(b)) break;
+      list.forEach((u) => { u.size = Math.max(15, Math.round(u.size * 0.9)); });
+    }
+    list.forEach((u) => { autoTail(b, u); delete u._side; });
+  }
+  function autoTail(b, u) {
+    if (!SHAPES[u.shape].tail) return;
+    const W = P.settings.width, S = blockSize(b, W), G = bubbleGeo(u, W, S.h);
+    const side = u._side || (G.cx < W / 2 ? "L" : "R");
+    const dx = side === "L" ? 0.1 : side === "R" ? -0.1 : 0.02;
+    u.tail = u.tail || { on: true };
+    u.tail.on = true;
+    u.tail.x = round1(clamp((G.cx + dx * W) / W * 100, 3, 97));
+    u.tail.y = round1(clamp((G.cy + G.ey + Math.max(S.ih * 0.08, 44 * W / BASE)) / S.h * 100, 3, 97));
+  }
+  function boxes(b) { const W = P.settings.width, S = blockSize(b, W); return { W, S, gs: b.bubbles.map((u) => bubbleGeo(u, W, S.h)) }; }
+  function overlap(a, c, m) { return Math.abs(a.cx - c.cx) < a.ex + c.ex + m && Math.abs(a.cy - c.cy) < a.ey + c.ey + m; }
+  function hasOverlap(b) { const { W, gs } = boxes(b), m = 8 * W / BASE; for (let i = 0; i < gs.length; i++) for (let j = 0; j < i; j++) if (overlap(gs[i], gs[j], m)) return true; return false; }
+  function resolveOverlaps(b) {
+    const list = b.bubbles; if (list.length < 2) { list.forEach((u) => normalizeBubble(b, u)); return; }
+    for (let iter = 0; iter < 8; iter++) {
+      const { W, S, gs } = boxes(b), m = 10 * W / BASE; let moved = false;
+      for (let i = 1; i < gs.length; i++) for (let j = 0; j < i; j++) {
+        if (!overlap(gs[i], gs[j], m)) continue;
+        const down = gs[j].cy + gs[j].ey + gs[i].ey + m;
+        if (down + gs[i].ey < S.h) gs[i].cy = down;
+        else {
+          const up = gs[i].cy - gs[i].ey - gs[j].ey - m;
+          if (up - gs[j].ey > 0) gs[j].cy = up; else gs[i].cx = gs[j].cx < W / 2 ? W - gs[i].ex - m : gs[i].ex + m;
+        }
+        moved = true;
+      }
+      gs.forEach((g, i) => { list[i].x = g.cx / W * 100; list[i].y = g.cy / S.h * 100; });
+      if (!moved) break;
+    }
+    list.forEach((u) => normalizeBubble(b, u));
+  }
+
+  // ---------- script parsing / quick build ----------
+  const SEP = /^(-{3,}|={3,}|#.*|\[\s*컷[^\]]*\]|컷\s*\d+\s*[:.)]?)$/;
+  function parseLine(t) {
+    t = t.replace(/\s+\/\s+/g, "\n");
+    let m;
+    if ((m = t.match(/^(?:>|＞)\s*([\s\S]+)$/)) || (m = t.match(/^\[(?:나레이션|해설)\]\s*([\s\S]+)$/)) || (m = t.match(/^(?:나레이션|해설|N)\s*[:：]\s*([\s\S]+)$/))) return { kind: "narr", text: m[1].trim() };
+    if ((m = t.match(/^\[(?:칸|박스|상자)\]\s*([\s\S]+)$/)) || (m = t.match(/^(?:칸|박스)\s*[:：]\s*([\s\S]+)$/))) return { kind: "box", text: m[1].trim() };
+    let speaker = "";
+    if ((m = t.match(/^([^:：()（）\[\]>*\n]{1,12}?)\s*[:：]\s*([\s\S]+)$/))) { speaker = m[1].trim(); t = m[2].trim(); }
+    let kind = null;
+    const KM = { "효과": "sfx", "효과음": "sfx", "sfx": "sfx", "SFX": "sfx", "생각": "thought", "속마음": "thought", "속삭임": "whisper", "작게": "whisper", "떨림": "wobble", "외침": "shout", "소리침": "shout", "글자": "plain" };
+    const tag = t.match(/^[(（]\s*(효과음|효과|sfx|SFX|생각|속마음|속삭임|작게|떨림|외침|소리침|글자)\s*[)）]\s*([\s\S]+)$/);
+    if (tag) { t = tag[2].trim(); kind = KM[tag[1]]; }
+    else if ((m = t.match(/^\*([\s\S]+)\*$/))) { t = m[1].trim(); kind = "sfx"; }
+    if (!kind) kind = /[!！]{2,}|[!！][?？]|[?？][!！]/.test(t) ? "shout" : "speech";
+    return { kind, speaker, text: t };
+  }
+  function parseScript(text) {
+    const lines = String(text || "").replace(/\r/g, "").split("\n");
+    const hasSep = lines.some((l) => SEP.test(l.trim()));
+    const sections = []; let cur = null, started = false;
+    const filled = (c) => c && (c.before.length || c.items.length || c.after.length);
+    lines.forEach((line) => {
+      const t = line.trim();
+      if (hasSep && SEP.test(t)) { if (started) { cur = { before: [], items: [], after: [] }; sections.push(cur); } return; }
+      if (!hasSep && !t) { if (filled(cur)) cur = null; return; }
+      if (!t) return;
+      if (!cur) { cur = { before: [], items: [], after: [] }; sections.push(cur); }
+      started = true;
+      const it = parseLine(t);
+      if (it.kind === "narr") (cur.items.length ? cur.after : cur.before).push(it.text);
+      else cur.items.push(it);
+    });
+    while (sections.length && !filled(sections[sections.length - 1])) sections.pop();
+    return sections;
+  }
+  function itemToBubble(it) {
+    const shape = it.kind === "speech" ? (P.settings.bubbleShape || "oval") : it.kind;
+    return makeBubble(shape, it.text, 50, 20, it.speaker);
+  }
+  function buildBlocks(sections, keys) {
+    const out = [], n = Math.max(sections.length, keys.length);
+    let bubbles = 0;
+    for (let i = 0; i < n; i++) {
+      const sec = sections[i] || { before: [], items: [], after: [] };
+      sec.before.forEach((t) => out.push(makeNarr(t)));
+      if (keys[i]) {
+        const b = { id: nid("b"), type: "image", img: keys[i], bubbles: sec.items.map(itemToBubble) };
+        bubbles += b.bubbles.length;
+        out.push(b);
+      } else sec.items.forEach((it) => out.push(makeNarr((it.speaker ? it.speaker + ": " : "") + it.text)));
+      sec.after.forEach((t) => out.push(makeNarr(t)));
+    }
+    return { blocks: out, bubbles };
+  }
+
+  // ---------- images ----------
+  function loadImg(url) { return new Promise((res, rej) => { const im = new Image(); im.onload = () => res(im); im.onerror = () => rej(new Error("decode")); im.src = url; }); }
+  function toBlob(c, type, q) { return new Promise((res) => c.toBlob(res, type, q)); }
+  async function addBlob(blob, key) {
+    key = key || nid("i");
+    const el = await loadImg(URL.createObjectURL(blob));
+    images.set(key, { el, blob, w: el.naturalWidth, h: el.naturalHeight });
+    return key;
+  }
+  async function importFile(file) {
+    const url = URL.createObjectURL(file);
+    try {
+      const img = await loadImg(url);
+      let w = img.naturalWidth, hh = img.naturalHeight, blob = file;
+      const MAX = 1600;
+      if (w > MAX || !/^image\/(png|jpeg|webp)$/.test(file.type)) {
+        const s = Math.min(1, MAX / w); const c = document.createElement("canvas");
+        c.width = Math.round(w * s); c.height = Math.round(hh * s);
+        c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+        blob = await toBlob(c, file.type === "image/png" ? "image/png" : "image/jpeg", 0.92);
+      }
+      return await addBlob(blob);
+    } finally { URL.revokeObjectURL(url); }
+  }
+  async function importFiles(files) {
+    const keys = [];
+    for (const f of files) {
+      if (!/^image\//.test(f.type) && !/\.(jpe?g|png|webp|gif|heic|heif|avif)$/i.test(f.name)) continue;
+      try { keys.push(await importFile(f)); } catch (e) { toast(f.name + " 파일을 읽지 못했어요. JPG나 PNG로 바꿔서 올려 주세요.", true); }
+    }
+    return keys;
+  }
+  async function panelBlob(key, max) {
+    const im = images.get(key); if (!im) return null;
+    const s = Math.min(1, (max || 1024) / Math.max(im.w, im.h)), c = document.createElement("canvas");
+    c.width = Math.round(im.w * s); c.height = Math.round(im.h * s);
+    c.getContext("2d").drawImage(im.el, 0, 0, c.width, c.height);
+    return toBlob(c, "image/jpeg", 0.86);
+  }
+
+  // ---------- sample ----------
+  function sampleCanvas(kind) {
+    const c = document.createElement("canvas"); c.width = 720; c.height = 900;
+    const g = c.getContext("2d");
+    if (kind === 1) {
+      const sky = g.createLinearGradient(0, 0, 0, 900); sky.addColorStop(0, "#151a33"); sky.addColorStop(0.55, "#5b3a5a"); sky.addColorStop(1, "#d98a45");
+      g.fillStyle = sky; g.fillRect(0, 0, 720, 900);
+      const beam = g.createLinearGradient(260, 0, 460, 0); beam.addColorStop(0, "rgba(255,214,120,0)"); beam.addColorStop(0.5, "rgba(255,226,150,0.85)"); beam.addColorStop(1, "rgba(255,214,120,0)");
+      g.fillStyle = beam; g.beginPath(); g.moveTo(300, 0); g.lineTo(420, 0); g.lineTo(520, 640); g.lineTo(200, 640); g.closePath(); g.fill();
+      g.fillStyle = "#17141c"; g.beginPath(); g.moveTo(0, 600);
+      for (let x = 0; x <= 720; x += 60) { g.lineTo(x, 600); g.lineTo(x, 575); g.lineTo(x + 30, 575); g.lineTo(x + 30, 600); }
+      g.lineTo(720, 900); g.lineTo(0, 900); g.closePath(); g.fill();
+      for (let i = 0; i < 70; i++) { const x = 220 + ((i * 97) % 300), y = 80 + ((i * 53) % 520); g.fillStyle = "rgba(255,236,170," + (0.25 + (i % 5) * 0.12) + ")"; g.beginPath(); g.arc(x, y, 1.5 + (i % 3), 0, 6.283); g.fill(); }
+    } else if (kind === 2) {
+      g.fillStyle = "#0f0e13"; g.fillRect(0, 0, 720, 900);
+      const glow = g.createRadialGradient(360, 520, 10, 360, 520, 420); glow.addColorStop(0, "rgba(255,222,140,0.95)"); glow.addColorStop(0.35, "rgba(214,150,60,0.45)"); glow.addColorStop(1, "rgba(15,14,19,0)");
+      g.fillStyle = glow; g.fillRect(0, 0, 720, 900);
+      g.fillStyle = "#121015"; g.fillRect(350, 170, 20, 520); g.fillRect(290, 250, 140, 18); g.fillRect(345, 140, 30, 40);
+      g.beginPath(); g.moveTo(350, 690); g.lineTo(370, 690); g.lineTo(360, 740); g.closePath(); g.fill();
+      g.fillStyle = "#1a1720"; g.fillRect(0, 760, 720, 140);
+    } else {
+      const bg = g.createLinearGradient(0, 0, 720, 900); bg.addColorStop(0, "#2b2420"); bg.addColorStop(1, "#4a3a30");
+      g.fillStyle = bg; g.fillRect(0, 0, 720, 900);
+      g.save(); g.translate(360, 470); for (let i = 0; i < 24; i++) { g.rotate(Math.PI / 12); g.fillStyle = "rgba(255,210,120,0.08)"; g.fillRect(0, -6, 420, 12); } g.restore();
+      const em = g.createRadialGradient(360, 470, 5, 360, 470, 170); em.addColorStop(0, "rgba(255,240,190,1)"); em.addColorStop(0.5, "rgba(240,190,90,0.6)"); em.addColorStop(1, "rgba(240,190,90,0)");
+      g.fillStyle = em; g.beginPath(); g.arc(360, 470, 170, 0, 6.283); g.fill();
+      g.strokeStyle = "#fff4cf"; g.lineWidth = 6; g.beginPath(); g.arc(360, 470, 80, 0, 6.283); g.stroke();
+      g.beginPath(); for (let i = 0; i < 8; i++) { const a = i * Math.PI / 4; g.moveTo(360 + Math.cos(a) * 30, 470 + Math.sin(a) * 30); g.lineTo(360 + Math.cos(a) * 110, 470 + Math.sin(a) * 110); } g.stroke();
+    }
+    g.font = '700 22px "Noto Sans KR", sans-serif'; g.fillStyle = "rgba(255,255,255,0.55)"; g.textAlign = "right"; g.fillText("예시 컷 " + kind, 700, 36);
+    return c;
+  }
+  async function ensureSamples() {
+    for (const k of [1, 2, 3]) {
+      if (images.has("sample" + k)) continue;
+      const blob = await toBlob(sampleCanvas(k), "image/png");
+      await addBlob(blob, "sample" + k);
+      images.get("sample" + k).blob = null;
+    }
+  }
+  const SAMPLE_SCRIPT = "> 제국 북부 최전선, 회색 성벽. / 마수 대침공의 새벽.\n(효과) 콰아아—\n병사: 하, 하늘에서 빛이……!!\n---\n> 빛이 걷힌 자리. / 처음 보는 아가씨가 대검을 쥐고 있었다.\n카일: ……단장님?\n(생각) 저 검 쥐는 법은 분명히……\n---\n[칸] 손등에는 금빛 성녀의 문장.\n아델라: 첫 번째. / 성녀는 대검을 들지 않습니다.";
+  async function loadSample() {
+    await ensureSamples();
+    P = { v: 2, settings: Object.assign({}, DEF, { bg: P.settings.bg, width: P.settings.width }), blocks: [] };
+    const r = buildBlocks(parseScript(SAMPLE_SCRIPT), ["sample1", "sample2", "sample3"]);
+    P.blocks = r.blocks;
+    P.blocks.filter((b) => b.type === "image").forEach(autoLayout);
+  }
+
+  // ---------- undo / autosave ----------
+  const hist = { stack: [], i: -1 };
+  let commitTimer = null;
+  function commit() {
+    clearTimeout(commitTimer); commitTimer = null;
+    const s = JSON.stringify(P);
+    if (hist.stack[hist.i] === s) return;
+    hist.stack = hist.stack.slice(0, hist.i + 1); hist.stack.push(s);
+    if (hist.stack.length > 80) hist.stack.shift();
+    hist.i = hist.stack.length - 1;
+    undoUI(); scheduleSave();
+  }
+  function commitSoon() { clearTimeout(commitTimer); commitTimer = setTimeout(commit, 500); }
+  function undoUI() { $("bUndo").disabled = hist.i <= 0; $("bRedo").disabled = hist.i >= hist.stack.length - 1; }
+  function restoreHist() {
+    P = JSON.parse(hist.stack[hist.i]);
+    const b = findBlock(sel.block);
+    if (!b) sel = { block: null, bubble: null }; else if (sel.bubble && !findBubble(b, sel.bubble)) sel.bubble = null;
+    renderStrip(); buildInspector(); undoUI(); scheduleSave(); updateSheetH();
+  }
+  function undo() { if (commitTimer) commit(); if (hist.i <= 0) return; hist.i--; restoreHist(); toast("되돌렸어요"); }
+  function redo() { if (hist.i >= hist.stack.length - 1) return; hist.i++; restoreHist(); toast("다시 했어요"); }
+
+  const store = {
+    db: null,
+    open() {
+      return new Promise((res) => {
+        try {
+          const r = indexedDB.open("cutlink", 1);
+          r.onupgradeneeded = () => { const d = r.result; if (!d.objectStoreNames.contains("kv")) d.createObjectStore("kv"); if (!d.objectStoreNames.contains("img")) d.createObjectStore("img"); };
+          r.onsuccess = () => { this.db = r.result; res(this.db); };
+          r.onerror = () => res(null); r.onblocked = () => res(null);
+        } catch (e) { res(null); }
+      });
+    },
+    run(name, mode, fn) {
+      return new Promise((res) => {
+        if (!this.db) return res(null);
+        try {
+          const t = this.db.transaction(name, mode), req = fn(t.objectStore(name));
+          t.oncomplete = () => res(req && "result" in req ? req.result : true);
+          t.onerror = () => res(null); t.onabort = () => res(null);
+        } catch (e) { res(null); }
+      });
+    }
+  };
+  const savedImgs = new Set();
+  let saveTimer;
+  function scheduleSave() { clearTimeout(saveTimer); saveTimer = setTimeout(saveNow, 900); }
+  async function saveNow() {
+    if (!store.db) return;
+    for (const b of P.blocks) {
+      if (b.type !== "image" || b.img.startsWith("sample") || savedImgs.has(b.img)) continue;
+      const im = images.get(b.img); if (!im || !im.blob) continue;
+      if (await store.run("img", "readwrite", (st) => st.put(im.blob, b.img))) savedImgs.add(b.img);
+    }
+    await store.run("kv", "readwrite", (st) => st.put(JSON.stringify(P), "project"));
+  }
+  async function restoreSaved() {
+    const raw = await store.run("kv", "readonly", (st) => st.get("project"));
+    if (!raw) return false;
+    let p; try { p = JSON.parse(raw); } catch (e) { return false; }
+    if (!p || !Array.isArray(p.blocks)) return false;
+    for (const b of p.blocks) {
+      if (b.type !== "image" || images.has(b.img)) continue;
+      if (b.img.startsWith("sample")) { await ensureSamples(); continue; }
+      const blob = await store.run("img", "readonly", (st) => st.get(b.img));
+      if (blob) { try { await addBlob(blob, b.img); savedImgs.add(b.img); } catch (e) { /* missing image */ } }
+    }
+    P = { v: 2, settings: Object.assign({}, DEF, p.settings || {}), blocks: p.blocks };
+    return true;
+  }
+  async function newProject() {
+    P = { v: 2, settings: Object.assign({}, P.settings), blocks: [] };
+    sel = { block: null, bubble: null };
+    await store.run("img", "readwrite", (st) => st.clear()); savedImgs.clear();
+    renderStrip(); commit(); select({});
+    toast("새 작업을 시작했어요");
+  }
+
+  // ---------- fonts ----------
+  async function ensureFonts() {
+    if (!document.fonts || !document.fonts.load) return;
+    const want = new Map(), add = (f, t) => want.set(f, (want.get(f) || "") + t);
+    add(P.settings.narrFont, "가나다");
+    P.blocks.forEach((b) => { if (b.type === "narration") add(P.settings.narrFont, b.text); if (b.type === "image") b.bubbles.forEach((u) => add(u.font, u.text)); });
+    const jobs = [...want].map(([f, t]) => document.fonts.load(fontCss(f, 40), (t || "가").slice(0, 600)).catch(() => null));
+    await Promise.race([Promise.all(jobs), new Promise((r) => setTimeout(r, 5000))]);
+  }
+  let fontTimer;
+  if (document.fonts) document.fonts.addEventListener("loadingdone", () => { clearTimeout(fontTimer); fontTimer = setTimeout(() => { iconCache.clear(); P.blocks.forEach((b) => renderBlock(b.id)); if (!document.activeElement || !$("insp").contains(document.activeElement)) buildInspector(); }, 120); });
+
+  // ---------- icons for shapes ----------
+  const iconCache = new Map();
+  function shapeIcon(shape) {
+    if (iconCache.has(shape)) return iconCache.get(shape);
+    const c = document.createElement("canvas"); c.width = 112; c.height = 84;
+    const ctx = c.getContext("2d"); ctx.scale(112 / 720, 84 / 540);
+    const txt = { sfx: "쾅!", plain: "가나", box: "나레이션" }[shape] || "가나";
+    const u = makeBubble(shape, txt, 46, 40);
+    u.id = "icon-" + shape; u.size = { sfx: 240, plain: 170, box: 96 }[shape] || 112; u.cols = 9; u.rot = shape === "sfx" ? -8 : 0;
+    u.tail = { on: !!SHAPES[shape].tail, x: 30, y: 96 };
+    u.font = SHAPES[shape].font || "gothic";
+    drawBubble(ctx, u, 720, 540);
+    const url = c.toDataURL();
+    iconCache.set(shape, url); return url;
+  }
+
+  // ---------- inspector ----------
+  const body = $("inspBody");
+  let inspKey = "";
+  function sec(label, ...kids) { return h("div", { class: "sec" }, h("div", { class: "sec-l", text: label }), kids); }
+  function slider(label, min, max, step, val, unit, onInput) {
+    const out = h("output", { text: val + (unit || "") });
+    const inp = h("input", { type: "range", min, max, step, value: val, "aria-label": label });
+    inp.addEventListener("input", () => { out.textContent = inp.value + (unit || ""); onInput(Number(inp.value)); });
+    inp.addEventListener("change", commit);
+    return h("label", { class: "fld" }, h("span", { class: "fld-l" }, label, out), inp);
+  }
+  function seg(options, value, onPick, label) {
+    const wrap = h("div", { class: "seg", role: "group", "aria-label": label || null });
+    options.forEach(([v, text]) => {
+      wrap.appendChild(h("button", { type: "button", class: "seg-b", "data-v": String(v), "aria-pressed": String(String(v) === String(value)),
+        onclick: () => { [...wrap.children].forEach((c) => c.setAttribute("aria-pressed", String(c.dataset.v === String(v)))); onPick(v); } }, text));
+    });
+    return wrap;
+  }
+  function fontGrid(value, onPick) {
+    const wrap = h("div", { class: "fonts" });
+    Object.entries(FONTS).forEach(([k, f]) => {
+      wrap.appendChild(h("button", { type: "button", class: "font-b", "aria-pressed": String(k === value), "data-v": k, style: "font-family:\"" + f.fam + "\", \"Noto Sans KR\", sans-serif; font-weight:" + f.w,
+        onclick: () => { [...wrap.children].forEach((c) => c.setAttribute("aria-pressed", String(c.dataset.v === k))); onPick(k); } }, h("b", { text: "가나다" }), h("span", { text: f.label })));
+    });
+    return wrap;
+  }
+  function textArea(id, value, label, onInput, rows) {
+    const ta = h("textarea", { id, rows: rows || 3, "aria-label": label, placeholder: label });
+    ta.value = value;
+    ta.addEventListener("input", () => { onInput(ta.value); commitSoon(); });
+    ta.addEventListener("blur", () => { if (commitTimer) commit(); });
+    return ta;
+  }
+  function setTitle(t, hint) { const el = $("inspTitle"); el.innerHTML = ""; el.append(t); if (hint) el.appendChild(h("span", { class: "insp-hint", text: hint })); }
+
+  function buildInspector() {
+    const b = findBlock(sel.block), u = findBubble(b, sel.bubble);
+    const key = (sel.block || "") + "/" + (sel.bubble || "");
+    const keep = key === inspKey ? body.scrollTop : 0;
+    inspKey = key;
+    body.innerHTML = "";
+    $("inspDone").hidden = !sel.block;
+    if (u) inspBubble(b, u);
+    else if (b && b.type === "image") inspImage(b);
+    else if (b && b.type === "narration") inspNarr(b);
+    else if (b) inspSpace(b);
+    else inspSettings();
+    body.scrollTop = keep;
+  }
+  function syncInspector() { const a = document.activeElement; if (a && body.contains(a) && (a.tagName === "TEXTAREA" || a.type === "text")) return; buildInspector(); }
+
+  function inspBubble(b, u) {
+    setTitle("말풍선", isMobile() ? "끌어서 옮기기 · 파란 점: 꼬리 · 흰 점: 크기" : "그림에서 끌어 옮기고, 흰 점으로 크기, 파란 점으로 꼬리를 조절해요");
+    const ta = textArea("uText", u.text, "대사를 입력하세요", (v) => { u.text = v; renderBlock(b.id); }, 3);
+    body.appendChild(ta);
+    body.appendChild(aiPolishBox(b, u, ta));
+    const shapes = h("div", { class: "shapes" });
+    Object.entries(SHAPES).forEach(([k, s]) => {
+      shapes.appendChild(h("button", { type: "button", class: "shape-b", "aria-pressed": String(k === u.shape), onclick: () => setShape(b, u, k) },
+        h("img", { src: shapeIcon(k), alt: "" }), s.label));
+    });
+    body.appendChild(sec("모양", shapes));
+    body.appendChild(sec("글꼴", fontGrid(u.font, (f) => { u.font = f; renderBlock(b.id); commit(); })));
+    const tones = h("div", { class: "tones" });
+    Object.entries(TONES).forEach(([k, t]) => tones.appendChild(h("button", { type: "button", class: "tone-b", title: t.label, "aria-label": t.label, "aria-pressed": String(k === u.tone), style: "background:" + t.fill,
+      onclick: (e) => { u.tone = k; [...tones.children].forEach((c) => c.setAttribute("aria-pressed", String(c === e.currentTarget))); renderBlock(b.id); commit(); } })));
+    body.appendChild(sec("색", tones));
+    const sliders = h("div", { class: "grid2" },
+      slider("글자 크기", 12, 170, 1, u.size, "", (v) => { u.size = v; renderSoon(b.id); }),
+      slider("한 줄 글자 수", 3, 24, 1, u.cols, "", (v) => { u.cols = v; renderSoon(b.id); }));
+    if (u.shape === "sfx" || u.shape === "plain") sliders.appendChild(slider("기울기", -30, 30, 1, u.rot || 0, "°", (v) => { u.rot = v; renderSoon(b.id); }));
+    body.appendChild(sliders);
+    if (SHAPES[u.shape].tail) {
+      const sw = h("input", { type: "checkbox", id: "tailOn" }); sw.checked = !!(u.tail && u.tail.on);
+      sw.addEventListener("change", () => { u.tail = u.tail || {}; u.tail.on = sw.checked; if (sw.checked && u.tail.x == null) autoTail(b, u); renderBlock(b.id); commit(); });
+      body.appendChild(sec("꼬리", h("label", { class: "switch" }, h("span", { text: "꼬리 보이기" }), sw),
+        h("div", { class: "row" }, h("button", { type: "button", class: "btn small", onclick: () => { autoTail(b, u); renderBlock(b.id); commit(); sw.checked = true; } }, "꼬리 아래로 자동")),
+        h("p", { class: "hint", text: "파란 점을 끌어서 말하는 사람의 입 쪽을 가리키게 하세요." })));
+    }
+    const who = h("input", { type: "text", value: u.who || "", placeholder: "예) 카일", "aria-label": "말하는 사람" });
+    who.addEventListener("input", () => { u.who = who.value.trim(); commitSoon(); });
+    body.appendChild(h("label", { class: "fld" }, h("span", { class: "fld-l", text: "말하는 사람 (자동 배치·AI가 참고해요)" }), who));
+    body.appendChild(h("div", { class: "row" },
+      h("button", { type: "button", class: "btn small", onclick: () => { const c = JSON.parse(JSON.stringify(u)); c.id = nid("u"); c.x = clamp(u.x + 6, 0, 100); c.y = clamp(u.y + 8, 0, 100); if (c.tail) { c.tail.y = clamp(c.tail.y + 8, 0, 100); } b.bubbles.push(c); normalizeBubble(b, c); renderBlock(b.id); commit(); select({ block: b.id, bubble: c.id }); } }, "복제"),
+      h("button", { type: "button", class: "btn small", onclick: () => { const i = b.bubbles.indexOf(u); b.bubbles.splice(i, 1); b.bubbles.push(u); renderBlock(b.id); commit(); toast("맨 앞으로 가져왔어요"); } }, "맨 앞으로"),
+      h("button", { type: "button", class: "btn small danger", onclick: () => removeBubble(b, u) }, "삭제")));
+    if (!isMobile()) body.appendChild(h("p", { class: "kbd", text: "Delete 지우기 · 방향키 미세 이동 · Esc 선택 해제" }));
+  }
+  function removeBubble(b, u) { b.bubbles = b.bubbles.filter((x) => x !== u); renderBlock(b.id); commit(); select({ block: b.id }); toast("말풍선을 지웠어요"); }
+  function setShape(b, u, s) {
+    const old = u.shape; if (old === s) return;
+    if (u.font === defaultFontFor(old) || !FONTS[u.font]) u.font = defaultFontFor(s);
+    const dOld = shapeDefaults(old), dNew = shapeDefaults(s);
+    if (u.size === dOld.size || (old === "sfx") !== (s === "sfx")) u.size = dNew.size;
+    if (u.cols === dOld.cols || (old === "box") !== (s === "box")) u.cols = dNew.cols;
+    u.rot = dNew.rot;
+    u.shape = s;
+    if (SHAPES[s].tail && (!u.tail || u.tail.x == null)) autoTail(b, u);
+    if (SHAPES[s].tail && u.tail && !SHAPES[old].tail) u.tail.on = true;
+    normalizeBubble(b, u); renderBlock(b.id); commit(); buildInspector();
+  }
+  function inspImage(b) {
+    const idx = P.blocks.filter((x) => x.type === "image").indexOf(b) + 1;
+    setTitle("컷 " + idx, "빈 곳을 두 번 누르면 그 자리에 말풍선이 생겨요");
+    body.appendChild(h("div", { class: "row" },
+      h("button", { type: "button", class: "btn primary", onclick: () => addBubbleSmart(b) }, "+ 말풍선"),
+      h("button", { type: "button", class: "btn", disabled: !b.bubbles.length, onclick: () => { autoLayout(b); renderBlock(b.id); commit(); toast("이 컷의 말풍선을 다시 놓았어요"); } }, "자동 배치")));
+    body.appendChild(h("div", { class: "ai-box" }, h("div", { class: "sec-l", text: "대사 자동완성 · 폰 AI" }),
+      h("div", { class: "row" }, h("button", { type: "button", class: "btn ai", onclick: async (e) => {
+        const btn = e.currentTarget, label = btn.textContent; btn.disabled = true; btn.textContent = "그림 보고 쓰는 중…";
+        const ok = await autoLinesForBlock(b);
+        if (ok) { renderStrip(); commit(); select({ block: b.id }, { reveal: true }); toast("대사를 넣었어요. 마음에 안 들면 되돌리기를 누르세요."); }
+        else { btn.disabled = false; btn.textContent = label; }
+      } }, b.bubbles.length ? "대사 다시 쓰기" : "그림 보고 대사 쓰기")),
+      h("p", { class: "hint", text: b.bubbles.length ? "지금 말풍선을 지우고 새로 써요." : "앞 컷 흐름을 이어서 대사 1~3개를 넣어요." })));
+    if (b.bubbles.length) {
+      const chips = h("div", { class: "chips" });
+      b.bubbles.forEach((u) => chips.appendChild(h("button", { type: "button", class: "chip-b", onclick: () => select({ block: b.id, bubble: u.id }, { reveal: true }) }, (SHAPES[u.shape].label) + " · " + (u.text || "").replace(/\n/g, " ").slice(0, 16))));
+      body.appendChild(sec("이 컷의 말풍선 " + b.bubbles.length + "개", chips));
+    }
+    body.appendChild(sec("컷", h("div", { class: "row" },
+      h("button", { type: "button", class: "btn small", onclick: () => { replaceTarget = b.id; $("fileReplace").click(); } }, "사진 바꾸기"),
+      h("button", { type: "button", class: "btn small", onclick: () => moveBlock(b.id, -1) }, "↑ 위로"),
+      h("button", { type: "button", class: "btn small", onclick: () => moveBlock(b.id, 1) }, "↓ 아래로")),
+      h("div", { class: "row" },
+        h("button", { type: "button", class: "btn small", onclick: () => { const n = makeNarr("나레이션"); insertAfter(b.id, n); select({ block: n.id }, { focus: true, selectAll: true, reveal: true }); } }, "아래에 나레이션"),
+        h("button", { type: "button", class: "btn small danger", onclick: () => deleteBlock(b.id) }, "컷 지우기"))));
+  }
+  function inspNarr(b) {
+    setTitle("나레이션", "컷 사이 여백에 들어가는 글이에요");
+    body.appendChild(textArea("nText", b.text, "나레이션을 입력하세요", (v) => { b.text = v; renderBlock(b.id); }, 3));
+    body.appendChild(h("div", { class: "grid2" },
+      slider("글자 크기", 16, 56, 1, b.size, "", (v) => { b.size = v; renderSoon(b.id); }),
+      slider("위아래 여백", 20, 360, 10, b.pad, "", (v) => { b.pad = v; renderSoon(b.id); })));
+    body.appendChild(sec("정렬", seg([["center", "가운데"], ["left", "왼쪽"]], b.align, (v) => { b.align = v; renderBlock(b.id); commit(); })));
+    body.appendChild(sec("나레이션 글꼴 (전체)", fontGrid(P.settings.narrFont, (f) => { P.settings.narrFont = f; P.blocks.forEach((x) => x.type === "narration" && renderBlock(x.id)); commit(); })));
+    body.appendChild(h("div", { class: "row" },
+      h("button", { type: "button", class: "btn small", onclick: () => moveBlock(b.id, -1) }, "↑ 위로"),
+      h("button", { type: "button", class: "btn small", onclick: () => moveBlock(b.id, 1) }, "↓ 아래로"),
+      h("button", { type: "button", class: "btn small danger", onclick: () => deleteBlock(b.id) }, "지우기")));
+  }
+  function inspSpace(b) {
+    setTitle("빈 여백", "장면 전환이나 여운을 줄 때 써요");
+    body.appendChild(slider("높이", 40, 1600, 20, b.h, "px", (v) => { b.h = v; renderSoon(b.id); }));
+    body.appendChild(h("div", { class: "row" },
+      h("button", { type: "button", class: "btn small", onclick: () => moveBlock(b.id, -1) }, "↑ 위로"),
+      h("button", { type: "button", class: "btn small", onclick: () => moveBlock(b.id, 1) }, "↓ 아래로"),
+      h("button", { type: "button", class: "btn small danger", onclick: () => deleteBlock(b.id) }, "지우기")));
+  }
+  let confirmNew = false;
+  function inspSettings() {
+    setTitle("전체 설정", isMobile() ? "컷을 누르면 편집, 빈 곳 두 번 누르면 말풍선" : "컷을 누르면 편집할 수 있어요");
+    const st = P.settings;
+    body.appendChild(sec("바탕색", seg(BGS, st.bg, (v) => { st.bg = v; renderStrip(); commit(); })));
+    body.appendChild(slider("컷 사이 여백", 0, 300, 10, st.gap, "", (v) => { st.gap = v; clearTimeout(gapT); gapT = setTimeout(renderStrip, 60); }));
+    body.appendChild(sec("컷 모양", seg([["full", "꽉 채우기"], ["border", "테두리 컷"]], st.frame, (v) => { st.frame = v; renderStrip(); commit(); })));
+    body.appendChild(sec("기본 말풍선", seg([["oval", "동그란 말풍선"], ["round", "둥근 네모"]], st.bubbleShape, (v) => { st.bubbleShape = v; commit(); })));
+    body.appendChild(sec("대사 글꼴", fontGrid(st.bubbleFont, (f) => { st.bubbleFont = f; commit(); }),
+      h("button", { type: "button", class: "btn small", onclick: () => { let n = 0; P.blocks.forEach((b) => b.type === "image" && b.bubbles.forEach((u) => { if (!SHAPES[u.shape].font) { u.font = st.bubbleFont; n++; } })); renderStrip(); commit(); toast("대사 " + n + "개에 적용했어요"); } }, "지금 있는 대사에도 적용")));
+    body.appendChild(sec("나레이션 글꼴", fontGrid(st.narrFont, (f) => { st.narrFont = f; renderStrip(); commit(); })));
+    const nb = h("button", { type: "button", class: "btn small danger" }, "모두 지우고 새로 시작");
+    nb.addEventListener("click", () => {
+      if (!confirmNew) { confirmNew = true; nb.textContent = "한 번 더 누르면 모두 지워요"; setTimeout(() => { confirmNew = false; nb.textContent = "모두 지우고 새로 시작"; }, 4000); return; }
+      confirmNew = false; newProject();
+    });
+    body.appendChild(sec("폰 AI", h("div", { class: "row" }, h("button", { type: "button", class: "btn small", onclick: openEngine }, "폰 AI 상태 보기")),
+      h("p", { class: "hint", text: engine.ready ? "켜져 있어요 · Qwen3.5 0.8B" : engine.cached ? "받아 둠 · 쓸 때 자동으로 켜져요" : "아직 안 받았어요 (약 1GB)" })));
+    body.appendChild(sec("작업", h("div", { class: "row" },
+      h("button", { type: "button", class: "btn small", onclick: async () => { await loadSample(); renderStrip(); commit(); select({}); toast("예시를 불러왔어요"); } }, "예시 불러오기"), nb),
+      h("p", { class: "hint", text: store.db ? "작업은 이 브라우저에 자동으로 저장돼요." : "이 화면에서는 자동 저장이 안 돼요. 다 만들면 이미지로 저장해 주세요." })));
+  }
+  let gapT;
+
+  // sheet behaviour (phone)
+  $("inspHead").addEventListener("click", (e) => { if (!isMobile() || e.target.closest("button")) return; $("insp").classList.toggle("collapsed"); updateSheetH(); });
+  $("inspDone").addEventListener("click", () => select({}));
+  function updateSheetH() { requestAnimationFrame(() => document.documentElement.style.setProperty("--sheet-h", isMobile() ? $("insp").offsetHeight + "px" : "0px")); }
+  if (window.ResizeObserver) new ResizeObserver(updateSheetH).observe($("insp"));
+
+  // ---------- on-device AI: Qwen3.5-0.8B (sees pictures, writes Korean) running inside this phone via WebGPU ----------
+  const TF_URL = "https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.3.2/dist/transformers.min.js";
+  const MODEL_ID = "onnx-community/Qwen3.5-0.8B-ONNX";
+  const engine = { tf: null, processor: null, model: null, ready: false, loading: null, cached: false, device: "", pct: 0, busy: false, err: "" };
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+  const hasGPU = () => !!(navigator.gpu);
+  const llmReady = () => engine.ready;
+  async function checkCached() {
+    try {
+      if (!("caches" in window)) return false;
+      const names = await caches.keys();
+      for (const n of names) {
+        if (!/transformers/i.test(n)) continue;
+        const c = await caches.open(n), keys = await c.keys();
+        if (keys.some((k) => k.url.includes("Qwen3.5-0.8B-ONNX") && /decoder_model_merged/.test(k.url))) return true;
+      }
+    } catch (e) { /* storage not available */ }
+    return false;
+  }
+  async function loadModel() {
+    if (engine.ready) return true;
+    if (engine.loading) return engine.loading;
+    engine.err = ""; engine.pct = 0;
+    engine.loading = (async () => {
+      try {
+        if (window.__SEDO_MOCK__) { engine.device = "mock"; await sleep(50); engine.ready = true; return true; }
+        try { await navigator.storage && navigator.storage.persist && navigator.storage.persist(); } catch (e) { /* optional */ }
+        const tf = engine.tf || (engine.tf = await import(TF_URL));
+        tf.env.allowLocalModels = false;
+        const files = new Map();
+        const progress = (p) => {
+          if (p && p.status === "progress" && p.total) { files.set(p.file, [p.loaded || 0, p.total]); let a = 0, t = 0; files.forEach(([x, y]) => { a += x; t += y; }); engine.pct = t ? Math.round(a / t * 100) : 0; engineUI(); }
+        };
+        engine.device = hasGPU() ? "webgpu" : "wasm";
+        engine.processor = await tf.AutoProcessor.from_pretrained(MODEL_ID, { progress_callback: progress });
+        engine.model = await tf.Qwen3_5ForConditionalGeneration.from_pretrained(MODEL_ID, {
+          dtype: { embed_tokens: "q4", vision_encoder: engine.device === "webgpu" ? "fp16" : "q8", decoder_model_merged: "q4" },
+          device: engine.device, progress_callback: progress
+        });
+        engine.ready = true; engine.cached = true; engine.pct = 100;
+        return true;
+      } catch (e) {
+        const m = String((e && e.message) || e);
+        engine.err = /memory|OOM|allocation|Out of/i.test(m) ? "memory" : /fetch|network|Failed to load|NetworkError/i.test(m) ? "network" : m.slice(0, 160);
+        engine.processor = null; engine.model = null;
+        return false;
+      } finally { engine.loading = null; engineUI(); }
+    })();
+    engineUI();
+    return engine.loading;
+  }
+  async function ensureLLM() {
+    if (engine.ready) return true;
+    openEngine();
+    const ok = await loadModel();
+    if (ok) { closeModal("mEngine"); toast("폰 AI 준비 완료"); }
+    return ok;
+  }
+  function cleanOut(t) { return String(t || "").replace(/<think>[\s\S]*?<\/think>/g, "").replace(/<\/?think>/g, "").replace(/<\|[^|]*\|>/g, "").trim(); }
+  async function runLLM(prompt, blob, maxTokens, onPiece) {
+    if (window.__SEDO_MOCK__) return cleanOut(await window.__SEDO_MOCK__(prompt, !!blob));
+    const tf = engine.tf;
+    const content = blob ? [{ type: "image" }, { type: "text", text: prompt }] : [{ type: "text", text: prompt }];
+    const text = engine.processor.apply_chat_template([{ role: "user", content }], { add_generation_prompt: true, enable_thinking: false });
+    let image = null;
+    if (blob) {
+      image = await tf.RawImage.fromBlob(blob);
+      const s = Math.min(1, 448 / Math.max(image.width, image.height));
+      if (s < 1) image = await image.resize(Math.round(image.width * s), Math.round(image.height * s));
+    }
+    const inputs = image ? await engine.processor(text, image) : await engine.processor(text);
+    let acc = "";
+    const streamer = new tf.TextStreamer(engine.processor.tokenizer, { skip_prompt: true, skip_special_tokens: true, callback_function: (piece) => { acc += piece; if (onPiece) onPiece(acc); } });
+    const out = await engine.model.generate({ ...inputs, max_new_tokens: maxTokens || 220, do_sample: true, temperature: 0.75, top_p: 0.9, repetition_penalty: 1.12, streamer });
+    const decoded = engine.processor.batch_decode(out.slice(null, [inputs.input_ids.dims.at(-1), null]), { skip_special_tokens: true });
+    return cleanOut(decoded[0] || acc);
+  }
+  const ENG_MSG = {
+    no_gpu: "이 브라우저는 WebGPU가 안 돼서 AI가 아주 느릴 수 있어요. 안드로이드는 최신 Chrome, 아이폰은 iOS 26 이상 Safari를 쓰세요.",
+    memory: "폰 메모리가 부족해요. 다른 앱을 닫고 다시 해 주세요.",
+    network: "AI를 받다가 인터넷이 끊겼어요. 와이파이에서 다시 해 주세요.",
+    empty: "AI가 대사를 비워서 돌려줬어요. 한 번 더 눌러 주세요."
+  };
+  async function engRun(fn, statusEl) {
+    try { return await fn(); }
+    catch (e) {
+      const m = String((e && (e.message || e.code)) || e);
+      const msg = ENG_MSG[e && e.code] || (/memory|OOM|allocation/i.test(m) ? ENG_MSG.memory : "AI 오류: " + m.slice(0, 120));
+      if (statusEl) { statusEl.textContent = msg; statusEl.classList.add("err"); }
+      toast(msg, true);
+      return null;
+    }
+  }
+
+  // script <-> lines (the small model writes plain script lines, which the existing parser understands)
+  const KIND_SET = ["speech", "shout", "thought", "whisper", "wobble", "box", "sfx", "plain"];
+  function lineToScript(l) {
+    const t = String(l.text || "").trim().replace(/\n/g, " / "); if (!t) return null;
+    const sp = l.speaker && !["box", "sfx", "plain"].includes(l.kind) ? l.speaker + ": " : "";
+    switch (l.kind) {
+      case "box": return "[칸] " + t;
+      case "sfx": return "(효과) " + t;
+      case "plain": return "(글자) " + t;
+      case "thought": return sp + "(생각) " + t;
+      case "whisper": return sp + "(속삭임) " + t;
+      case "wobble": return sp + "(떨림) " + t;
+      case "shout": return sp + (/[!！]{2,}/.test(t) ? "" : "(외침) ") + t;
+      default: return sp + t;
+    }
+  }
+  function sectionToScript(sec) {
+    const n = (t) => "> " + String(t).replace(/\n/g, " / ");
+    return [].concat((sec.before || []).filter(Boolean).map(n), (sec.items || []).map(lineToScript), (sec.after || []).filter(Boolean).map(n)).filter(Boolean).join("\n");
+  }
+  function parseSection(text) {
+    const sec = { before: [], items: [], after: [] };
+    String(text || "").split("\n").forEach((l) => { const t = l.trim(); if (!t || SEP.test(t)) return; const it = parseLine(t); if (it.kind === "narr") (sec.items.length ? sec.after : sec.before).push(it.text); else sec.items.push(it); });
+    return sec;
+  }
+  // keep only lines that look like webtoon script, drop chatter the model may add
+  function scriptFromModel(raw, maxItems) {
+    const keep = [];
+    String(raw || "").split("\n").forEach((l) => {
+      let t = l.trim().replace(/^[-*•\d.)\s]+(?=\S)/, "").replace(/^["“]|["”]$/g, "").trim();
+      if (!t || /^(형식|규칙|예시|컷\s*\d|장면\s*[:：]|그림\s*[:：]|대본|출력)/.test(t) || t.length > 80) return;
+      if (/^[A-Za-z]/.test(t) && !/[가-힣]/.test(t)) return;
+      keep.push(t);
+    });
+    const sec = parseSection(keep.join("\n"));
+    sec.items = sec.items.filter((it) => /[가-힣!?…~]/.test(it.text)).slice(0, maxItems || 4);
+    sec.before = sec.before.slice(0, 1); sec.after = sec.after.slice(0, 1);
+    return sec;
+  }
+  function bubbleToLine(u) { return { kind: u.shape === "oval" || u.shape === "round" ? "speech" : u.shape, speaker: u.who || "", text: u.text }; }
+  const imageBlocks = () => P.blocks.filter((b) => b.type === "image");
+  const FORMAT_HELP = "형식은 아래처럼 한 줄에 하나씩, 다른 설명 없이 쓴다.\n이름: 대사\n(효과) 효과음\n(생각) 속마음\n예시)\n카일: 단장님! 괜찮으십니까?\n(효과) 쾅!";
+
+  async function autoLinesFor(blob, ctx) {
+    const prompt = "너는 한국 세로 웹툰 작가다. " + (blob ? "이 그림은 웹툰의 컷 " + ctx.i + " / " + ctx.n + "이다. 그림 속 인물의 표정, 동작, 분위기를 보고" : "아래 장면을 보고") + " 이 컷의 대사를 1~3줄 써라. 한 줄은 30자 이내의 자연스러운 한국어 구어체.\n" +
+      (ctx.scene ? "장면: " + ctx.scene + "\n" : "") + (ctx.story ? "전체 이야기: " + ctx.story + "\n" : "") + (ctx.chars ? "등장인물: " + ctx.chars + "\n" : "") + (ctx.prev ? "앞 컷 대본:\n" + ctx.prev + "\n" : "") + FORMAT_HELP;
+    const raw = await runLLM(prompt, blob, 160);
+    const sec = scriptFromModel(raw, 3);
+    if (!sec.items.length) throw { code: "empty" };
+    return { before: sec.before[0] || "", lines: sec.items, after: "" };
+  }
+  async function autoLinesForBlock(b, statusEl) {
+    if (!(await ensureLLM())) return false;
+    const list = imageBlocks(), idx = list.indexOf(b);
+    const prev = list.slice(Math.max(0, idx - 2), idx).map((x) => sectionToScript({ items: x.bubbles.map(bubbleToLine) })).filter(Boolean).join("\n");
+    const blob = await panelBlob(b.img, 640);
+    if (!blob) return false;
+    const r = await engRun(() => autoLinesFor(blob, { i: idx + 1, n: list.length, story: sb.story || "", chars: sb.chars || "", prev }), statusEl);
+    if (!r) return false;
+    b.bubbles = r.lines.map(itemToBubble);
+    autoLayout(b);
+    const i = P.blocks.indexOf(b);
+    if (r.before && !(P.blocks[i - 1] && P.blocks[i - 1].type === "narration")) P.blocks.splice(i, 0, makeNarr(r.before));
+    return true;
+  }
+  function aiPolishBox(b, u, ta) {
+    const out = h("div", { class: "chips", style: "flex-direction:column;align-items:stretch" });
+    const go = async (style) => {
+      if (engine.busy) return;
+      if (!(await ensureLLM())) return;
+      engine.busy = true;
+      out.innerHTML = ""; const p = h("p", { class: "hint" }, h("span", { class: "spin" }), " 폰 AI가 고르는 중…"); out.appendChild(p);
+      const prompt = "다음 웹툰 대사를 '" + style + "' 방향으로 고친 버전 3개를 써라. 각각 30자 이내, 원래 뜻과 말투(존댓말/반말)는 유지. 한 줄에 하나씩, 번호나 설명 없이 대사만 쓴다.\n대사: " + u.text;
+      const raw = await engRun(() => runLLM(prompt, null, 120));
+      engine.busy = false; out.innerHTML = "";
+      if (!raw) return;
+      const opts = raw.split("\n").map((l) => l.trim().replace(/^[-*•\d.)\s]+(?=\S)/, "").replace(/^["“'‘]|["”'’]$/g, "").replace(/^[^:：]{1,10}[:：]\s*/, "").trim()).filter((l) => l && /[가-힣]/.test(l) && l.length <= 60).slice(0, 3);
+      if (!opts.length) { out.appendChild(h("p", { class: "hint", text: ENG_MSG.empty })); return; }
+      opts.forEach((s) => out.appendChild(h("button", { type: "button", class: "sugg", onclick: () => { u.text = s; ta.value = s; renderBlock(b.id); commit(); } }, s)));
+    };
+    return h("div", { class: "ai-box" }, h("div", { class: "sec-l", text: "대사 다듬기 · 폰 AI" }),
+      h("div", { class: "chips" }, ["짧게", "웹툰 말투로", "더 웃기게", "더 극적으로"].map((s) => h("button", { type: "button", class: "chip-b", onclick: () => go(s) }, s))), out);
+  }
+
+  // ---------- storyboard: description -> cuts (+prompts for the phone drawing app) -> pictures -> webtoon ----------
+  const SB_STYLE = "masterpiece, best quality, korean webtoon style, clean lineart, cel shading, vivid colors";
+  const SB_NEG = "lowres, bad anatomy, bad hands, extra fingers, worst quality, low quality, blurry, text, letters, speech bubble, watermark, signature, logo";
+  let sb = { story: "", chars: "", n: 6, aspect: "3:4", style: SB_STYLE, neg: SB_NEG, mode: "replace", autofill: true, cuts: [] };
+  let sbSaveT;
+  function saveSB() { clearTimeout(sbSaveT); sbSaveT = setTimeout(() => store.run("kv", "readwrite", (st) => st.put(JSON.stringify(sb, (k, v) => (k.startsWith("_") ? undefined : v)), "storyboard")), 400); }
+  async function loadSB() {
+    const raw = await store.run("kv", "readonly", (st) => st.get("storyboard")); if (!raw) return;
+    let v; try { v = JSON.parse(raw); } catch (e) { return; }
+    if (!v || !Array.isArray(v.cuts)) return;
+    sb = Object.assign(sb, v);
+    for (const c of sb.cuts) {
+      if (!c.img || images.has(c.img)) continue;
+      const blob = await store.run("img", "readonly", (st) => st.get(c.img));
+      if (blob) { try { await addBlob(blob, c.img); savedImgs.add(c.img); } catch (e) { c.img = null; } } else c.img = null;
+    }
+  }
+  function newCut(o) { return Object.assign({ id: nid("c"), scene: "", prompt: "", script: "", img: null }, o || {}); }
+  function openStory() { closeModal("mQuick"); renderStory(); openModal("mStory"); }
+  function fullPrompt(c) { return [sb.style, (c.prompt || "").trim() || (c.scene || "").trim()].filter((x) => x && x.trim()).join(", "); }
+  async function copyText(t, okMsg) {
+    try { await navigator.clipboard.writeText(t); toast(okMsg || "복사했어요"); }
+    catch (e) { const ta = h("textarea", { style: "position:fixed;opacity:0" }); ta.value = t; document.body.appendChild(ta); ta.select(); try { document.execCommand("copy"); toast(okMsg || "복사했어요"); } catch (er) { toast("복사가 안 돼요. 길게 눌러서 복사해 주세요.", true); } ta.remove(); }
+  }
+  function renderStory() {
+    $("sStory").value = sb.story; $("sChars").value = sb.chars; $("sStyle").value = sb.style; $("sNeg").value = sb.neg; $("sN").value = String(sb.n);
+    $("sAuto").checked = !!sb.autofill;
+    const as = $("sAspect"); as.innerHTML = ""; as.appendChild(seg([["3:4", "3:4"], ["2:3", "2:3"], ["9:16", "9:16"], ["1:1", "1:1"], ["4:3", "4:3 가로"]], sb.aspect, (v) => { sb.aspect = v; saveSB(); }));
+    const md = $("sMode"); md.innerHTML = ""; md.appendChild(seg([["replace", "지우고 새로 만들기"], ["append", "맨 뒤에 이어 붙이기"]], sb.mode, (v) => { sb.mode = v; saveSB(); }));
+    renderCuts();
+  }
+  function renderCuts() {
+    const box = $("sCuts"); box.innerHTML = "";
+    if (!sb.cuts.length) box.appendChild(h("p", { class: "hint", text: "아직 콘티가 없어요. 위에서 ‘폰 AI로 콘티 짜기’를 누르거나 빈 콘티를 만들어 직접 써 보세요." }));
+    sb.cuts.forEach((c, i) => box.appendChild(cutCard(c, i)));
+    const withImg = sb.cuts.filter((c) => c.img && images.has(c.img)).length;
+    $("sCount").textContent = sb.cuts.length ? "컷 " + sb.cuts.length + "개 · 그림 " + withImg + "개" : "";
+  }
+  let pickTarget = null;
+  function cutCard(c, i) {
+    const im = c.img && images.get(c.img);
+    const thumb = h("button", { type: "button", class: "cut-thumb", "aria-label": "컷 " + (i + 1) + " 그림 넣기", onclick: () => { pickTarget = c.id; $("fileCut").click(); } },
+      im ? h("img", { src: im.el.src, alt: "" }) : h("span", { text: "+ 그림 넣기" }));
+    const scene = h("input", { type: "text", value: c.scene, placeholder: "장면 설명 (한국어)", "aria-label": "컷 " + (i + 1) + " 장면 설명" });
+    scene.addEventListener("input", () => { c.scene = scene.value; saveSB(); });
+    const prompt = h("textarea", { rows: 2, placeholder: "그림 프롬프트 (영어 태그)\n예) 1girl, black hair, red eyes, surprised, upper body", "aria-label": "컷 " + (i + 1) + " 그림 프롬프트" });
+    prompt.value = c.prompt; prompt.addEventListener("input", () => { c.prompt = prompt.value; saveSB(); });
+    const script = h("textarea", { rows: 3, placeholder: "대사 (비워 두면 자동완성할 수 있어요)\n카일: ……단장님?", "aria-label": "컷 " + (i + 1) + " 대사" });
+    script.value = c.script; script.addEventListener("input", () => { c.script = script.value; saveSB(); });
+    const st = h("p", { class: "hint" });
+    return h("div", { class: "cut-card" },
+      h("div", { class: "cut-top" }, h("b", { text: "컷 " + (i + 1) }),
+        h("div", { class: "row" },
+          h("button", { type: "button", class: "btn small", "aria-label": "컷 " + (i + 1) + " 위로", onclick: () => { if (i > 0) { [sb.cuts[i - 1], sb.cuts[i]] = [sb.cuts[i], sb.cuts[i - 1]]; renderCuts(); saveSB(); } } }, "↑"),
+          h("button", { type: "button", class: "btn small danger", onclick: () => { sb.cuts.splice(i, 1); renderCuts(); saveSB(); } }, "삭제"))),
+      h("div", { class: "cut-body" }, thumb, h("div", { class: "cut-fields" }, scene, prompt, script)),
+      h("div", { class: "row" },
+        h("button", { type: "button", class: "btn small", onclick: () => copyText(fullPrompt(c), "컷 " + (i + 1) + " 프롬프트를 복사했어요. 그림 앱에 붙여 넣으세요.") }, "프롬프트 복사"),
+        h("button", { type: "button", class: "btn small ai", onclick: () => autoCut(c, st, script) }, c.script.trim() ? "대사 다시 쓰기" : "대사 자동완성")),
+      st);
+  }
+  async function storeImage(blob) {
+    const key = await addBlob(blob);
+    await store.run("img", "readwrite", (s) => s.put(images.get(key).blob, key)); savedImgs.add(key);
+    return key;
+  }
+  async function putCutImages(files, startId) {
+    const empty = sb.cuts.filter((c) => !(c.img && images.has(c.img)));
+    let targets = startId ? [sb.cuts.find((c) => c.id === startId)].filter(Boolean) : empty;
+    let n = 0;
+    for (const f of files) {
+      let c = targets.shift();
+      if (!c) { c = newCut(); sb.cuts.push(c); }
+      try { const keys = await importFiles([f]); if (!keys[0]) continue; await store.run("img", "readwrite", (s) => s.put(images.get(keys[0]).blob, keys[0])); savedImgs.add(keys[0]); c.img = keys[0]; n++; } catch (e) { /* skip */ }
+    }
+    saveSB(); renderCuts();
+    return n;
+  }
+  async function fillCut(c, statusEl) {
+    const i = sb.cuts.indexOf(c);
+    const hasImg = !!(c.img && images.has(c.img));
+    if (!hasImg && !c.scene.trim() && !c.prompt.trim()) { if (statusEl) statusEl.textContent = "장면 설명이나 그림이 있어야 대사를 쓸 수 있어요."; return false; }
+    if (!(await ensureLLM())) return false;
+    const prev = sb.cuts.slice(Math.max(0, i - 2), i).map((x) => x.script).filter(Boolean).join("\n");
+    const blob = hasImg ? await panelBlob(c.img, 640) : null;
+    const r = await engRun(() => autoLinesFor(blob, { i: i + 1, n: sb.cuts.length, scene: c.scene || c.prompt, story: sb.story, chars: sb.chars, prev }), statusEl);
+    if (!r) return false;
+    c.script = sectionToScript({ before: r.before ? [r.before] : [], items: r.lines, after: [] });
+    saveSB();
+    return true;
+  }
+  async function autoCut(c, st, ta) {
+    st.classList.remove("err"); st.innerHTML = ""; st.append(h("span", { class: "spin" }), " 폰 AI가 대사 쓰는 중…");
+    const ok = await fillCut(c, st);
+    if (ok) { ta.value = c.script; st.textContent = "대사를 썼어요. 마음대로 고쳐도 돼요."; }
+    else if (!st.classList.contains("err") && st.querySelector(".spin")) st.textContent = "";
+  }
+  function planPrompt(n) {
+    return "너는 한국 세로 웹툰 콘티 작가다. 아래 이야기로 컷 " + n + "개짜리 콘티를 짜라.\n이야기: " + sb.story.trim() + "\n" +
+      (sb.chars.trim() ? "등장인물 외모 태그:\n" + sb.chars.trim() + "\n" : "") +
+      "컷마다 아래 형식으로 쓴다. 다른 설명은 쓰지 않는다.\n컷1\n장면: 한국어 한 줄 장면 설명\n그림: 그림 AI용 영어 태그 (인원수, 외모, 표정, 동작, 구도, 배경)\n이름: 대사\n(효과) 효과음\n\n" +
+      "예시)\n컷1\n장면: 무너진 성벽 위로 금빛이 쏟아진다\n그림: 1girl, long black hair, red eyes, broken armor, glowing light, castle wall, dawn, from below\n(효과) 콰아아—\n카일: 단장님?!\n\n대사는 컷마다 0~3줄, 한 줄 30자 이내의 한국어 구어체.";
+  }
+  function parsePlan(raw, n) {
+    const out = []; let cur = null;
+    String(raw || "").split("\n").forEach((l) => {
+      const t = l.trim().replace(/^[*#\s]+/, "");
+      if (!t) return;
+      if (/^컷\s*\d+/.test(t)) { cur = { scene: "", prompt: "", lines: [] }; out.push(cur); const rest = t.replace(/^컷\s*\d+\s*[:.)\-]?\s*/, ""); if (rest) cur.scene = rest; return; }
+      if (!cur) { cur = { scene: "", prompt: "", lines: [] }; out.push(cur); }
+      let m;
+      if ((m = t.match(/^장면\s*[:：]\s*(.+)$/))) { cur.scene = m[1].trim(); return; }
+      if ((m = t.match(/^(?:그림|프롬프트|prompt)\s*[:：]\s*(.+)$/i))) { cur.prompt = m[1].trim(); return; }
+      cur.lines.push(t);
+    });
+    return out.filter((c) => c.scene || c.prompt || c.lines.length).slice(0, Math.max(n, 1) + 2).map((c) => newCut({ scene: c.scene, prompt: c.prompt, script: sectionToScript(scriptFromModel(c.lines.join("\n"), 3)) }));
+  }
+  let confirmPlan = false;
+  function bindStory() {
+    $("sStory").addEventListener("input", (e) => { sb.story = e.target.value; saveSB(); });
+    $("sChars").addEventListener("input", (e) => { sb.chars = e.target.value; saveSB(); });
+    $("sStyle").addEventListener("input", (e) => { sb.style = e.target.value; saveSB(); });
+    $("sNeg").addEventListener("input", (e) => { sb.neg = e.target.value; saveSB(); });
+    $("sN").addEventListener("change", (e) => { sb.n = Number(e.target.value); saveSB(); });
+    $("sAuto").addEventListener("change", (e) => { sb.autofill = e.target.checked; saveSB(); });
+    $("toStory").addEventListener("click", openStory);
+    $("toQuick").addEventListener("click", () => { closeModal("mStory"); openQuick(); });
+    $("sAdd").addEventListener("click", () => { sb.cuts.push(newCut()); renderCuts(); saveSB(); });
+    $("sEmpty").addEventListener("click", () => { for (let i = 0; i < sb.n; i++) sb.cuts.push(newCut()); renderCuts(); saveSB(); });
+    $("sCopyAll").addEventListener("click", () => {
+      if (!sb.cuts.length) { toast("콘티가 없어요", true); return; }
+      copyText(sb.cuts.map((c, i) => "컷 " + (i + 1) + ": " + fullPrompt(c)).join("\n\n") + "\n\n빼고 싶은 것: " + sb.neg, "모든 컷 프롬프트를 복사했어요");
+    });
+    $("sCopyNeg").addEventListener("click", () => copyText(sb.neg, "빼고 싶은 것(네거티브)을 복사했어요"));
+    $("sPickAll").addEventListener("click", () => { pickTarget = null; $("fileCuts").click(); });
+    $("fileCuts").addEventListener("change", async (e) => {
+      const files = Array.from(e.target.files || []); e.target.value = ""; if (!files.length) return;
+      files.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
+      const n = await putCutImages(files, null); toast("그림 " + n + "장을 빈 컷에 순서대로 넣었어요");
+    });
+    $("fileCut").addEventListener("change", async (e) => {
+      const files = Array.from(e.target.files || []); e.target.value = ""; if (!files.length) return;
+      await putCutImages(files.slice(0, 1), pickTarget); pickTarget = null;
+    });
+    $("sPlan").addEventListener("click", async (e) => {
+      const st = $("sStatus"), btn = e.currentTarget;
+      st.classList.remove("err");
+      if (!sb.story.trim()) { st.textContent = "어떻게 만들지 먼저 적어 주세요."; st.classList.add("err"); $("sStory").focus(); return; }
+      if (sb.cuts.length && !confirmPlan) { confirmPlan = true; st.textContent = "지금 콘티가 있어요. 한 번 더 누르면 새 콘티로 바꿔요."; setTimeout(() => { confirmPlan = false; }, 5000); return; }
+      confirmPlan = false;
+      if (!(await ensureLLM())) return;
+      btn.disabled = true; st.innerHTML = ""; const sp = h("span", { class: "spin" }); st.append(sp, " 폰 AI가 콘티 짜는 중…");
+      const raw = await engRun(() => runLLM(planPrompt(sb.n), null, Math.min(1400, 150 * sb.n + 120), (acc) => { st.innerHTML = ""; st.append(h("span", { class: "spin" }), " 콘티 짜는 중… " + acc.length + "자"); }), st);
+      btn.disabled = false;
+      if (!raw) return;
+      const cuts = parsePlan(raw, sb.n);
+      if (!cuts.length) { st.textContent = ENG_MSG.empty; st.classList.add("err"); return; }
+      sb.cuts = cuts; renderCuts(); saveSB();
+      st.textContent = "콘티 " + sb.cuts.length + "컷을 짰어요. 고칠 곳을 고친 다음 그림을 넣으세요.";
+    });
+    $("sBuild").addEventListener("click", async (e) => {
+      const st = $("sStatus2"), btn = e.currentTarget;
+      st.classList.remove("err");
+      if (!sb.cuts.length) { st.textContent = "콘티가 없어요."; st.classList.add("err"); return; }
+      const keys = sb.cuts.map((c) => (c.img && images.has(c.img) ? c.img : null));
+      if (!keys.some(Boolean)) { st.textContent = "그림이 있는 컷이 없어요. 컷의 ‘+ 그림 넣기’로 그림을 넣어 주세요."; st.classList.add("err"); return; }
+      btn.disabled = true;
+      const empty = sb.cuts.filter((c, i) => keys[i] && !c.script.trim());
+      if (sb.autofill && empty.length && (await ensureLLM())) {
+        for (let k = 0; k < empty.length; k++) {
+          st.innerHTML = ""; st.append(h("span", { class: "spin" }), " 빈 컷 대사 쓰는 중… " + (k + 1) + " / " + empty.length);
+          if (!(await fillCut(empty[k], st))) break;
+        }
+        renderCuts();
+      }
+      const sections = sb.cuts.map((c) => parseSection(c.script));
+      const r = buildBlocks(sections, keys);
+      if (sb.mode === "replace") P.blocks = r.blocks; else P.blocks = P.blocks.concat(r.blocks);
+      await ensureFonts();
+      r.blocks.filter((b) => b.type === "image").forEach(autoLayout);
+      sel = { block: null, bubble: null };
+      renderStrip(); commit(); select({});
+      btn.disabled = false; st.textContent = "";
+      closeModal("mStory");
+      const missing = keys.filter((k) => !k).length;
+      toast("컷 " + (keys.length - missing) + "개, 말풍선 " + r.bubbles + "개로 만들었어요." + (missing ? " 그림 없는 컷 " + missing + "개는 나레이션으로 넣었어요." : ""));
+      const first = r.blocks[0]; if (first) { const cv = canvasMap.get(first.id); if (cv) cv.scrollIntoView({ block: "start", behavior: "smooth" }); }
+    });
+  }
+
+  // ---------- AI settings ----------
+  function openEngine() { renderEngine(); openModal("mEngine"); }
+  function stRow(s, title, text) { return h("div", { class: "eng-row" }, h("span", { class: "eng-dot", "data-s": s }), h("div", { class: "eng-txt" }, h("b", { text: title }), h("p", { class: "hint", text }))); }
+  function engineUI() {
+    const d = $("engDot"); if (d) d.dataset.s = engine.ready ? "ok" : engine.cached || engine.loading ? "part" : "off";
+    if (!$("mEngine").hidden) renderEngine();
+    const q = $("qAutoStatus");
+    if (q && !q.dataset.busy) { q.classList.remove("err"); q.textContent = engine.ready ? "대사를 직접 쓴 컷은 그대로 두고, 빈 컷만 폰 AI가 사진을 보고 채워요." : "처음 한 번 폰 AI(약 1GB)를 받으면 그다음부터는 인터넷 없이도 돼요."; }
+  }
+  async function renderEngine() {
+    const b = $("engBody"); b.innerHTML = "";
+    let est = null; try { est = navigator.storage && navigator.storage.estimate ? await navigator.storage.estimate() : null; } catch (e) { est = null; }
+    if ($("engBody") !== b) return;
+    b.innerHTML = "";
+    b.append(stRow(hasGPU() ? "ok" : "part", "그래픽 가속 (WebGPU)", hasGPU() ? "지원돼요. 폰 AI가 빠르게 돌아가요." : ENG_MSG.no_gpu));
+    const state = engine.ready ? ["ok", "준비됐어요 · Qwen3.5 0.8B (그림 보기 + 한국어)"] : engine.loading ? ["part", "받는 중… " + engine.pct + "%"] : engine.cached ? ["part", "폰에 받아 뒀어요. 쓸 때 자동으로 켜져요."] : ["off", "아직 안 받았어요. 처음 한 번 약 1GB를 받아요 (와이파이 추천)."];
+    b.append(stRow(state[0], "폰 AI", state[1]));
+    if (engine.err) b.append(h("p", { class: "status err", text: ENG_MSG[engine.err] || "AI를 켜지 못했어요: " + engine.err }));
+    if (engine.loading) {
+      const bar = h("div", { class: "bar" }, h("i", { style: "width:" + engine.pct + "%" }));
+      b.append(bar, h("p", { class: "hint", text: "화면을 켜 둔 채로 기다려 주세요. 받은 뒤에는 인터넷이 없어도 돼요." }));
+    } else if (!engine.ready) {
+      b.append(h("button", { type: "button", class: "btn primary wide", onclick: () => loadModel() }, engine.cached ? "폰 AI 켜기" : "폰 AI 받기 (약 1GB)"));
+    }
+    if (est && est.quota) b.append(h("p", { class: "hint", text: "이 앱 저장 공간: " + (est.usage / 1e9).toFixed(2) + "GB 사용 · 최대 " + (est.quota / 1e9).toFixed(1) + "GB" }));
+    b.append(h("div", { class: "sec" }, h("div", { class: "sec-l", text: "그림은 폰 그림 앱으로" }),
+      h("p", { class: "hint", text: "그림도 폰 안에서 무료로 뽑을 수 있어요. 안드로이드는 Local Dream, 아이폰은 Draw Things 앱에서 콘티의 프롬프트를 붙여 넣고 뽑은 다음, 이 앱으로 가져오면 돼요. 안드로이드는 갤러리에서 ‘공유 → 세로툰’으로 바로 보낼 수도 있어요." })));
+    if (engine.cached && !engine.loading) b.append(h("button", { type: "button", class: "btn small danger", onclick: async () => {
+      try { for (const n of await caches.keys()) if (/transformers/i.test(n)) await caches.delete(n); } catch (e) { /* ignore */ }
+      engine.cached = false; engine.ready = false; engine.model = null; engine.processor = null; renderEngine(); engineUI(); toast("폰 AI를 지웠어요");
+    } }, "폰 AI 지우기 (저장 공간 비우기)"));
+  }
+  async function refreshEngine() { engine.cached = engine.ready || (await checkCached()); engineUI(); }
+
+  // ---------- pictures shared from other apps (Android share target) ----------
+  async function takeShared() {
+    if (!("caches" in window)) return;
+    let files = [];
+    try {
+      const c = await caches.open("sedotoon-inbox"), keys = await c.keys();
+      for (const k of keys) { const r = await c.match(k); if (r) files.push(new File([await r.blob()], "shared-" + files.length + ".png", { type: r.headers.get("Content-Type") || "image/png" })); await c.delete(k); }
+    } catch (e) { return; }
+    if (!files.length) return;
+    if (location.search) history.replaceState(null, "", location.pathname);
+    const inbox = h("div", { class: "modal", id: "mInbox", role: "dialog", "aria-modal": "true" },
+      h("div", { class: "modal-card" },
+        h("div", { class: "m-head" }, h("h2", { text: "받은 그림 " + files.length + "장" })),
+        h("p", { class: "m-sub", style: "margin-top:0", text: "그림 앱에서 보낸 그림이에요. 어디에 넣을까요?" }),
+        h("button", { type: "button", class: "btn ai wide", onclick: async () => { inbox.remove(); const n = await putCutImages(files, null); openStory(); toast("콘티의 빈 컷에 " + n + "장을 넣었어요"); } }, "콘티 빈 컷에 순서대로 넣기"),
+        h("button", { type: "button", class: "btn wide", onclick: async () => { inbox.remove(); await appendPhotos(files); } }, "웹툰 맨 뒤에 컷으로 붙이기"),
+        h("button", { type: "button", class: "btn small", onclick: () => inbox.remove() }, "취소")));
+    document.body.appendChild(inbox);
+  }
+
+  // ---------- quick build ----------
+  const qb = { src: "new", photos: [], mode: "replace" };
+  function onlySamples() { return P.blocks.every((b) => b.type !== "image" || b.img.startsWith("sample")); }
+  function existingKeys() { return P.blocks.filter((b) => b.type === "image" && images.has(b.img)).map((b) => b.img); }
+  function openModal(id) { const m = $(id); m.hidden = false; document.body.style.overflow = "hidden"; const f = m.querySelector("textarea, button"); if (f && !isMobile()) f.focus({ preventScroll: true }); }
+  function closeModal(id) { $(id).hidden = true; if (![...document.querySelectorAll(".modal")].some((m) => !m.hidden)) document.body.style.overflow = ""; }
+  document.querySelectorAll(".modal").forEach((m) => {
+    m.addEventListener("click", (e) => { if (e.target === m || e.target.closest("[data-close]")) closeModal(m.id); });
+  });
+  function openQuick(opts) {
+    qb.src = qb.photos.length ? "new" : (existingKeys().length ? "existing" : "new");
+    if (opts && opts.existing && existingKeys().length) qb.src = "existing";
+    qb.mode = onlySamples() || qb.src === "existing" ? "replace" : "append";
+    renderQuick(); openModal("mQuick"); $("qStatus").textContent = "";
+    if (opts && opts.focusAI) setTimeout(() => $("qStory").focus(), 50);
+  }
+  function quickKeys() { return qb.src === "existing" ? existingKeys() : qb.photos; }
+  function renderQuick() {
+    const exN = existingKeys().length;
+    const src = $("qSrc"); src.innerHTML = "";
+    src.appendChild(seg([["new", "새 사진 고르기"], ["existing", "지금 있는 컷 " + exN + "장 쓰기"]], qb.src, (v) => { qb.src = v; if (v === "existing") qb.mode = "replace"; renderQuick(); }));
+    if (!exN) src.hidden = true; else src.hidden = false;
+    $("qPickRow").hidden = qb.src !== "new";
+    const keys = quickKeys();
+    $("qCount").textContent = keys.length ? keys.length + "장 · 왼쪽부터 컷 1" : "여러 장을 한 번에 골라도 돼요";
+    const th = $("qThumbs"); th.innerHTML = "";
+    keys.forEach((k, i) => {
+      const im = images.get(k); if (!im) return;
+      const ctl = qb.src === "new" ? h("div", { class: "tctl" },
+        h("button", { type: "button", "aria-label": "앞으로", onclick: () => { if (i > 0) { [qb.photos[i - 1], qb.photos[i]] = [qb.photos[i], qb.photos[i - 1]]; renderQuick(); } } }, "◀"),
+        h("button", { type: "button", "aria-label": "빼기", onclick: () => { qb.photos.splice(i, 1); renderQuick(); } }, "✕")) : null;
+      th.appendChild(h("div", { class: "thumb" }, h("img", { src: im.el.src, alt: "컷 " + (i + 1) }), h("span", { class: "num", text: String(i + 1) }), ctl));
+    });
+    th.hidden = !keys.length;
+    const mode = $("qMode"); mode.innerHTML = "";
+    mode.appendChild(seg(qb.src === "existing" ? [["replace", "대사를 새로 넣기"]] : [["replace", "지우고 새로 만들기"], ["append", "맨 뒤에 이어 붙이기"]], qb.mode, (v) => { qb.mode = v; }));
+    const shp = $("qShape"); shp.innerHTML = "";
+    shp.appendChild(seg([["oval", "동그란 말풍선"], ["round", "둥근 네모"]], P.settings.bubbleShape, (v) => { P.settings.bubbleShape = v; }));
+    engineUI();
+  }
+  $("qPick").addEventListener("click", () => $("fileQuick").click());
+  $("fileQuick").addEventListener("change", async (e) => {
+    const files = Array.from(e.target.files || []); e.target.value = "";
+    if (!files.length) return;
+    $("qCount").textContent = "사진 읽는 중…";
+    files.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
+    const keys = await importFiles(files);
+    qb.photos.push(...keys); qb.src = "new"; renderQuick();
+  });
+  $("qExample").addEventListener("click", () => { $("qScript").value = SAMPLE_SCRIPT.replace(/ \/ /g, " / "); });
+  $("qClear").addEventListener("click", () => { $("qScript").value = ""; $("qScript").focus(); });
+  $("qBuild").addEventListener("click", async () => {
+    const keys = quickKeys(), text = $("qScript").value;
+    const sections = parseScript(text);
+    if (!keys.length && !sections.length) { $("qStatus").textContent = "사진이나 대본을 넣어 주세요."; $("qStatus").classList.add("err"); return; }
+    $("qStatus").classList.remove("err");
+    const r = buildBlocks(sections, keys);
+    if (qb.mode === "replace") P.blocks = r.blocks; else P.blocks = P.blocks.concat(r.blocks);
+    await ensureFonts();
+    r.blocks.filter((b) => b.type === "image").forEach(autoLayout);
+    sel = { block: null, bubble: null };
+    renderStrip(); commit(); select({});
+    closeModal("mQuick");
+    if (qb.src === "new") qb.photos = [];
+    const cuts = r.blocks.filter((b) => b.type === "image").length;
+    toast("컷 " + cuts + "개, 말풍선 " + r.bubbles + "개를 이어 붙였어요." + (sections.length > keys.length && keys.length ? " 사진보다 대본 컷이 많아서 남은 줄은 나레이션으로 넣었어요." : ""));
+    const first = r.blocks[0]; if (first) { const cv = canvasMap.get(first.id); if (cv) cv.scrollIntoView({ block: "start", behavior: "smooth" }); }
+  });
+  function cutsToScript(cuts) {
+    const line = (l) => {
+      const sp = l.speaker ? l.speaker + ": " : "", t = String(l.text || "").trim(); if (!t) return null;
+      switch (l.kind) {
+        case "box": return "[칸] " + t;
+        case "sfx": return "(효과) " + t;
+        case "thought": return sp + "(생각) " + t;
+        case "whisper": return sp + "(속삭임) " + t;
+        case "shout": return sp + "(외침) " + t;
+        default: return sp + t;
+      }
+    };
+    return cuts.map((c) => [c.before && "> " + c.before, ...(Array.isArray(c.lines) ? c.lines.map(line) : []), c.after && "> " + c.after].filter(Boolean).join("\n")).join("\n---\n");
+  }
+  $("qAuto").addEventListener("click", async (e) => {
+    if (engine.busy) return;
+    const st = $("qAutoStatus"), btn = e.currentTarget, keys = quickKeys(), story = $("qStory").value.trim();
+    st.classList.remove("err");
+    if (!keys.length) { st.textContent = "먼저 사진을 골라 주세요."; st.classList.add("err"); return; }
+    if (!(await ensureLLM())) return;
+    const secs = parseScript($("qScript").value);
+    engine.busy = true; btn.disabled = true; st.dataset.busy = "1";
+    let filled = 0;
+    const write = () => { $("qScript").value = keys.map((k, i) => (secs[i] ? sectionToScript(secs[i]) : "")).concat(secs.slice(keys.length).map(sectionToScript)).join("\n---\n"); };
+    for (let i = 0; i < keys.length; i++) {
+      const sec = secs[i] || (secs[i] = { before: [], items: [], after: [] });
+      if (sec.items.length) continue;
+      st.innerHTML = ""; st.append(h("span", { class: "spin" }), " 컷 " + (i + 1) + " / " + keys.length + " 사진 보고 대사 쓰는 중…");
+      const prev = secs.slice(Math.max(0, i - 2), i).filter(Boolean).map(sectionToScript).join("\n");
+      const blob = await panelBlob(keys[i], 640);
+      const r = await engRun(() => autoLinesFor(blob, { i: i + 1, n: keys.length, story, prev }), st);
+      if (!r) break;
+      sec.items = r.lines.map((l) => ({ kind: l.kind, speaker: l.speaker, text: l.text }));
+      if (r.before && !sec.before.length) sec.before = [r.before];
+      filled++; write();
+    }
+    engine.busy = false; btn.disabled = false; delete st.dataset.busy;
+    if (filled) { st.classList.remove("err"); st.textContent = "컷 " + filled + "개의 대사를 채웠어요. 고칠 곳을 고친 다음 ‘컷 이어 붙이기’를 누르세요."; }
+    else if (!st.classList.contains("err")) st.textContent = "모든 컷에 이미 대사가 있어요.";
+  });
+
+  // ---------- auto modal ----------
+  $("bAuto").addEventListener("click", () => { engineUI(); $("aStatus").textContent = ""; openModal("mAuto"); });
+  $("aPlace").addEventListener("click", () => {
+    const list = P.blocks.filter((b) => b.type === "image" && b.bubbles.length);
+    list.forEach(autoLayout); renderStrip(); commit(); syncInspector();
+    $("aStatus").textContent = "컷 " + list.length + "개의 말풍선을 다시 놓았어요.";
+  });
+  $("aTidy").addEventListener("click", () => {
+    const list = P.blocks.filter((b) => b.type === "image" && b.bubbles.length);
+    list.forEach(resolveOverlaps); renderStrip(); commit();
+    $("aStatus").textContent = "겹친 말풍선을 정리했어요.";
+  });
+  $("aUnify").addEventListener("click", () => {
+    const sp = []; P.blocks.forEach((b) => b.type === "image" && b.bubbles.forEach((u) => { if (!["sfx", "plain", "box"].includes(u.shape)) sp.push(u); }));
+    if (!sp.length) { $("aStatus").textContent = "맞출 대사가 없어요."; return; }
+    const sizes = sp.map((u) => u.size).sort((a, c) => a - c), med = sizes[Math.floor(sizes.length / 2)];
+    sp.forEach((u) => { u.size = u.shape === "shout" ? Math.round(med * 1.15) : med; u.cols = 9; });
+    P.blocks.forEach((b) => b.type === "image" && b.bubbles.length && resolveOverlaps(b));
+    renderStrip(); commit(); syncInspector();
+    $("aStatus").textContent = "대사 " + sp.length + "개를 글자 크기 " + med + "로 맞췄어요.";
+  });
+  $("aAutoLines").addEventListener("click", async (e) => {
+    const st = $("aStatus"), btn = e.currentTarget;
+    st.classList.remove("err");
+    const todo = imageBlocks().filter((b) => !b.bubbles.length && images.has(b.img));
+    if (!todo.length) { st.textContent = "말풍선이 없는 컷이 없어요."; return; }
+    if (!(await ensureLLM())) return;
+    btn.disabled = true; let done = 0;
+    for (const b of todo) {
+      st.innerHTML = ""; st.append(h("span", { class: "spin" }), " 컷 " + (done + 1) + " / " + todo.length + " 대사 쓰는 중…");
+      if (!(await autoLinesForBlock(b, st))) break;
+      done++; renderStrip();
+    }
+    btn.disabled = false;
+    if (done) { commit(); syncInspector(); st.classList.remove("err"); st.textContent = "컷 " + done + "개에 대사를 넣었어요."; }
+  });
+
+  // ---------- export ----------
+  function stripLayout(W) {
+    const gap = Math.round(P.settings.gap * W / BASE); let y = 0;
+    const items = P.blocks.map((b, i) => { const S = blockSize(b, W), it = { b, S, y }; y += S.h + (i < P.blocks.length - 1 ? gap : 0); return it; });
+    return { items, total: Math.max(1, y), gap };
+  }
+  function splitParts(lay, n, maxH) {
+    const bounds = lay.items.slice(0, -1).map((it) => Math.round(it.y + it.S.h + lay.gap / 2));
+    const cuts = []; let prev = 0;
+    for (let k = 1; k < n; k++) {
+      const target = lay.total * k / n; let best = null;
+      bounds.forEach((bd) => { if (bd > prev && (best === null || Math.abs(bd - target) < Math.abs(best - target))) best = bd; });
+      if (best === null) break; cuts.push(best); prev = best;
+    }
+    const edges = [0].concat(cuts, [lay.total]), out = [];
+    for (let i = 0; i < edges.length - 1; i++) {
+      let a = edges[i]; const b = edges[i + 1];
+      while (b - a > maxH) { let c = null; bounds.forEach((bd) => { if (bd > a && bd <= a + maxH) c = bd; }); if (c === null) c = a + maxH; out.push([a, c]); a = c; }
+      out.push([a, b]);
+    }
+    return out;
+  }
+  function exportPlan() { const W = P.settings.width, lay = stripLayout(W), maxH = Math.floor(16000000 / W), parts = splitParts(lay, P.settings.parts, maxH); return { W, lay, parts }; }
+  function renderExportUI() {
+    const st = P.settings;
+    $("eParts").innerHTML = ""; $("eParts").appendChild(seg([[1, "한 장으로"], [2, "2장"], [3, "3장"], [4, "4장"], [5, "5장"]], st.parts, (v) => { st.parts = Number(v); exportInfo(); scheduleSave(); }));
+    $("eWidth").innerHTML = ""; $("eWidth").appendChild(seg([[720, "720px"], [800, "800px"], [1080, "1080px"]], st.width, (v) => { st.width = Number(v); renderStrip(); exportInfo(); commit(); }));
+    $("eFormat").innerHTML = ""; $("eFormat").appendChild(seg([["png", "PNG 선명하게"], ["jpg", "JPG 가볍게"]], st.format, (v) => { st.format = v; scheduleSave(); }));
+    exportInfo();
+  }
+  function exportInfo() {
+    const { W, lay, parts } = exportPlan();
+    const forced = parts.length > P.settings.parts;
+    $("eInfo").innerHTML = "";
+    $("eInfo").append("전체 ", h("b", { text: W + " × " + lay.total.toLocaleString() + "px" }), " · ", h("b", { text: parts.length + "장" }), "으로 저장 (" + parts.map((p) => (p[1] - p[0]).toLocaleString()).join(" / ") + "px)" + (forced ? " · 휴대폰에서도 열리도록 길이 제한에 맞춰 더 나눴어요" : ""));
+  }
+  $("bExport").addEventListener("click", () => { if (!P.blocks.length) { toast("먼저 컷 사진을 올려 주세요", true); return; } renderExportUI(); $("eStatus").textContent = ""; $("eResults").hidden = true; openModal("mExport"); });
+  $("eSave").addEventListener("click", async () => {
+    const btn = $("eSave"), stEl = $("eStatus"), res = $("eResults");
+    btn.disabled = true; stEl.classList.remove("err"); res.hidden = true; res.innerHTML = "";
+    try {
+      stEl.textContent = "글꼴 준비 중…";
+      await ensureFonts();
+      const { W, lay, parts } = exportPlan();
+      const fmt = P.settings.format, mime = fmt === "jpg" ? "image/jpeg" : "image/png";
+      const blobs = [];
+      for (let i = 0; i < parts.length; i++) {
+        const [a, b] = parts[i];
+        stEl.textContent = (i + 1) + " / " + parts.length + "장 그리는 중…";
+        await new Promise((r) => setTimeout(r, 0));
+        const c = document.createElement("canvas"); c.width = W; c.height = Math.max(1, b - a);
+        const ctx = c.getContext("2d");
+        ctx.fillStyle = P.settings.bg; ctx.fillRect(0, 0, W, c.height);
+        lay.items.forEach((it) => {
+          if (it.y + it.S.h <= a || it.y >= b) return;
+          ctx.save(); ctx.translate(0, it.y - a); drawBlock(ctx, it.b, W, it.S, null); ctx.restore();
+        });
+        const blob = await toBlob(c, mime, 0.93);
+        c.width = 1; c.height = 1;
+        if (!blob) throw new Error("too_tall");
+        blobs.push(blob);
+      }
+      for (let i = 0; i < blobs.length; i++) {
+        const a = document.createElement("a"), href = URL.createObjectURL(blobs[i]);
+        a.href = href; a.download = "sedotoon_" + String(i + 1).padStart(2, "0") + "." + fmt;
+        document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(() => URL.revokeObjectURL(href), 60000);
+        await sleep(400);
+      }
+      blobs.forEach((bl, i) => { res.appendChild(h("div", { class: "sec-l", text: (i + 1) + "장" })); res.appendChild(h("img", { src: URL.createObjectURL(bl), alt: (i + 1) + "장 결과" })); });
+      res.hidden = false;
+      stEl.textContent = blobs.length + "장을 저장했어요. 사진첩에 넣으려면 아래 버튼을 누르세요.";
+      const files = blobs.map((bl, i) => new File([bl], "sedotoon_" + String(i + 1).padStart(2, "0") + "." + fmt, { type: mime }));
+      if (navigator.canShare && navigator.canShare({ files })) {
+        res.insertBefore(h("button", { type: "button", class: "btn primary wide", onclick: async () => { try { await navigator.share({ files, title: "세로툰" }); } catch (er) { /* closed */ } } }, "사진첩에 저장 · 공유"), res.firstChild);
+      } else stEl.textContent = blobs.length + "장을 저장했어요. 다운로드 폴더를 확인하세요. 안 보이면 아래 그림을 길게 눌러 저장하세요.";
+    } catch (e) {
+      stEl.classList.add("err");
+      stEl.textContent = e && e.message === "too_large" ? "파일이 너무 커요. JPG로 바꾸거나 장수를 늘려 주세요." : "이미지를 만들지 못했어요. 장수를 늘리거나 가로 폭을 줄여서 다시 해 보세요.";
+    }
+    btn.disabled = false;
+  });
+
+  // ---------- add bar, files, drag-drop ----------
+  let replaceTarget = null;
+  $("addPhotos").addEventListener("click", () => $("filePanels").click());
+  $("filePanels").addEventListener("change", async (e) => {
+    const files = Array.from(e.target.files || []); e.target.value = "";
+    if (!files.length) return;
+    files.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
+    await appendPhotos(files);
+  });
+  async function appendPhotos(files) {
+    toast("사진 읽는 중…");
+    const keys = await importFiles(files);
+    if (!keys.length) return;
+    if (onlySamples() && P.blocks.length) P.blocks = [];
+    keys.forEach((k) => P.blocks.push({ id: nid("b"), type: "image", img: k, bubbles: [] }));
+    renderStrip(); commit();
+    toast(keys.length + "컷을 붙였어요. 컷 빈 곳을 두 번 누르면 말풍선이 생겨요.");
+  }
+  $("fileReplace").addEventListener("change", async (e) => {
+    const f = e.target.files && e.target.files[0]; e.target.value = "";
+    const b = findBlock(replaceTarget); if (!f || !b) return;
+    const [k] = await importFiles([f]); if (!k) return;
+    b.img = k; renderStrip(); commit(); toast("사진을 바꿨어요");
+  });
+  $("addNarr").addEventListener("click", () => { const n = makeNarr("나레이션"); P.blocks.push(n); renderStrip(); commit(); select({ block: n.id }, { focus: true, selectAll: true, reveal: true }); });
+  $("addSpace").addEventListener("click", () => { const s = { id: nid("s"), type: "space", h: 240 }; P.blocks.push(s); renderStrip(); commit(); select({ block: s.id }, { reveal: true }); });
+  const stage = $("stage");
+  stage.addEventListener("dragover", (e) => { if (e.dataTransfer && [...e.dataTransfer.types].includes("Files")) { e.preventDefault(); stage.classList.add("dropping"); } });
+  stage.addEventListener("dragleave", (e) => { if (!stage.contains(e.relatedTarget)) stage.classList.remove("dropping"); });
+  stage.addEventListener("drop", async (e) => { e.preventDefault(); stage.classList.remove("dropping"); const files = Array.from(e.dataTransfer.files || []); if (files.length) await appendPhotos(files); });
+  stage.addEventListener("pointerdown", (e) => { if (e.target === stage) select({}); });
+
+  // ---------- header & keys ----------
+  $("bUndo").addEventListener("click", undo);
+  $("bRedo").addEventListener("click", redo);
+  $("bQuick").addEventListener("click", () => openQuick());
+  document.addEventListener("click", (e) => { if (e.target.closest("[data-engine]")) openEngine(); });
+  bindStory();
+  document.addEventListener("keydown", (e) => {
+    const open = [...document.querySelectorAll(".modal")].filter((m) => !m.hidden).pop();
+    if (e.key === "Escape") { if (open) closeModal(open.id); else if (sel.block) select({}); return; }
+    if (open) return;
+    const typing = /^(TEXTAREA|INPUT|SELECT)$/.test((document.activeElement || {}).tagName || "") && document.activeElement.type !== "range" && document.activeElement.type !== "checkbox";
+    const mod = e.ctrlKey || e.metaKey;
+    if (mod && e.key.toLowerCase() === "z" && !typing) { e.preventDefault(); e.shiftKey ? redo() : undo(); return; }
+    if (mod && e.key.toLowerCase() === "y" && !typing) { e.preventDefault(); redo(); return; }
+    if (typing) return;
+    const b = findBlock(sel.block), u = findBubble(b, sel.bubble);
+    if (u && (e.key === "Delete" || e.key === "Backspace")) { e.preventDefault(); removeBubble(b, u); return; }
+    if (u && e.key.startsWith("Arrow")) {
+      e.preventDefault(); const st = e.shiftKey ? 2 : 0.5;
+      if (e.key === "ArrowLeft") u.x -= st; if (e.key === "ArrowRight") u.x += st; if (e.key === "ArrowUp") u.y -= st; if (e.key === "ArrowDown") u.y += st;
+      normalizeBubble(b, u); renderBlock(b.id); commitSoon();
+    }
+  });
+  let lastW = 0;
+  const onResize = () => { const w = strip.clientWidth; if (w && w !== lastW) { lastW = w; P.blocks.forEach((b) => renderBlock(b.id)); } updateSheetH(); };
+  if (window.ResizeObserver) new ResizeObserver(onResize).observe(strip); else window.addEventListener("resize", onResize);
+
+  // ---------- boot ----------
+  (async function start() {
+    await store.open();
+    let restored = false;
+    try { restored = await restoreSaved(); } catch (e) { restored = false; }
+    if (!restored) await loadSample();
+    renderStrip(); commit(); select({});
+    undoUI();
+    ensureFonts().then(() => { iconCache.clear(); P.blocks.forEach((b) => renderBlock(b.id)); buildInspector(); });
+    engineUI(); refreshEngine(); loadSB().then(takeShared);
+    if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")) navigator.serviceWorker.register("sw.js").catch(() => {});
+    if (!restored) toast("예시 컷이 들어 있어요. 말풍선을 끌어 보거나 만들기를 눌러 보세요.");
+  })();
+})();
+</script>
+</body>
+</html>
