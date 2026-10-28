@@ -139,6 +139,17 @@ button { font: inherit; color: inherit; }
 .strip { width: min(100%, 500px); border-radius: 6px; overflow: hidden; box-shadow: var(--shadow); user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
 .blk { position: relative; }
 .blk canvas { display: block; width: 100%; touch-action: manipulation; cursor: default; }
+.blk.lifting { opacity: .25; }
+.blk.swap-target::before, .blk.moved::before { content: ""; position: absolute; inset: 0; z-index: 2; pointer-events: none; border: 3px solid var(--accent); background: color-mix(in srgb, var(--accent) 18%, transparent); }
+.blk.moved::before { background: none; animation: movedFade 1.3s ease forwards; }
+@keyframes movedFade { 0%, 40% { opacity: 1; } 100% { opacity: 0; } }
+.reo-ghost { position: fixed; z-index: 45; pointer-events: none; border-radius: 8px; box-shadow: 0 16px 40px rgba(0,0,0,.45); transform: translate(-50%, -70%) rotate(-2deg); outline: 2px solid var(--accent); background: var(--bg); }
+.reo-line { position: fixed; z-index: 44; height: 4px; border-radius: 4px; background: var(--accent); pointer-events: none; box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 22%, transparent); }
+.reo-line::before, .reo-line::after { content: ""; position: absolute; top: -4px; width: 12px; height: 12px; border-radius: 50%; background: var(--accent); }
+.reo-line::before { left: -6px; } .reo-line::after { right: -6px; }
+.reo-box { position: fixed; z-index: 44; pointer-events: none; border: 3px solid var(--accent); background: color-mix(in srgb, var(--accent) 20%, transparent); border-radius: 3px; }
+.reo-tip { position: fixed; top: calc(env(safe-area-inset-top, 0px) + 66px); left: 50%; transform: translateX(-50%); z-index: 46; background: var(--ink); color: var(--bg); padding: 8px 14px; border-radius: 99px; font-weight: 600; font-size: 13px; pointer-events: none; white-space: nowrap; max-width: calc(100% - 32px); overflow: hidden; text-overflow: ellipsis; }
+body.reordering, body.reordering .blk canvas { cursor: grabbing; }
 .blk.sel::after { content: ""; position: absolute; inset: 0; border: 2px solid var(--accent); pointer-events: none; }
 .gap { width: 100%; }
 .empty { width: min(100%, 500px); border: 2px dashed var(--line); border-radius: 12px; padding: 36px 20px; display: flex; flex-direction: column; align-items: center; gap: 12px; text-align: center; background: var(--panel); }
@@ -598,7 +609,7 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     red: { fill: "#e5392f", ink: "#ffffff", line: "#111111", label: "빨강" }
   };
   const BGS = [["#000000", "검정"], ["#17181c", "먹색"], ["#ffffff", "흰색"], ["#f4efe6", "종이"]];
-  const DEF = { width: 720, bg: "#000000", gap: 60, frame: "full", narrFont: "myeongjo", bubbleFont: "gothic", bubbleShape: "oval", parts: 1, format: "png", sign: "", pageRatio: "a4", perPage: 4, rtl: false, comicJoin: false };
+  const DEF = { width: 720, bg: "#000000", gap: 0, frame: "full", narrFont: "myeongjo", bubbleFont: "gothic", bubbleShape: "oval", parts: 1, format: "png", sign: "", pageRatio: "a4", perPage: 4, rtl: false, comicJoin: false };
 
   let P = { v: 2, settings: Object.assign({}, DEF), blocks: [] };
   const images = new Map(); // key -> {el, blob, w, h}
@@ -985,7 +996,7 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     return Math.max(1, Math.min(S.iy + trLen(b.tin, S.ih), Math.round(PS.h * 0.8), Math.round(S.h * 0.8)));
   }
   function junction(a, b, W) {
-    const gap = Math.round(P.settings.gap * W / BASE);
+    const gap = 0;
     if (isMix(b)) return { gap: -mixOverlap(b, W), col: null };
     const ca = a.type === "image" && outOf(a) ? trCol(a.tout) : null;
     const cb = b.type === "image" && trOn(b.tin) ? trCol(b.tin) : null;
@@ -1172,7 +1183,7 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   }
   function refreshJoins() {
     if (isComic() || !P.blocks.length || canvasMap.size !== P.blocks.length) { renderStrip(); return; }
-    const anchor = stripAnchor(), W = P.settings.width, sc = cssScale(), gapCss = P.settings.gap * W / BASE * sc;
+    const anchor = stripAnchor(), W = P.settings.width, sc = cssScale(), gapCss = 0;
     P.blocks.forEach((b, i) => {
       const cv = canvasMap.get(b.id); if (!cv) return;
       const wrap = cv.parentElement, mix = isMix(b);
@@ -1183,8 +1194,8 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     });
     restoreAnchor(anchor);
   }
-  function renderStrip() {
-    const anchor = !strip.hidden && canvasMap.size ? stripAnchor() : null, keepH = strip.hidden ? 0 : strip.offsetHeight, wasOn = new Set(onScreen);
+  function renderStrip(anchorOverride) {
+    const anchor = anchorOverride && anchorOverride.id ? anchorOverride : !strip.hidden && canvasMap.size ? stripAnchor() : null, keepH = strip.hidden ? 0 : strip.offsetHeight, wasOn = new Set(onScreen);
     if (keepH) strip.style.minHeight = keepH + "px";
     if (viewObs) { canvasMap.forEach((cv) => viewObs.unobserve(cv)); onScreen.clear(); }
     canvasMap.clear();
@@ -1213,7 +1224,7 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     strip.hidden = false;
     strip.style.background = isComic() ? "transparent" : P.settings.bg;
     strip.classList.toggle("comic", isComic());
-    const sc = cssScale(), gapCss = isComic() ? 18 : P.settings.gap * W / BASE * sc;
+    const sc = cssScale(), gapCss = isComic() ? 18 : 0;
     let pageNo = 0;
     P.blocks.forEach((b, i) => {
       const wrap = h("div", { class: "blk", "data-id": b.id });
@@ -1351,11 +1362,13 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
       if (grab(cv, id, b, e)) return;
       const uh = underHit(b, e.clientX, e.clientY);
       if (uh && grab(uh.pcv, uh.pv.id, uh.pv, e)) return;
-      pend = { id, pid: e.pointerId, x: e.clientX, y: e.clientY, t: performance.now() };
+      const pp = { id, pid: e.pointerId, x: e.clientX, y: e.clientY, lx: e.clientX, ly: e.clientY, t: performance.now() };
+      pp.lp = setTimeout(() => { if (pend === pp) startReorder(id, pp); }, LP_MS);
+      pend = pp;
     });
     cv.addEventListener("touchstart", onTouch, { passive: false });
     cv.addEventListener("pointermove", (e) => {
-      if (pend && pend.pid === e.pointerId && Math.hypot(e.clientX - pend.x, e.clientY - pend.y) > 10) pend = null;
+      if (pend && pend.pid === e.pointerId) { if (Math.hypot(e.clientX - pend.x, e.clientY - pend.y) > 10) { clearTimeout(pend.lp); pend = null; } else { pend.lx = e.clientX; pend.ly = e.clientY; } }
       if (!drag || drag.pid !== e.pointerId) return;
       const b = findBlock(drag.id); if (!b) return;
       if (!drag.moved && Math.hypot(e.clientX - drag.sx, e.clientY - drag.sy) < 4) return;
@@ -1368,7 +1381,7 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     });
     const end = (e) => {
       if (pend && pend.pid === e.pointerId) {
-        const p = pend; pend = null;
+        const p = pend; pend = null; clearTimeout(p.lp);
         if (e.type === "pointerup" && performance.now() - p.t < 700) onTap(cv, id, e);
         return;
       }
@@ -1381,6 +1394,130 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     cv.addEventListener("pointerup", end);
     cv.addEventListener("pointercancel", end);
   }
+  // ---------- long press: lift a cut and drop it elsewhere, or onto another cut to swap ----------
+  const LP_MS = 430;
+  let reo = null;
+  const blkName = (b) => (!b ? "" : b.type === "page" ? "페이지" : b.type === "image" ? "컷" : b.type === "narration" ? "나레이션" : "빈 여백");
+  const josaWa = (w) => { const c = w.charCodeAt(w.length - 1) - 0xac00; return w + (c >= 0 && c < 11172 && c % 28 ? "과" : "와"); };
+  function panelInside(b, x, y) { const S = blockSize(b, P.settings.width); return S.rects.findIndex((r) => x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h); }
+  function panelScreenRect(pg, i) { const cv = canvasMap.get(pg.id), r = cv.getBoundingClientRect(), W = P.settings.width, q = blockSize(pg, W).rects[i], k = r.width / W; return { left: r.left + q.x * k, top: r.top + q.y * k, width: q.w * k, height: q.h * k }; }
+  function startReorder(id, pp) {
+    const b = findBlock(id), cv = canvasMap.get(id); if (!b || !cv || reo) return;
+    pend = null; lastTap = null; drag = null;
+    let panel = -1;
+    if (b.type === "page") { const pt = localPt(cv, b, pp.x, pp.y), i = panelInside(b, pt.x, pt.y), pn = i >= 0 && (b.panels || [])[i]; if (pn && pn.img && images.has(pn.img)) panel = i; }
+    if (isMobile() && sheetOpen()) closeSheet();
+    try { if (navigator.vibrate) navigator.vibrate(15); } catch (err) { /* ignore */ }
+    const W = P.settings.width, S = blockSize(b, W), dpr = Math.min(2, window.devicePixelRatio || 1);
+    let aw = W, ah = S.h, paint;
+    if (panel >= 0) {
+      const q = S.rects[panel], pn = b.panels[panel], im = images.get(pn.img); aw = q.w; ah = q.h;
+      paint = (gc) => { const z = (pn.zoom || 100) / 100, sc = Math.max(q.w / im.w, q.h / im.h) * z, dw = im.w * sc, dh = im.h * sc; gc.drawImage(lookSrc(pn.img, pn.look) || im.el, (q.w - dw) * (pn.fx == null ? 50 : pn.fx) / 100, (q.h - dh) * (pn.fy == null ? 50 : pn.fy) / 100, dw, dh); };
+    } else paint = (gc) => drawBlock(gc, b, W, S, null, false);
+    let gw = Math.min(150, (strip.clientWidth || 360) * 0.42), gh = gw * ah / aw;
+    if (gh > 190) { gh = 190; gw = gh * aw / ah; }
+    if (gh < 28) gh = 28;
+    const g = document.createElement("canvas"); g.className = "reo-ghost";
+    g.width = Math.max(1, Math.round(gw * dpr)); g.height = Math.max(1, Math.round(gh * dpr)); g.style.width = Math.round(gw) + "px"; g.style.height = Math.round(gh) + "px";
+    const gc = g.getContext("2d"); gc.scale(g.width / aw, g.height / ah); paint(gc);
+    const line = h("div", { class: "reo-line" }), box = h("div", { class: "reo-box" }), tip = h("div", { class: "reo-tip" });
+    line.hidden = true; box.hidden = true;
+    document.body.append(g, line, box, tip);
+    if (panel < 0) cv.parentElement.classList.add("lifting");
+    document.body.classList.add("reordering");
+    reo = { id, panel, pid: pp.pid, x: pp.lx, y: pp.ly, ghost: g, line, box, tip, target: null, raf: 0, swapEl: null };
+    moveReorder(pp.lx, pp.ly);
+    reo.raf = requestAnimationFrame(reoTick);
+  }
+  function reoTarget(x, y) {
+    if (reo.panel >= 0) {
+      for (const b of P.blocks) {
+        if (b.type !== "page") continue;
+        const cv = canvasMap.get(b.id); if (!cv) continue;
+        const r = cv.getBoundingClientRect(); if (y < r.top || y > r.bottom || x < r.left || x > r.right) continue;
+        const pt = localPt(cv, b, x, y), i = panelInside(b, pt.x, pt.y);
+        if (i < 0 || (b.id === reo.id && i === reo.panel)) return null;
+        return { kind: "panel", id: b.id, i };
+      }
+      return null;
+    }
+    const n = P.blocks.length; let last = null;
+    for (let i = 0; i < n; i++) {
+      const id = P.blocks[i].id, cv = canvasMap.get(id); if (!cv) continue;
+      const r = cv.getBoundingClientRect(); last = r;
+      if (y < r.top) return { kind: "insert", index: i, y: r.top };
+      if (y <= r.bottom) {
+        const edge = Math.min(r.height * 0.28, 72);
+        if (y - r.top < edge) return { kind: "insert", index: i, y: r.top };
+        if (r.bottom - y < edge) return { kind: "insert", index: i + 1, y: r.bottom };
+        return { kind: "swap", id };
+      }
+    }
+    return last ? { kind: "insert", index: n, y: last.bottom } : null;
+  }
+  function moveReorder(x, y) {
+    if (!reo) return;
+    reo.x = x; reo.y = y;
+    reo.ghost.style.left = x + "px"; reo.ghost.style.top = y + "px";
+    const from = P.blocks.findIndex((b) => b.id === reo.id);
+    let t = reoTarget(x, y);
+    if (t && t.kind === "insert" && (t.index === from || t.index === from + 1)) t = null;
+    if (t && t.kind === "swap" && t.id === reo.id) t = null;
+    reo.target = t;
+    const sw = t && t.kind === "swap" ? canvasMap.get(t.id).parentElement : null;
+    if (reo.swapEl !== sw) { if (reo.swapEl) reo.swapEl.classList.remove("swap-target"); if (sw) sw.classList.add("swap-target"); reo.swapEl = sw; }
+    if (t && t.kind === "insert") { const sr = strip.getBoundingClientRect(); reo.line.hidden = false; reo.line.style.left = (sr.left + 10) + "px"; reo.line.style.width = (sr.width - 20) + "px"; reo.line.style.top = (t.y - 2) + "px"; } else reo.line.hidden = true;
+    if (t && t.kind === "panel") { const q = panelScreenRect(findBlock(t.id), t.i); reo.box.hidden = false; Object.assign(reo.box.style, { left: q.left + "px", top: q.top + "px", width: q.width + "px", height: q.height + "px" }); } else reo.box.hidden = true;
+    const me = findBlock(reo.id);
+    reo.tip.textContent = reo.panel >= 0 ? (t ? "놓으면 두 칸의 사진이 바뀌어요" : "다른 칸 위로 끌어요")
+      : !t ? "놓을 곳으로 끌어요 · 다른 " + blkName(me) + " 가운데에 놓으면 자리 바꾸기"
+      : t.kind === "swap" ? "놓으면 이 " + josaWa(blkName(findBlock(t.id))) + " 자리를 바꿔요" : "여기에 끼워 넣어요";
+  }
+  function reoTick() {
+    if (!reo) return;
+    const top = document.querySelector(".top"), topEdge = (top ? top.getBoundingClientRect().bottom : 0) + 56, botEdge = window.innerHeight - 64;
+    let v = 0;
+    if (reo.y < topEdge) v = -Math.min(24, (topEdge - reo.y) * 0.4 + 3);
+    else if (reo.y > botEdge) v = Math.min(24, (reo.y - botEdge) * 0.4 + 3);
+    if (v) { const y0 = window.scrollY; window.scrollBy(0, v); if (window.scrollY !== y0) moveReorder(reo.x, reo.y); }
+    reo.raf = requestAnimationFrame(reoTick);
+  }
+  function endReorder(drop) {
+    if (!reo) return;
+    const r = reo; reo = null;
+    cancelAnimationFrame(r.raf); r.ghost.remove(); r.line.remove(); r.box.remove(); r.tip.remove();
+    if (r.swapEl) r.swapEl.classList.remove("swap-target");
+    const cv0 = canvasMap.get(r.id); if (cv0) cv0.parentElement.classList.remove("lifting");
+    document.body.classList.remove("reordering");
+    const t = drop ? r.target : null; if (!t) return;
+    if (t.kind === "panel") {
+      const src = findBlock(r.id), dst = findBlock(t.id); src.panels = src.panels || []; dst.panels = dst.panels || [];
+      const a = src.panels[r.panel] || null, bb = dst.panels[t.i] || null;
+      src.panels[r.panel] = bb; dst.panels[t.i] = a;
+      renderBlock(src.id); if (dst !== src) renderBlock(dst.id); commit();
+      select({ block: dst.id, panel: t.i });
+      toast(bb && bb.img ? "두 칸의 사진을 바꿨어요" : "사진을 옮겼어요");
+      return;
+    }
+    const from = P.blocks.findIndex((b) => b.id === r.id); if (from < 0) return;
+    const moved = P.blocks[from];
+    let anchor = null;
+    for (const [aid, acv] of canvasMap) { if (aid === r.id || (t.kind === "swap" && aid === t.id)) continue; const rr = acv.getBoundingClientRect(); if (rr.bottom > 64) { anchor = { id: aid, top: rr.top }; break; } }
+    if (t.kind === "swap") { const j = P.blocks.findIndex((b) => b.id === t.id); P.blocks[from] = P.blocks[j]; P.blocks[j] = moved; }
+    else { P.blocks.splice(from, 1); P.blocks.splice(t.index > from ? t.index - 1 : t.index, 0, moved); }
+    sel = { block: r.id, bubble: null, panel: null };
+    renderStrip(anchor); commit(); select({ block: r.id });
+    const nw = canvasMap.get(r.id);
+    if (nw) { const w = nw.parentElement; w.classList.add("moved"); setTimeout(() => w.classList.remove("moved"), 1400); }
+    toast(t.kind === "swap" ? "자리를 바꿨어요" : blkName(moved) + " 위치를 옮겼어요");
+  }
+  window.addEventListener("pointermove", (e) => { if (reo && e.pointerId === reo.pid) { e.preventDefault(); moveReorder(e.clientX, e.clientY); } }, { passive: false });
+  window.addEventListener("pointerup", (e) => { if (reo && e.pointerId === reo.pid) endReorder(true); });
+  window.addEventListener("pointercancel", (e) => { if (reo && e.pointerId === reo.pid) endReorder(false); });
+  document.addEventListener("touchmove", (e) => { if (reo) e.preventDefault(); }, { passive: false });
+  window.addEventListener("keydown", (e) => { if (reo && e.key === "Escape") endReorder(false); });
+  window.addEventListener("blur", () => endReorder(false));
+  strip.addEventListener("contextmenu", (e) => e.preventDefault());
   function onTap(cv, id, e) {
     const b = findBlock(id); if (!b) return;
     const now = performance.now();
@@ -2332,8 +2469,10 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
           h("button", { type: "button", class: "btn small", onclick: () => moveBlock(b.id, 1) }, "↓ 아래로")));
         body.appendChild(h("div", { class: "row" },
           h("button", { type: "button", class: "btn small", onclick: () => { const n = makeNarr("나레이션"); insertAfter(b.id, n); select({ block: n.id }, { focus: true, selectAll: true, reveal: true }); } }, "아래에 나레이션"),
+          h("button", { type: "button", class: "btn small", onclick: () => { const sp = { id: nid("s"), type: "space", h: 160 }; insertAfter(b.id, sp); select({ block: sp.id }, { reveal: true }); } }, "아래에 빈 여백"),
           h("button", { type: "button", class: "btn small", onclick: () => duplicateBlock(b) }, "컷 복제"),
           h("button", { type: "button", class: "btn small danger", onclick: () => deleteBlock(b.id) }, "컷 지우기")));
+        body.appendChild(h("p", { class: "hint", text: "컷을 꾹 누른 채 끌면 원하는 곳으로 옮겨요. 다른 컷 한가운데에 놓으면 두 컷의 자리가 바뀌어요." }));
       }],
     ]);
   }
@@ -2500,7 +2639,7 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
           body.appendChild(sec("읽는 방향", seg([["ltr", "왼쪽 → 오른쪽"], ["rtl", "오른쪽 → 왼쪽"]], st.rtl ? "rtl" : "ltr", (v) => { st.rtl = v === "rtl"; renderStrip(); commit(); })));
         } else {
           body.appendChild(sec("바탕색", seg(BGS, st.bg, (v) => { st.bg = v; renderStrip(); commit(); })));
-          body.appendChild(slider("컷 사이 여백", 0, 300, 10, st.gap, "", (v) => { st.gap = v; clearTimeout(gapT); gapT = setTimeout(refreshJoins, 60); }));
+          body.appendChild(h("p", { class: "hint", text: "컷과 컷은 빈틈 없이 붙어요. 사이에 공간이 필요하면 컷을 누르고 ‘컷’ 탭에서 빈 여백을 넣으세요." }));
           body.appendChild(sec("컷 모양", seg([["full", "꽉 채우기"], ["border", "테두리 컷"]], st.frame, (v) => { st.frame = v; renderStrip(); commit(); })));
         }
       }],
@@ -3289,7 +3428,7 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
 
   // ---------- export ----------
   function stripLayout(W) {
-    const gap = Math.round((isComic() ? 40 : P.settings.gap) * W / BASE); let y = 0; const joins = [];
+    const gap = isComic() ? Math.round(40 * W / BASE) : 0; let y = 0; const joins = [];
     const items = P.blocks.map((b, i) => {
       const S = blockSize(b, W), it = { b, S, y }; y += S.h;
       if (i < P.blocks.length - 1) {
@@ -3422,7 +3561,7 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     if (onlySamples() && P.blocks.length) P.blocks = [];
     keys.forEach((k) => P.blocks.push({ id: nid("b"), type: "image", img: k, bubbles: [] }));
     renderStrip(); commit();
-    toast(keys.length + "컷을 붙였어요. 컷 빈 곳을 두 번 누르면 말풍선이 생겨요.");
+    toast(keys.length + "컷을 붙였어요. 빈 곳 두 번: 말풍선 · 꾹 눌러 끌기: 순서 바꾸기");
   }
   $("fileReplace").addEventListener("change", async (e) => {
     const f = e.target.files && e.target.files[0]; e.target.value = "";
