@@ -412,6 +412,15 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
       <p>대사 순서대로 위에서 아래로, 말하는 사람별로 좌우를 나눠 겹치지 않게 놓아요.</p>
       <button class="btn" type="button" id="aPlace">모든 컷에 적용</button>
     </div>
+    <div class="auto-card" id="aTransCard">
+      <h3>컷 사이 자연스럽게 잇기</h3>
+      <p>사진과 사진이 맞닿는 곳을 녹여서 한 장면처럼 이어지게 해요. 컷마다 따로 고치려면 컷을 누르고 '컷 이어짐'을 보세요.</p>
+      <div class="row">
+        <button class="btn" type="button" id="aTrFade">스르륵 잇기</button>
+        <button class="btn" type="button" id="aTrMix">겹쳐 녹이기</button>
+        <button class="btn" type="button" id="aTrNone">모두 빼기</button>
+      </div>
+    </div>
     <div class="auto-card">
       <h3>겹친 말풍선 정리</h3>
       <p>지금 위치는 최대한 그대로 두고, 서로 겹치거나 컷 밖으로 나간 말풍선만 밀어내요.</p>
@@ -937,8 +946,103 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     }
     ctx.restore();
   }
+  // ---------- transitions between cuts (fade in / fade out / cross-dissolve) ----------
+  const TR_IN = [["none", "없음"], ["fade", "스르륵"], ["mix", "앞 컷과 겹치기"], ["brush", "붓 자국"], ["cloud", "몽글몽글"], ["dots", "망점"], ["wave", "물결"]];
+  const TR_OUT = TR_IN.filter((t) => t[0] !== "mix");
+  const TR_COL = [["bg", "배경색으로"], ["#ffffff", "흰색으로"], ["#000000", "검정으로"]];
+  const trOn = (t) => !!(t && t.kind && t.kind !== "none");
+  const trCol = (t) => (!t || !t.col || t.col === "bg" ? P.settings.bg : t.col);
+  const trLen = (t, ih) => Math.round(ih * Math.max(3, Math.min(70, t.len || 20)) / 100);
+  function prevBlock(b) { const i = P.blocks.indexOf(b); return i > 0 ? P.blocks[i - 1] : null; }
+  function isMix(b) { const pv = b && b.type === "image" && b.tin && b.tin.kind === "mix" && !isComic() ? prevBlock(b) : null; return !!pv && (pv.type === "image" || pv.type === "space"); }
+  function mixOverlap(b, W) {
+    if (!isMix(b)) return 0;
+    const S = blockSize(b, W), PS = blockSize(prevBlock(b), W);
+    return Math.max(1, Math.min(S.iy + trLen(b.tin, S.ih), Math.round(PS.h * 0.8), Math.round(S.h * 0.8)));
+  }
+  function junction(a, b, W) {
+    const gap = Math.round(P.settings.gap * W / BASE);
+    if (isMix(b)) return { gap: -mixOverlap(b, W), col: null };
+    const ca = a.type === "image" && outOf(a) ? trCol(a.tout) : null;
+    const cb = b.type === "image" && trOn(b.tin) ? trCol(b.tin) : null;
+    const col = ca && cb ? (ca === cb ? ca : null) : (ca || cb);
+    return { gap, col: col && col !== P.settings.bg ? col : null };
+  }
+  // erase an edge band of height L; local coords: edge at v=0, image inward at v>0
+  function edgeMask(g, kind, w, L, seed, k) {
+    const R = rng(hashStr(seed + kind));
+    if (kind === "fade") {
+      const gr = g.createLinearGradient(0, 0, 0, L);
+      for (let i = 0; i <= 10; i++) { const t = i / 10, a = 1 - t * t * (3 - 2 * t); gr.addColorStop(t, "rgba(0,0,0," + a.toFixed(3) + ")"); }
+      g.fillStyle = gr; g.fillRect(-2, -2, w + 4, L + 2); return;
+    }
+    g.fillStyle = "#000";
+    if (kind === "brush") {
+      const base = L * 0.5, n = Math.max(30, Math.round(w / (5 * k)));
+      let off = 0; g.beginPath(); g.moveTo(-2, -2);
+      for (let i = 0; i <= n; i++) { off = off * 0.8 + (R() - 0.5) * 0.5; g.lineTo(w * i / n, Math.max(0, base + off * L * 0.32 + (R() - 0.5) * L * 0.05)); }
+      g.lineTo(w + 2, -2); g.closePath(); g.fill();
+      const m = Math.round(w / (11 * k));
+      for (let i = 0; i < m; i++) { g.globalAlpha = 0.25 + R() * 0.55; const sw = (2 + R() * 9) * k; g.beginPath(); g.ellipse(R() * w, base, sw, Math.min(L * 0.5, base * 0.25 + R() * L * 0.3), 0, 0, Math.PI * 2); g.fill(); }
+      g.globalAlpha = 1;
+      const gr = g.createLinearGradient(0, 0, 0, L); gr.addColorStop(0, "rgba(0,0,0,.6)"); gr.addColorStop(1, "rgba(0,0,0,0)");
+      g.fillStyle = gr; g.fillRect(-2, 0, w + 4, L); return;
+    }
+    if (kind === "cloud") {
+      const base = L * 0.42; g.fillRect(-2, -2, w + 4, base + 2);
+      let x = -L * 0.1;
+      while (x < w + L * 0.3) { const r = L * (0.16 + R() * 0.2); g.beginPath(); g.arc(x, base, r, 0, Math.PI * 2); g.fill(); x += r * (1.05 + R() * 0.5); }
+      g.globalAlpha = 0.4; x = R() * L * 0.2;
+      while (x < w + L * 0.3) { const r = L * (0.08 + R() * 0.12); g.beginPath(); g.arc(x, base + L * 0.3, r, 0, Math.PI * 2); g.fill(); x += r * (1.8 + R() * 0.9); }
+      g.globalAlpha = 1; return;
+    }
+    if (kind === "dots") {
+      const cell = Math.max(6, 13 * k), cols = Math.ceil(w / cell) + 2;
+      for (let r = 0; r * cell <= L; r++) {
+        const t = r * cell / L, rad = cell * 0.74 * Math.pow(1 - t, 1.15); if (rad < 0.4) break;
+        const xo = (r % 2) * cell / 2; g.beginPath();
+        for (let c = -1; c < cols; c++) { const cx = c * cell + xo; g.moveTo(cx + rad, r * cell); g.arc(cx, r * cell, rad, 0, Math.PI * 2); }
+        g.fill();
+      }
+      return;
+    }
+    if (kind === "wave") {
+      const base = L * 0.45, amp = L * 0.16, per = Math.max(40 * k, w / (2.5 + R() * 1.5)), ph = R() * Math.PI * 2;
+      g.beginPath(); g.moveTo(-2, -2);
+      for (let x = 0; x <= w + 4; x += 4) g.lineTo(x, base + Math.sin(x / per * Math.PI * 2 + ph) * amp);
+      g.lineTo(w + 2, -2); g.closePath(); g.fill();
+      g.globalAlpha = 0.5; g.beginPath(); g.moveTo(-2, -2);
+      for (let x = 0; x <= w + 4; x += 4) g.lineTo(x, base + amp * 1.6 + Math.sin(x / per * Math.PI * 2 + ph + 1.3) * amp * 0.8);
+      g.lineTo(w + 2, -2); g.closePath(); g.fill(); g.globalAlpha = 1;
+      const gr = g.createLinearGradient(0, base, 0, L); gr.addColorStop(0, "rgba(0,0,0,.35)"); gr.addColorStop(1, "rgba(0,0,0,0)");
+      g.fillStyle = gr; g.fillRect(-2, base, w + 4, L - base);
+    }
+  }
+  function outOf(b) { const nx = P.blocks[P.blocks.indexOf(b) + 1]; return trOn(b.tout) && !(nx && isMix(nx)) ? b.tout : null; }
+  const trCache = new Map();
+  function trImage(b, S, scale) {
+    const W = P.settings.width, mix = isMix(b);
+    const tin = mix ? { kind: "fade" } : trOn(b.tin) && b.tin.kind !== "mix" ? b.tin : null, tout = outOf(b);
+    const Lin = mix ? Math.max(1, mixOverlap(b, W) - S.iy) : tin ? trLen(tin, S.ih) : 0, Lout = tout ? trLen(tout, S.ih) : 0;
+    const key = [b.id, b.img, JSON.stringify(b.look || 0), JSON.stringify(b.fxl || 0), tin ? tin.kind : "", Lin, tout ? tout.kind : "", Lout, S.iw, S.ih, scale.toFixed(3)].join("|");
+    if (trCache.has(key)) { const c = trCache.get(key); trCache.delete(key); trCache.set(key, c); return c; }
+    const im = images.get(b.img), cw = Math.max(1, Math.round(S.iw * scale)), ch = Math.max(1, Math.round(S.ih * scale));
+    const c = document.createElement("canvas"); c.width = cw; c.height = ch;
+    const g = c.getContext("2d"); g.scale(cw / S.iw, ch / S.ih);
+    g.drawImage(lookSrc(b.img, b.look) || im.el, 0, 0, S.iw, S.ih);
+    drawFxLines(g, b.fxl, 0, 0, S.iw, S.ih, b.id, W / BASE);
+    g.globalCompositeOperation = "destination-out";
+    const k = W / BASE;
+    if (Lin) { g.save(); edgeMask(g, tin.kind, S.iw, Math.min(Lin, S.ih), b.id + "in", k); g.restore(); }
+    if (Lout) { g.save(); g.translate(0, S.ih); g.scale(1, -1); edgeMask(g, tout.kind, S.iw, Math.min(Lout, S.ih), b.id + "out", k); g.restore(); }
+    g.globalCompositeOperation = "source-over";
+    while (trCache.size > 10) trCache.delete(trCache.keys().next().value);
+    trCache.set(key, c); return c;
+  }
   function drawBlock(ctx, b, W, S, selInfo, preview) {
-    ctx.fillStyle = P.settings.bg; ctx.fillRect(0, 0, W, S.h);
+    const mixO = b.type === "image" && isMix(b) ? mixOverlap(b, W) : 0;
+    if (mixO) ctx.clearRect(0, 0, W, mixO);
+    ctx.fillStyle = P.settings.bg; ctx.fillRect(0, mixO, W, S.h - mixO);
     if (b.type === "page") {
       const k = W / BASE, dark = !lightBg(), line = dark ? "#e9e9e9" : "#111111";
       S.rects.forEach((r, i) => {
@@ -978,14 +1082,30 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
       return;
     }
     if (b.type !== "image") return;
-    const im = images.get(b.img);
-    if (im) { ctx.drawImage(lookSrc(b.img, b.look) || im.el, S.ix, S.iy, S.iw, S.ih); drawFxLines(ctx, b.fxl, S.ix, S.iy, S.iw, S.ih, b.id, W / BASE); }
+    const im = images.get(b.img), bout = isComic() ? null : outOf(b), trs = !isComic() && !!im && (mixO > 0 || trOn(b.tin) || !!bout);
+    if (trs) {
+      let sc = 1; try { sc = Math.abs(ctx.getTransform().a) || 1; } catch (e) { /* old browser */ }
+      if (!mixO && trOn(b.tin) && b.tin.kind !== "mix") { ctx.fillStyle = trCol(b.tin); ctx.fillRect(0, 0, W, S.iy + trLen(b.tin, S.ih)); }
+      if (bout) { const y0 = S.iy + S.ih - trLen(bout, S.ih); ctx.fillStyle = trCol(bout); ctx.fillRect(0, y0, W, S.h - y0); }
+      ctx.drawImage(trImage(b, S, Math.min(2.5, sc)), S.ix, S.iy, S.iw, S.ih);
+    } else if (im) { ctx.drawImage(lookSrc(b.img, b.look) || im.el, S.ix, S.iy, S.iw, S.ih); drawFxLines(ctx, b.fxl, S.ix, S.iy, S.iw, S.ih, b.id, W / BASE); }
     else {
       ctx.fillStyle = "#3a3d44"; ctx.fillRect(S.ix, S.iy, S.iw, S.ih);
       ctx.fillStyle = "#c9ced6"; ctx.font = fontCss("gothic", 26 * W / BASE); ctx.textAlign = "center"; ctx.textBaseline = "middle";
       ctx.fillText("사진을 다시 올려 주세요", W / 2, S.h / 2);
     }
-    if (S.bw) { ctx.lineWidth = S.bw; ctx.strokeStyle = lightBg() ? "#141414" : "#e9e9e9"; ctx.strokeRect(S.ix + S.bw / 2, S.iy + S.bw / 2, S.iw - S.bw, S.ih - S.bw); }
+    if (S.bw && !trs) { ctx.lineWidth = S.bw; ctx.strokeStyle = lightBg() ? "#141414" : "#e9e9e9"; ctx.strokeRect(S.ix + S.bw / 2, S.iy + S.bw / 2, S.iw - S.bw, S.ih - S.bw); }
+    if (mixO) {
+      // the previous cut's bubbles that sit under this cut's dissolve stay on top
+      const pv = prevBlock(b);
+      if (hasBubbles(pv) && pv.bubbles.length) {
+        const PS = blockSize(pv, W);
+        ctx.save(); ctx.beginPath(); ctx.rect(0, 0, W, mixO); ctx.clip(); ctx.translate(0, mixO - PS.h);
+        pv.bubbles.forEach((u) => drawBubble(ctx, u, W, PS.h));
+        if (preview && sel.block === pv.id && sel.bubble) { const u = findBubble(pv, sel.bubble); if (u) drawSelection(ctx, u, W, PS.h, (strip.clientWidth || 360) / W); }
+        ctx.restore();
+      }
+    }
     b.bubbles.forEach((u) => drawBubble(ctx, u, W, S.h));
     if (selInfo && selInfo.bubble) { const u = findBubble(b, selInfo.bubble); if (u) drawSelection(ctx, u, W, S.h, selInfo.hs); }
   }
@@ -1024,13 +1144,16 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     let pageNo = 0;
     P.blocks.forEach((b, i) => {
       const wrap = h("div", { class: "blk", "data-id": b.id });
+      if (!isComic() && isMix(b)) { wrap.style.marginTop = -(mixOverlap(b, W) * sc) + "px"; wrap.classList.add("mix"); }
       const cv = h("canvas", { "aria-label": b.type === "page" ? "페이지 " + (++pageNo) : b.type === "image" ? "컷 " + (i + 1) : b.type === "narration" ? "나레이션" : "빈 여백" });
       wrap.appendChild(cv);
       strip.appendChild(wrap);
       canvasMap.set(b.id, cv);
       attachPointer(cv, b.id);
       if (i < P.blocks.length - 1) {
-        const g = h("div", { class: "gap", style: "height:" + gapCss + "px" });
+        let gh = gapCss, gbg = "";
+        if (!isComic()) { const J = junction(b, P.blocks[i + 1], W); if (J.gap < 0) gh = 0; if (J.col) gbg = ";background:" + J.col; }
+        const g = h("div", { class: "gap", style: "height:" + gh + "px" + gbg });
         g.addEventListener("click", () => select({}));
         strip.appendChild(g);
       }
@@ -1060,6 +1183,7 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     ctx.setTransform(s, 0, 0, s, 0, 0);
     drawBlock(ctx, b, W, S, sel.block === id ? { bubble: sel.bubble, panel: sel.panel, hs: cssW / W } : null, true);
     cv.parentElement.classList.toggle("sel", sel.block === id && !sel.bubble);
+    if (!isComic()) { const nx = P.blocks[P.blocks.indexOf(b) + 1]; if (nx && isMix(nx)) renderSoon(nx.id); }
   }
   const rafSet = new Set(); let rafOn = false;
   function renderSoon(id) { rafSet.add(id); if (rafOn) return; rafOn = true; requestAnimationFrame(() => { rafOn = false; const ids = [...rafSet]; rafSet.clear(); ids.forEach(renderBlock); }); }
@@ -1113,17 +1237,22 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     return null;
   }
   function attachPointer(cv, id) {
-    cv.addEventListener("touchstart", (e) => {
+    const onTouch = (e) => {
       const b = findBlock(id); if (!b || e.touches.length !== 1) return;
       const t = e.touches[0];
       const dblSoon = lastTap && lastTap.id === id && performance.now() - lastTap.t < 380 && Math.hypot(t.clientX - lastTap.x, t.clientY - lastTap.y) < 30;
-      if (dblSoon || (hasBubbles(b) && hitTest(b, localPt(cv, b, t.clientX, t.clientY)))) e.preventDefault();
-    }, { passive: false });
-    cv.addEventListener("pointerdown", (e) => {
-      if (e.button && e.button !== 0) return;
-      const b = findBlock(id); if (!b) return;
+      const uh = underHit(b, t.clientX, t.clientY);
+      if (dblSoon || (hasBubbles(b) && hitTest(b, localPt(cv, b, t.clientX, t.clientY))) || (uh && hitTest(uh.pv, localPt(uh.pcv, uh.pv, t.clientX, t.clientY)))) e.preventDefault();
+    };
+    const underHit = (b, x, y) => {
+      if (!isMix(b)) return null;
+      const pv = prevBlock(b), pcv = canvasMap.get(pv.id);
+      if (!pcv || !hasBubbles(pv) || localPt(cv, b, x, y).y > mixOverlap(b, P.settings.width)) return null;
+      return { pv, pcv };
+    };
+    const grab = (tcv, id, b, e) => {
       if (hasBubbles(b)) {
-        const pt = localPt(cv, b, e.clientX, e.clientY), hit = hitTest(b, pt);
+        const pt = localPt(tcv, b, e.clientX, e.clientY), hit = hitTest(b, pt);
         if (hit) {
           e.preventDefault();
           try { cv.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ }
@@ -1131,20 +1260,29 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
           const dbl = !!(lastTap && lastTap.bubble === hit.u.id && now - lastTap.t < 380);
           lastTap = { id, t: now, x: e.clientX, y: e.clientY, bubble: hit.u.id };
           const tx = hit.u.tail ? hit.u.tail.x / 100 * pt.W : 0, ty = hit.u.tail ? hit.u.tail.y / 100 * pt.H : 0;
-          drag = { id, cv, u: hit.u, kind: hit.kind, pid: e.pointerId, sx: e.clientX, sy: e.clientY, ox: G.cx - pt.x, oy: G.cy - pt.y, tox: tx - pt.x, toy: ty - pt.y, cx0: G.cx, cy0: G.cy, size0: hit.u.size, d0: Math.max(10, Math.hypot(pt.x - G.cx, pt.y - G.cy)), moved: false, dbl };
+          drag = { id, cv: tcv, u: hit.u, kind: hit.kind, pid: e.pointerId, sx: e.clientX, sy: e.clientY, ox: G.cx - pt.x, oy: G.cy - pt.y, tox: tx - pt.x, toy: ty - pt.y, cx0: G.cx, cy0: G.cy, size0: hit.u.size, d0: Math.max(10, Math.hypot(pt.x - G.cx, pt.y - G.cy)), moved: false, dbl };
           if (sel.bubble !== hit.u.id) select({ block: id, bubble: hit.u.id, panel: hit.u.panel });
-          return;
+          return true;
         }
       }
+      return false;
+    };
+    cv.addEventListener("pointerdown", (e) => {
+      if (e.button && e.button !== 0) return;
+      const b = findBlock(id); if (!b) return;
+      if (grab(cv, id, b, e)) return;
+      const uh = underHit(b, e.clientX, e.clientY);
+      if (uh && grab(uh.pcv, uh.pv.id, uh.pv, e)) return;
       pend = { id, pid: e.pointerId, x: e.clientX, y: e.clientY, t: performance.now() };
     });
+    cv.addEventListener("touchstart", onTouch, { passive: false });
     cv.addEventListener("pointermove", (e) => {
       if (pend && pend.pid === e.pointerId && Math.hypot(e.clientX - pend.x, e.clientY - pend.y) > 10) pend = null;
       if (!drag || drag.pid !== e.pointerId) return;
       const b = findBlock(drag.id); if (!b) return;
       if (!drag.moved && Math.hypot(e.clientX - drag.sx, e.clientY - drag.sy) < 4) return;
       drag.moved = true;
-      const pt = localPt(cv, b, e.clientX, e.clientY), u = drag.u;
+      const pt = localPt(drag.cv, b, e.clientX, e.clientY), u = drag.u;
       if (drag.kind === "move") { u.x = (pt.x + drag.ox) / pt.W * 100; u.y = (pt.y + drag.oy) / pt.H * 100; }
       else if (drag.kind === "tail") { u.tail.x = clamp((pt.x + drag.tox) / pt.W * 100, 0, 100); u.tail.y = clamp((pt.y + drag.toy) / pt.H * 100, 0, 100); }
       else { const f = Math.hypot(pt.x - drag.cx0, pt.y - drag.cy0) / drag.d0; u.size = clamp(Math.round(drag.size0 * f), 12, 170); }
@@ -2078,6 +2216,7 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
       body.appendChild(sec("이 컷의 말풍선 " + b.bubbles.length + "개", chips));
     }
     if (images.has(b.img)) body.appendChild(lookSection(b, (now) => { now ? renderBlock(b.id) : renderSoon(b.id); if (now) commit(); else commitSoon(); }, applyLookAll));
+    body.appendChild(trSection(b));
     body.appendChild(sec("컷", h("div", { class: "row" },
       h("button", { type: "button", class: "btn small", onclick: () => { replaceTarget = b.id; replacePanel = null; $("fileReplace").click(); } }, "사진 바꾸기"),
       h("button", { type: "button", class: "btn small", onclick: () => moveBlock(b.id, -1) }, "↑ 위로"),
@@ -2099,6 +2238,51 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     const sp = document.createElement("span");
     sp.innerHTML = '<svg viewBox="0 0 30 40" width="30" height="40" fill="currentColor" fill-opacity=".16" stroke="currentColor" stroke-width="1.3" aria-hidden="true">' + out + "</svg>";
     return sp.firstChild;
+  }
+  let trT = 0;
+  const trDef = () => ({ kind: "none", col: "bg", len: 20 });
+  const trSet = (b, side, kind, col, len) => { b[side] = { kind, col: col || "bg", len: len || 20 }; };
+  function sceneBreak(b, col) {
+    const i = P.blocks.indexOf(b), nx = P.blocks[i + 1];
+    trSet(b, "tout", "fade", col, 30);
+    if (!(nx && nx.type === "space" && nx.bgc === col)) P.blocks.splice(i + 1, 0, { id: nid("s"), type: "space", h: 260, bgc: col });
+    const nn = P.blocks[i + 2];
+    if (nn && nn.type === "image") trSet(nn, "tin", "fade", col, 30);
+  }
+  function trSection(b) {
+    b.tin = b.tin || trDef(); b.tout = b.tout || trDef();
+    const i = P.blocks.indexOf(b), prev = P.blocks[i - 1], next = P.blocks[i + 1];
+    const canMix = !!prev && (prev.type === "image" || prev.type === "space");
+    const redo = (rebuild) => { renderStrip(); commit(); if (rebuild) buildInspector(); };
+    const wrap = h("div", { class: "sec" }, h("div", { class: "sec-l", text: "컷 이어짐 · 페이드" }),
+      h("p", { class: "hint", text: "사진 위아래 끝을 부드럽게 녹여서 다음 장면으로 자연스럽게 넘어가게 해요." }));
+    const quick = h("div", { class: "row" });
+    if (next && next.type === "image") quick.appendChild(h("button", { type: "button", class: "btn small", onclick: () => { b.tout.kind = "none"; trSet(next, "tin", "mix", "bg", 28); redo(true); toast("다음 컷이 이 컷 위로 겹쳐지며 녹아들어요"); } }, "다음 컷과 겹쳐 녹이기"));
+    quick.appendChild(h("button", { type: "button", class: "btn small", onclick: () => { trSet(b, "tout", "fade", "bg", 18); if (next && next.type === "image" && !isMix(next)) trSet(next, "tin", "fade", "bg", 18); redo(true); } }, "스르륵 잇기"));
+    quick.appendChild(h("button", { type: "button", class: "btn small", onclick: () => { sceneBreak(b, "#000000"); redo(true); toast("검게 사라졌다가 다음 컷이 떠올라요"); } }, "암전 (검게)"));
+    quick.appendChild(h("button", { type: "button", class: "btn small", onclick: () => { sceneBreak(b, "#ffffff"); redo(true); toast("하얗게 사라졌다가 다음 컷이 떠올라요"); } }, "화이트아웃"));
+    wrap.appendChild(quick);
+    const side = (key, label, opts) => {
+      const t = b[key];
+      if (t.kind === "mix" && !canMix) t.kind = "fade";
+      wrap.appendChild(h("div", { class: "sec-l", text: label, style: "margin-top:6px" }));
+      wrap.appendChild(seg(opts, t.kind || "none", (v) => {
+        t.kind = v;
+        if (v === "mix" && prev && prev.type === "image" && prev.tout) prev.tout.kind = "none";
+        if (v !== "none" && !t.len) t.len = 20;
+        redo(true);
+      }, label));
+      if (trOn(t)) {
+        if (t.kind !== "mix") wrap.appendChild(seg(TR_COL, t.col || "bg", (v) => { t.col = v; redo(false); }, label + " 색"));
+        wrap.appendChild(slider(t.kind === "mix" ? "겹치는 길이" : "녹는 길이", 5, 60, 1, t.len || 20, "%", (v) => { t.len = v; clearTimeout(trT); trT = setTimeout(renderStrip, 80); }));
+      }
+    };
+    side("tin", "들어올 때 · 위쪽 (페이드 인)", canMix ? TR_IN : TR_IN.filter((x) => x[0] !== "mix"));
+    side("tout", "나갈 때 · 아래쪽 (페이드 아웃)", TR_OUT);
+    wrap.appendChild(h("div", { class: "row" },
+      h("button", { type: "button", class: "btn small", onclick: () => { let n = 0; P.blocks.forEach((x) => { if (x.type === "image" && x !== b) { x.tin = JSON.parse(JSON.stringify(b.tin)); x.tout = JSON.parse(JSON.stringify(b.tout)); n++; } }); redo(false); toast("컷 " + (n + 1) + "개에 같은 이어짐을 넣었어요"); } }, "모든 컷에 똑같이"),
+      h("button", { type: "button", class: "btn small", disabled: !trOn(b.tin) && !trOn(b.tout), onclick: () => { b.tin = trDef(); b.tout = trDef(); redo(true); } }, "이 컷 이어짐 빼기")));
+    return wrap;
   }
   function inspPage(b) {
     const W = P.settings.width, S = blockSize(b, W), pages = P.blocks.filter((x) => x.type === "page"), cnt = S.rects.length;
@@ -2896,7 +3080,22 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   });
 
   // ---------- auto modal ----------
-  $("bAuto").addEventListener("click", () => { engineUI(); $("aStatus").textContent = ""; openModal("mAuto"); });
+  $("bAuto").addEventListener("click", () => { engineUI(); $("aTransCard").hidden = isComic(); $("aStatus").textContent = ""; openModal("mAuto"); });
+  function autoTrans(mode) {
+    let n = 0;
+    P.blocks.forEach((b, i) => {
+      if (b.type !== "image") return;
+      const nx = P.blocks[i + 1], pv = P.blocks[i - 1];
+      if (mode === "none") { b.tin = trDef(); b.tout = trDef(); return; }
+      if (mode === "fade") { if (b.tin && b.tin.kind === "mix") b.tin = trDef(); if (nx && nx.type === "image") { trSet(b, "tout", "fade", "bg", 16); trSet(nx, "tin", "fade", "bg", 16); n++; } }
+      if (mode === "mix" && pv && pv.type === "image") { trSet(b, "tin", "mix", "bg", 24); pv.tout = trDef(); n++; }
+    });
+    renderStrip(); commit(); syncInspector();
+    $("aStatus").textContent = mode === "none" ? "컷 이어짐을 모두 뺐어요." : n ? "컷 사이 " + n + "곳을 " + (mode === "mix" ? "겹쳐 녹였어요." : "스르륵 이었어요.") : "이어 줄 컷이 두 장 이상 있어야 해요.";
+  }
+  $("aTrFade").addEventListener("click", () => autoTrans("fade"));
+  $("aTrMix").addEventListener("click", () => autoTrans("mix"));
+  $("aTrNone").addEventListener("click", () => autoTrans("none"));
   $("aPlace").addEventListener("click", () => {
     const list = P.blocks.filter((b) => hasBubbles(b) && b.bubbles.length);
     list.forEach((b) => autoLayout(b)); renderStrip(); commit(); syncInspector();
@@ -2935,12 +3134,19 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
 
   // ---------- export ----------
   function stripLayout(W) {
-    const gap = Math.round((isComic() ? 40 : P.settings.gap) * W / BASE); let y = 0;
-    const items = P.blocks.map((b, i) => { const S = blockSize(b, W), it = { b, S, y }; y += S.h + (i < P.blocks.length - 1 ? gap : 0); return it; });
-    return { items, total: Math.max(1, y), gap };
+    const gap = Math.round((isComic() ? 40 : P.settings.gap) * W / BASE); let y = 0; const joins = [];
+    const items = P.blocks.map((b, i) => {
+      const S = blockSize(b, W), it = { b, S, y }; y += S.h;
+      if (i < P.blocks.length - 1) {
+        if (isComic()) y += gap;
+        else { const J = junction(b, P.blocks[i + 1], W); if (J.col && J.gap > 0) joins.push({ y, h: J.gap, col: J.col }); y += J.gap; }
+      }
+      return it;
+    });
+    return { items, total: Math.max(1, y), gap, joins };
   }
   function splitParts(lay, n, maxH) {
-    const bounds = lay.items.slice(0, -1).map((it) => Math.round(it.y + it.S.h + lay.gap / 2));
+    const bounds = lay.items.slice(0, -1).map((it, i) => { const e = it.y + it.S.h, ny = lay.items[i + 1].y; return Math.round(ny >= e ? (e + ny) / 2 : e); });
     const cuts = []; let prev = 0;
     for (let k = 1; k < n; k++) {
       const target = lay.total * k / n; let best = null;
@@ -2992,6 +3198,7 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
         const c = document.createElement("canvas"); c.width = W; c.height = Math.max(1, b - a);
         const ctx = c.getContext("2d");
         ctx.fillStyle = P.settings.bg; ctx.fillRect(0, 0, W, c.height);
+        (lay.joins || []).forEach((j) => { if (j.y + j.h <= a || j.y >= b) return; ctx.fillStyle = j.col; ctx.fillRect(0, j.y - a, W, j.h); });
         lay.items.forEach((it) => {
           if (it.y + it.S.h <= a || it.y >= b) return;
           ctx.save(); ctx.translate(0, it.y - a); drawBlock(ctx, it.b, W, it.S, null); ctx.restore();
