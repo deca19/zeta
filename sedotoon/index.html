@@ -133,6 +133,14 @@ input[type="range"] { width: 100%; accent-color: var(--accent); height: 28px; }
 .switch input { width: 44px; height: 24px; accent-color: var(--accent); }
 
 /* toast */
+.fab { display: none; position: fixed; right: max(16px, env(safe-area-inset-right, 0px)); bottom: calc(18px + env(safe-area-inset-bottom, 0px)); z-index: 31; width: 60px; height: 60px; border-radius: 50%; border: 0; background: var(--accent); color: var(--accent-ink); box-shadow: 0 6px 20px rgba(0,0,0,.28); align-items: center; justify-content: center; cursor: pointer; padding: 0; }
+.fab svg { width: 26px; height: 26px; }
+.fab-tag { position: absolute; top: -6px; right: -6px; background: var(--ink); color: var(--bg); font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 99px; white-space: nowrap; }
+.pad { display: grid; grid-template-columns: repeat(3, 46px); gap: 6px; }
+.pad button { height: 42px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel-2); font-size: 18px; cursor: pointer; padding: 0; }
+.pad button.mid { font-size: 11px; font-weight: 600; }
+.pad-row { display: flex; gap: 16px; align-items: flex-start; flex-wrap: wrap; }
+.pad-row .grow { flex: 1 1 160px; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
 .toast { position: fixed; left: 50%; transform: translateX(-50%) translateY(10px); bottom: calc(var(--sheet-h, 0px) + 16px + env(safe-area-inset-bottom, 0px)); z-index: 60; background: var(--ink); color: var(--bg); padding: 10px 14px; border-radius: 10px; max-width: calc(100% - 32px); width: max-content; font-weight: 500; opacity: 0; pointer-events: none; transition: opacity .18s, transform .18s; }
 .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 .toast.err { background: var(--warn); color: #fff; }
@@ -200,8 +208,11 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   .grab { display: block; position: absolute; top: 5px; left: 50%; width: 38px; height: 4px; border-radius: 4px; background: var(--line); transform: translateX(-50%); }
   .insp-head { position: relative; padding: 14px 16px 10px; cursor: pointer; }
   .insp-body { padding: 12px 16px 16px; }
-  .insp.collapsed .insp-body { display: none; }
-  .insp.collapsed .insp-head { border-bottom: 0; }
+  .insp.collapsed { display: none; }
+  .insp-head { cursor: default; }
+  .fab { display: flex; }
+  body.sheet-open .fab { display: none; }
+  .toast { bottom: calc(max(var(--sheet-h, 0px), 74px) + 12px + env(safe-area-inset-bottom, 0px)); }
   .modal { align-items: flex-end; padding-left: 0; padding-right: 0; padding-bottom: 0; }
   .modal-card { border-radius: 16px 16px 0 0; max-height: 92vh; padding: 16px max(16px, env(safe-area-inset-right, 0px)) calc(16px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); }
 }
@@ -248,6 +259,7 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   </aside>
 </div>
 
+<button class="fab" id="fab" type="button" aria-label="편집 도구 열기"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="m13.5 6.5 4 4"/></svg><span class="fab-tag" id="fabTag" hidden></span></button>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 <input type="file" id="filePanels" accept="image/*" multiple hidden>
 <input type="file" id="fileReplace" accept="image/*" hidden>
@@ -517,18 +529,19 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     tw = Math.max(tw, px * 0.9);
     const th = lines.length * lh, a = tw / 2, bb = th / 2;
     let rx, ry, ex, ey;
+    const fx = (u.padX || 100) / 100, fy = (u.padY || 100) / 100;
     switch (u.shape) {
-      case "thought": rx = a * 1.16 + px * 0.95; ry = bb * 1.26 + px * 0.85; ex = rx + px * 0.9; ey = ry + px * 0.9; break;
-      case "shout": rx = a * 1.2 + px * 1.0; ry = bb * 1.3 + px * 0.85; ex = rx * 1.3; ey = ry * 1.32; break;
-      case "round": rx = a + px * 0.85; ry = bb + px * 0.62; ex = rx; ey = ry; break;
-      case "box": rx = a + px * 0.8; ry = bb + px * 0.58; ex = rx; ey = ry; break;
+      case "thought": rx = a * 1.16 + px * 0.95 * fx; ry = bb * 1.26 + px * 0.85 * fy; ex = rx + px * 0.9; ey = ry + px * 0.9; break;
+      case "shout": rx = a * 1.2 + px * 1.0 * fx; ry = bb * 1.3 + px * 0.85 * fy; ex = rx * 1.3; ey = ry * 1.32; break;
+      case "round": rx = a + px * 0.85 * fx; ry = bb + px * 0.62 * fy; ex = rx; ey = ry; break;
+      case "box": rx = a + px * 0.8 * fx; ry = bb + px * 0.58 * fy; ex = rx; ey = ry; break;
       case "sfx": case "plain": {
         const st = px * (u.shape === "sfx" ? 0.16 : 0.1);
         rx = a + st; ry = bb + st;
         const r = (u.rot || 0) * Math.PI / 180, c = Math.abs(Math.cos(r)), s = Math.abs(Math.sin(r));
         ex = rx * c + ry * s; ey = rx * s + ry * c; break;
       }
-      default: rx = a * 1.18 + px * 0.88; ry = bb * 1.28 + px * 0.74; ex = rx; ey = ry;
+      default: rx = a * 1.18 + px * 0.88 * fx; ry = bb * 1.28 + px * 0.74 * fy; ex = rx; ey = ry;
     }
     const m = 6 * k;
     const cl = (v, lo, hi) => (hi < lo ? (lo + hi) / 2 : clamp(v, lo, hi));
@@ -557,11 +570,13 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     c.moveTo(x + r, y); c.lineTo(x + w - r, y); c.quadraticCurveTo(x + w, y, x + w, y + r); c.lineTo(x + w, y + hh - r); c.quadraticCurveTo(x + w, y + hh, x + w - r, y + hh);
     c.lineTo(x + r, y + hh); c.quadraticCurveTo(x, y + hh, x, y + hh - r); c.lineTo(x, y + r); c.quadraticCurveTo(x, y, x + r, y); c.closePath();
   }
-  function tailPath(c, cx, cy, tx, ty, bw) {
+  function tailPath(c, cx, cy, tx, ty, bw, bend) {
+    if (bend == null) bend = 0.25;
     const dx = tx - cx, dy = ty - cy, len = Math.hypot(dx, dy) || 1, nx = -dy / len, ny = dx / len;
+    const sh = bend * Math.max(bw * 0.6, len * 0.14);
     c.moveTo(cx + nx * bw, cy + ny * bw);
-    c.quadraticCurveTo(cx + dx * 0.6 + nx * bw * 0.55, cy + dy * 0.6 + ny * bw * 0.55, tx, ty);
-    c.quadraticCurveTo(cx + dx * 0.6 - nx * bw * 0.08, cy + dy * 0.6 - ny * bw * 0.08, cx - nx * bw, cy - ny * bw);
+    c.quadraticCurveTo(cx + dx * 0.6 + nx * (bw * 0.4 + sh), cy + dy * 0.6 + ny * (bw * 0.4 + sh), tx, ty);
+    c.quadraticCurveTo(cx + dx * 0.6 + nx * (-bw * 0.4 + sh), cy + dy * 0.6 + ny * (-bw * 0.4 + sh), cx - nx * bw, cy - ny * bw);
     c.closePath();
   }
   function cloudParts(parts, cx, cy, rx, ry, px, seed) {
@@ -597,7 +612,7 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
       const nd = Math.pow((tx - cx) / rx, 2) + Math.pow((ty - cy) / ry, 2);
       if (nd > 1.2) {
         if (s === "thought") trail = { tx, ty };
-        else { const bw = Math.min(Math.min(rx, ry) * 0.34, px * 0.95); parts.push((c) => tailPath(c, cx, cy, tx, ty, bw)); }
+        else { const bw = Math.min(Math.min(rx, ry) * 0.34, px * 0.95) * ((u.tailW || 100) / 100), bend = u.tailBend == null ? 0.25 : u.tailBend / 100; parts.push((c) => tailPath(c, cx, cy, tx, ty, bw, bend)); }
       }
     }
     if (s === "box") {
@@ -642,7 +657,7 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   }
   function handlePos(G, W, H, hs) { const pad = 4 / hs; return { x: Math.min(W - 13 / hs, G.cx + G.ex + pad), y: Math.min(H - 13 / hs, G.cy + G.ey + pad) }; }
   function drawSelection(ctx, u, W, H, hs) {
-    const G = bubbleGeo(u, W, H), pad = 5 / hs, r = 10 / hs;
+    const G = bubbleGeo(u, W, H), pad = 5 / hs, r = (coarse() ? 13 : 10) / hs;
     ctx.save();
     ctx.setLineDash([6 / hs, 4 / hs]); ctx.lineWidth = 1.6 / hs; ctx.strokeStyle = "#2f7bf5";
     ctx.strokeRect(G.cx - G.ex - pad, G.cy - G.ey - pad, (G.ex + pad) * 2, (G.ey + pad) * 2);
@@ -715,7 +730,7 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
       attachPointer(cv, b.id);
       if (i < P.blocks.length - 1) {
         const g = h("div", { class: "gap", style: "height:" + gapCss + "px" });
-        g.addEventListener("pointerdown", () => select({}));
+        g.addEventListener("click", () => select({}));
         strip.appendChild(g);
       }
       renderBlock(b.id);
@@ -746,8 +761,8 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     if (prev && prev !== sel.block) renderBlock(prev);
     if (sel.block) renderBlock(sel.block);
     buildInspector();
-    if (isMobile()) $("insp").classList.toggle("collapsed", !sel.block && !opts.open);
-    updateSheetH();
+    if (opts.open) openSheet();
+    updateFab(); updateSheetH();
     if (opts.focus) {
       const ta = $("uText") || $("nText");
       if (ta) { ta.focus({ preventScroll: true }); if (opts.selectAll) ta.select(); }
@@ -762,17 +777,18 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
       const b = findBlock(sel.block), u = findBubble(b, sel.bubble);
       if (u) { const S = blockSize(b, W), G = bubbleGeo(u, W, S.h); y1 = r.top + (G.cy - G.ey) * sc; y2 = r.top + (G.cy + G.ey) * sc; }
       const top = document.querySelector(".top").getBoundingClientRect().bottom + 8;
-      const bottom = window.innerHeight - (isMobile() ? $("insp").offsetHeight : 0) - 10;
+      const bottom = window.innerHeight - (sheetOpen() ? $("insp").offsetHeight : 0) - 10;
       if (y2 > bottom) window.scrollBy({ top: y2 - bottom + 16, behavior: "smooth" });
       else if (y1 < top) window.scrollBy({ top: y1 - top - 16, behavior: "smooth" });
     });
   }
 
   // ---------- pointer editing ----------
-  let drag = null, lastTap = null, suppressTouch = false;
+  let drag = null, lastTap = null, pend = null;
+  const coarse = () => window.matchMedia("(pointer: coarse)").matches;
   function localPt(cv, b, cx, cy) { const r = cv.getBoundingClientRect(), W = P.settings.width, S = blockSize(b, W); return { x: (cx - r.left) / r.width * W, y: (cy - r.top) / r.height * S.h, W, H: S.h, hs: r.width / W }; }
   function hitTest(b, pt) {
-    const { W, H, hs } = pt, tol = 22 / hs;
+    const { W, H, hs } = pt, tol = (coarse() ? 32 : 22) / hs;
     const su = findBubble(b, sel.block === b.id ? sel.bubble : null);
     if (su) {
       if (SHAPES[su.shape].tail && su.tail && su.tail.on && Math.hypot(pt.x - su.tail.x / 100 * W, pt.y - su.tail.y / 100 * H) < tol) return { kind: "tail", u: su };
@@ -788,62 +804,66 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   function attachPointer(cv, id) {
     cv.addEventListener("touchstart", (e) => {
       const b = findBlock(id); if (!b || e.touches.length !== 1) return;
-      if (b.type !== "image") { if (suppressTouch) e.preventDefault(); suppressTouch = false; return; }
       const t = e.touches[0];
-      if (suppressTouch || hitTest(b, localPt(cv, b, t.clientX, t.clientY))) e.preventDefault();
-      suppressTouch = false;
+      const dblSoon = lastTap && lastTap.id === id && performance.now() - lastTap.t < 380 && Math.hypot(t.clientX - lastTap.x, t.clientY - lastTap.y) < 30;
+      if (dblSoon || (b.type === "image" && hitTest(b, localPt(cv, b, t.clientX, t.clientY)))) e.preventDefault();
     }, { passive: false });
     cv.addEventListener("pointerdown", (e) => {
       if (e.button && e.button !== 0) return;
       const b = findBlock(id); if (!b) return;
-      if (b.type !== "image") {
-        const again = lastTap && lastTap.id === id && performance.now() - lastTap.t < 380;
-        lastTap = { id, t: performance.now(), x: e.clientX, y: e.clientY };
-        if (again) { e.preventDefault(); suppressTouch = true; }
-        select({ block: id }, { focus: again, reveal: true });
-        return;
+      if (b.type === "image") {
+        const pt = localPt(cv, b, e.clientX, e.clientY), hit = hitTest(b, pt);
+        if (hit) {
+          e.preventDefault();
+          try { cv.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ }
+          const G = hit.G || bubbleGeo(hit.u, pt.W, pt.H), now = performance.now();
+          const dbl = !!(lastTap && lastTap.bubble === hit.u.id && now - lastTap.t < 380);
+          lastTap = { id, t: now, x: e.clientX, y: e.clientY, bubble: hit.u.id };
+          const tx = hit.u.tail ? hit.u.tail.x / 100 * pt.W : 0, ty = hit.u.tail ? hit.u.tail.y / 100 * pt.H : 0;
+          drag = { id, cv, u: hit.u, kind: hit.kind, pid: e.pointerId, sx: e.clientX, sy: e.clientY, ox: G.cx - pt.x, oy: G.cy - pt.y, tox: tx - pt.x, toy: ty - pt.y, cx0: G.cx, cy0: G.cy, size0: hit.u.size, d0: Math.max(10, Math.hypot(pt.x - G.cx, pt.y - G.cy)), moved: false, dbl };
+          if (sel.bubble !== hit.u.id) select({ block: id, bubble: hit.u.id });
+          return;
+        }
       }
-      const pt = localPt(cv, b, e.clientX, e.clientY);
-      const hit = hitTest(b, pt);
-      const now = performance.now();
-      const dbl = lastTap && lastTap.id === id && now - lastTap.t < 380 && Math.hypot(e.clientX - lastTap.x, e.clientY - lastTap.y) < 30;
-      lastTap = { id, t: now, x: e.clientX, y: e.clientY, bubble: hit ? hit.u.id : null };
-      if (hit) {
-        e.preventDefault();
-        try { cv.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ }
-        const G = hit.G || bubbleGeo(hit.u, pt.W, pt.H);
-        drag = { id, cv, u: hit.u, kind: hit.kind, pid: e.pointerId, sx: e.clientX, sy: e.clientY, ox: G.cx - pt.x, oy: G.cy - pt.y, cx0: G.cx, cy0: G.cy, size0: hit.u.size, d0: Math.max(10, Math.hypot(pt.x - G.cx, pt.y - G.cy)), moved: false, dbl: dbl && lastTapBubbleWas(hit.u.id) };
-        if (sel.bubble !== hit.u.id) select({ block: id, bubble: hit.u.id });
-        return;
-      }
-      if (dbl) { e.preventDefault(); suppressTouch = true; lastTap = null; addBubbleAt(b, pt.x / pt.W * 100, pt.y / pt.H * 100); return; }
-      select({ block: id });
+      pend = { id, pid: e.pointerId, x: e.clientX, y: e.clientY, t: performance.now() };
     });
     cv.addEventListener("pointermove", (e) => {
+      if (pend && pend.pid === e.pointerId && Math.hypot(e.clientX - pend.x, e.clientY - pend.y) > 10) pend = null;
       if (!drag || drag.pid !== e.pointerId) return;
       const b = findBlock(drag.id); if (!b) return;
       if (!drag.moved && Math.hypot(e.clientX - drag.sx, e.clientY - drag.sy) < 4) return;
       drag.moved = true;
       const pt = localPt(cv, b, e.clientX, e.clientY), u = drag.u;
       if (drag.kind === "move") { u.x = (pt.x + drag.ox) / pt.W * 100; u.y = (pt.y + drag.oy) / pt.H * 100; }
-      else if (drag.kind === "tail") { u.tail.x = clamp(pt.x / pt.W * 100, 0, 100); u.tail.y = clamp(pt.y / pt.H * 100, 0, 100); }
+      else if (drag.kind === "tail") { u.tail.x = clamp((pt.x + drag.tox) / pt.W * 100, 0, 100); u.tail.y = clamp((pt.y + drag.toy) / pt.H * 100, 0, 100); }
       else { const f = Math.hypot(pt.x - drag.cx0, pt.y - drag.cy0) / drag.d0; u.size = clamp(Math.round(drag.size0 * f), 12, 170); }
       renderSoon(drag.id);
     });
     const end = (e) => {
+      if (pend && pend.pid === e.pointerId) {
+        const p = pend; pend = null;
+        if (e.type === "pointerup" && performance.now() - p.t < 700) onTap(cv, id, e);
+        return;
+      }
       if (!drag || drag.pid !== e.pointerId) return;
       const d = drag; drag = null;
       const b = findBlock(d.id); if (!b) return;
       if (d.moved) { normalizeBubble(b, d.u); renderBlock(d.id); commit(); syncInspector(); }
-      else if (d.dbl) select({ block: d.id, bubble: d.u.id }, { focus: true, selectAll: false });
-      else reveal();
+      else if (d.dbl) select({ block: d.id, bubble: d.u.id }, { open: true, focus: true, reveal: true });
     };
     cv.addEventListener("pointerup", end);
     cv.addEventListener("pointercancel", end);
   }
-  function lastTapBubbleWas(uid) { return prevTapBubble === uid; }
-  let prevTapBubble = null;
-  document.addEventListener("pointerdown", () => { prevTapBubble = lastTap ? lastTap.bubble : null; }, true);
+  function onTap(cv, id, e) {
+    const b = findBlock(id); if (!b) return;
+    const now = performance.now();
+    const dbl = !!(lastTap && lastTap.id === id && !lastTap.bubble && now - lastTap.t < 380 && Math.hypot(e.clientX - lastTap.x, e.clientY - lastTap.y) < 30);
+    lastTap = dbl ? null : { id, t: now, x: e.clientX, y: e.clientY, bubble: null };
+    if (b.type === "image") {
+      if (dbl) { const pt = localPt(cv, b, e.clientX, e.clientY); addBubbleAt(b, pt.x / pt.W * 100, pt.y / pt.H * 100); return; }
+      select({ block: id });
+    } else select({ block: id }, dbl ? { open: true, focus: true } : {});
+  }
   function normalizeBubble(b, u) { const W = P.settings.width, S = blockSize(b, W), G = bubbleGeo(u, W, S.h); u.x = round1(G.cx / W * 100); u.y = round1(G.cy / S.h * 100); }
   const round1 = (v) => Math.round(v * 10) / 10;
 
@@ -867,7 +887,7 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     const u = makeBubble(P.settings.bubbleShape || "oval", "대사", x, y);
     b.bubbles.push(u); normalizeBubble(b, u);
     renderBlock(b.id); commit();
-    select({ block: b.id, bubble: u.id }, { focus: true, selectAll: true, reveal: true });
+    select({ block: b.id, bubble: u.id }, { open: true, focus: true, selectAll: true, reveal: true });
   }
   function addBubbleSmart(b) {
     const W = P.settings.width, S = blockSize(b, W);
@@ -933,6 +953,19 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     u.tail.on = true;
     u.tail.x = round1(clamp((G.cx + dx * W) / W * 100, 3, 97));
     u.tail.y = round1(clamp((G.cy + G.ey + Math.max(S.ih * 0.08, 44 * W / BASE)) / S.h * 100, 3, 97));
+  }
+  function tailInfo(b, u) {
+    const W = P.settings.width, S = blockSize(b, W), G = bubbleGeo(u, W, S.h), k = W / BASE;
+    const tx = (u.tail && u.tail.x != null ? u.tail.x : 50) / 100 * W, ty = (u.tail && u.tail.y != null ? u.tail.y : 90) / 100 * S.h;
+    const dx = tx - G.cx, dy = ty - G.cy, d = Math.hypot(dx, dy) || 1, ux = dx / d, uy = dy / d;
+    const de = 1 / Math.sqrt(Math.pow(ux / G.rx, 2) + Math.pow(uy / G.ry, 2));
+    return { W, S, G, k, ang: Math.atan2(dy, dx), len: Math.max(0, d - de) };
+  }
+  function setTail(b, u, ang, len) {
+    const { W, S, G } = tailInfo(b, u), ux = Math.cos(ang), uy = Math.sin(ang);
+    const de = 1 / Math.sqrt(Math.pow(ux / G.rx, 2) + Math.pow(uy / G.ry, 2)), d = de + Math.max(0, len);
+    u.tail = u.tail || {}; u.tail.on = true;
+    u.tail.x = round1(clamp((G.cx + ux * d) / W * 100, 0, 100)); u.tail.y = round1(clamp((G.cy + uy * d) / S.h * 100, 0, 100));
   }
   function boxes(b) { const W = P.settings.width, S = blockSize(b, W); return { W, S, gs: b.bubbles.map((u) => bubbleGeo(u, W, S.h)) }; }
   function overlap(a, c, m) { return Math.abs(a.cx - c.cx) < a.ex + c.ex + m && Math.abs(a.cy - c.cy) < a.ey + c.ey + m; }
@@ -1252,7 +1285,8 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     const keep = key === inspKey ? body.scrollTop : 0;
     inspKey = key;
     body.innerHTML = "";
-    $("inspDone").hidden = !sel.block;
+    $("inspDone").hidden = isMobile() ? false : !sel.block;
+    $("inspDone").textContent = isMobile() ? "접기" : "완료";
     if (u) inspBubble(b, u);
     else if (b && b.type === "image") inspImage(b);
     else if (b && b.type === "narration") inspNarr(b);
@@ -1283,12 +1317,34 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
       slider("한 줄 글자 수", 3, 24, 1, u.cols, "", (v) => { u.cols = v; renderSoon(b.id); }));
     if (u.shape === "sfx" || u.shape === "plain") sliders.appendChild(slider("기울기", -30, 30, 1, u.rot || 0, "°", (v) => { u.rot = v; renderSoon(b.id); }));
     body.appendChild(sliders);
+    const nudge = (dx, dy) => { u.x = clamp(u.x + dx, 0, 100); u.y = clamp(u.y + dy, 0, 100); normalizeBubble(b, u); renderBlock(b.id); commitSoon(); };
+    const posPad = h("div", { class: "pad", role: "group", "aria-label": "말풍선 위치 옮기기" },
+      h("span"), h("button", { type: "button", "aria-label": "위로", onclick: () => nudge(0, -2) }, "↑"), h("span"),
+      h("button", { type: "button", "aria-label": "왼쪽으로", onclick: () => nudge(-2, 0) }, "←"), h("button", { type: "button", class: "mid", "aria-label": "가로 가운데로", onclick: () => { u.x = 50; normalizeBubble(b, u); renderBlock(b.id); commit(); } }, "가운데"), h("button", { type: "button", "aria-label": "오른쪽으로", onclick: () => nudge(2, 0) }, "→"),
+      h("span"), h("button", { type: "button", "aria-label": "아래로", onclick: () => nudge(0, 2) }, "↓"), h("span"));
+    const shapeSliders = u.shape === "sfx" || u.shape === "plain" ? null : h("div", { class: "grow" },
+      slider("가로 넓이", 40, 300, 5, u.padX || 100, "%", (v) => { u.padX = v; renderSoon(b.id); }),
+      slider("세로 높이", 40, 300, 5, u.padY || 100, "%", (v) => { u.padY = v; renderSoon(b.id); }));
+    body.appendChild(sec("위치 · 모양", h("div", { class: "pad-row" }, posPad, shapeSliders)));
     if (SHAPES[u.shape].tail) {
-      const sw = h("input", { type: "checkbox", id: "tailOn" }); sw.checked = !!(u.tail && u.tail.on);
-      sw.addEventListener("change", () => { u.tail = u.tail || {}; u.tail.on = sw.checked; if (sw.checked && u.tail.x == null) autoTail(b, u); renderBlock(b.id); commit(); });
-      body.appendChild(sec("꼬리", h("label", { class: "switch" }, h("span", { text: "꼬리 보이기" }), sw),
-        h("div", { class: "row" }, h("button", { type: "button", class: "btn small", onclick: () => { autoTail(b, u); renderBlock(b.id); commit(); sw.checked = true; } }, "꼬리 아래로 자동")),
-        h("p", { class: "hint", text: "파란 점을 끌어서 말하는 사람의 입 쪽을 가리키게 하세요." })));
+      u.tail = u.tail || { on: false };
+      if (u.tail.x == null) autoTail(b, u);
+      const sw = h("input", { type: "checkbox", id: "tailOn" }); sw.checked = !!u.tail.on;
+      sw.addEventListener("change", () => { u.tail.on = sw.checked; renderBlock(b.id); commit(); });
+      const ti = tailInfo(b, u);
+      const dirBtn = (label, deg, aria) => h("button", { type: "button", "aria-label": aria, onclick: () => { const t = tailInfo(b, u); setTail(b, u, deg * Math.PI / 180, Math.max(t.len, 30 * t.k)); renderBlock(b.id); commit(); sw.checked = true; lenOut(); } }, label);
+      const dirPad = h("div", { class: "pad", role: "group", "aria-label": "꼬리 방향" },
+        dirBtn("↖", -135, "왼쪽 위"), dirBtn("↑", -90, "위"), dirBtn("↗", -45, "오른쪽 위"),
+        dirBtn("←", 180, "왼쪽"), h("button", { type: "button", class: "mid", "aria-label": "꼬리 자동", onclick: () => { autoTail(b, u); renderBlock(b.id); commit(); sw.checked = true; lenOut(); } }, "자동"), dirBtn("→", 0, "오른쪽"),
+        dirBtn("↙", 135, "왼쪽 아래"), dirBtn("↓", 90, "아래"), dirBtn("↘", 45, "오른쪽 아래"));
+      const lenSlider = slider("길이", 0, 400, 2, Math.round(ti.len / ti.k), "", (v) => { const t = tailInfo(b, u); setTail(b, u, t.ang, v * t.k); renderSoon(b.id); });
+      const lenOut = () => { const t = tailInfo(b, u), inp = lenSlider.querySelector("input"), out = lenSlider.querySelector("output"); inp.value = Math.round(t.len / t.k); out.textContent = inp.value; };
+      body.appendChild(sec("꼬리 (뾰족한 끝)", h("label", { class: "switch" }, h("span", { text: "꼬리 보이기" }), sw),
+        h("div", { class: "pad-row" }, dirPad, h("div", { class: "grow" },
+          lenSlider,
+          slider("굵기", 30, 250, 5, u.tailW || 100, "%", (v) => { u.tailW = v; renderSoon(b.id); }),
+          slider("휘어짐", -100, 100, 5, u.tailBend == null ? 25 : u.tailBend, "", (v) => { u.tailBend = v; renderSoon(b.id); }))),
+        h("p", { class: "hint", text: "화살표로 방향을 고르고 길이를 조절하세요. 그림에서 파란 점을 끌어도 돼요." })));
     }
     const who = h("input", { type: "text", value: u.who || "", placeholder: "예) 카일", "aria-label": "말하는 사람" });
     who.addEventListener("input", () => { u.who = who.value.trim(); commitSoon(); });
@@ -1377,7 +1433,7 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
       confirmNew = false; newProject();
     });
     body.appendChild(sec("폰 AI", h("div", { class: "row" }, h("button", { type: "button", class: "btn small", onclick: openEngine }, "폰 AI 상태 보기")),
-      h("p", { class: "hint", text: engine.ready ? "켜져 있어요 · Qwen3.5 0.8B" : engine.cached ? "받아 둠 · 쓸 때 자동으로 켜져요" : "아직 안 받았어요 (약 1GB)" })));
+      h("p", { class: "hint", text: engine.ready ? "켜져 있어요 · " + curModel().label : engine.cached ? "받아 둠 · 쓸 때 자동으로 켜져요" : "아직 안 받았어요 (약 1GB)" })));
     body.appendChild(sec("작업", h("div", { class: "row" },
       h("button", { type: "button", class: "btn small", onclick: async () => { await loadSample(); renderStrip(); commit(); select({}); toast("예시를 불러왔어요"); } }, "예시 불러오기"), nb),
       h("p", { class: "hint", text: store.db ? "작업은 이 브라우저에 자동으로 저장돼요." : "이 화면에서는 자동 저장이 안 돼요. 다 만들면 이미지로 저장해 주세요." })));
@@ -1385,14 +1441,30 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   let gapT;
 
   // sheet behaviour (phone)
-  $("inspHead").addEventListener("click", (e) => { if (!isMobile() || e.target.closest("button")) return; $("insp").classList.toggle("collapsed"); updateSheetH(); });
-  $("inspDone").addEventListener("click", () => select({}));
-  function updateSheetH() { requestAnimationFrame(() => document.documentElement.style.setProperty("--sheet-h", isMobile() ? $("insp").offsetHeight + "px" : "0px")); }
+  function sheetOpen() { return isMobile() && !$("insp").classList.contains("collapsed"); }
+  function openSheet() { $("insp").classList.remove("collapsed"); document.body.classList.toggle("sheet-open", isMobile()); updateSheetH(); }
+  function closeSheet() { $("insp").classList.add("collapsed"); document.body.classList.remove("sheet-open"); updateSheetH(); }
+  function updateFab() {
+    const b = findBlock(sel.block), u = findBubble(b, sel.bubble), tag = $("fabTag");
+    const t = u ? "말풍선" : b ? (b.type === "image" ? "컷" : b.type === "narration" ? "글" : "여백") : "";
+    tag.textContent = t; tag.hidden = !t;
+    $("fab").setAttribute("aria-label", t ? t + " 편집 도구 열기" : "설정 열기");
+  }
+  $("fab").addEventListener("click", () => { buildInspector(); openSheet(); });
+  $("inspDone").addEventListener("click", () => { if (isMobile()) closeSheet(); else select({}); });
+  window.addEventListener("resize", () => { if (!isMobile()) document.body.classList.remove("sheet-open"); else if (!$("insp").classList.contains("collapsed")) document.body.classList.add("sheet-open"); });
+  function updateSheetH() { requestAnimationFrame(() => document.documentElement.style.setProperty("--sheet-h", sheetOpen() ? $("insp").offsetHeight + "px" : "0px")); }
   if (window.ResizeObserver) new ResizeObserver(updateSheetH).observe($("insp"));
 
   // ---------- on-device AI: Qwen3.5-0.8B (sees pictures, writes Korean) running inside this phone via WebGPU ----------
   const TF_URL = "https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.3.2/dist/transformers.min.js";
-  const MODEL_ID = "onnx-community/Qwen3.5-0.8B-ONNX";
+  const MODELS = {
+    base: { id: "onnx-community/Qwen3.5-0.8B-ONNX", key: "Qwen3.5-0.8B-ONNX", label: "기본 · 0.8B", size: "약 1GB", note: "대부분의 폰에서 돌아가요" },
+    pro: { id: "onnx-community/Qwen3.5-2B-ONNX", key: "Qwen3.5-2B-ONNX", label: "고급 · 2B", size: "약 2GB 이상", note: "대사를 더 잘 써요. 램 8GB 이상 최신 폰 추천" }
+  };
+  let modelKey = "base";
+  try { const m = localStorage.getItem("sedo-model"); if (MODELS[m]) modelKey = m; } catch (e) { /* default */ }
+  const curModel = () => MODELS[modelKey];
   const engine = { tf: null, processor: null, model: null, ready: false, loading: null, cached: false, device: "", pct: 0, busy: false, err: "" };
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   const hasGPU = () => !!(navigator.gpu);
@@ -1404,7 +1476,7 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
       for (const n of names) {
         if (!/transformers/i.test(n)) continue;
         const c = await caches.open(n), keys = await c.keys();
-        if (keys.some((k) => k.url.includes("Qwen3.5-0.8B-ONNX") && /decoder_model_merged/.test(k.url))) return true;
+        if (keys.some((k) => k.url.includes(curModel().key) && /decoder_model_merged/.test(k.url))) return true;
       }
     } catch (e) { /* storage not available */ }
     return false;
@@ -1424,6 +1496,7 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
           if (p && p.status === "progress" && p.total) { files.set(p.file, [p.loaded || 0, p.total]); let a = 0, t = 0; files.forEach(([x, y]) => { a += x; t += y; }); engine.pct = t ? Math.round(a / t * 100) : 0; engineUI(); }
         };
         engine.device = hasGPU() ? "webgpu" : "wasm";
+        const MODEL_ID = curModel().id;
         engine.processor = await tf.AutoProcessor.from_pretrained(MODEL_ID, { progress_callback: progress });
         engine.model = await tf.Qwen3_5ForConditionalGeneration.from_pretrained(MODEL_ID, {
           dtype: { embed_tokens: "q4", vision_encoder: engine.device === "webgpu" ? "fp16" : "q8", decoder_model_merged: "q4" },
@@ -1457,19 +1530,19 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     let image = null;
     if (blob) {
       image = await tf.RawImage.fromBlob(blob);
-      const s = Math.min(1, 448 / Math.max(image.width, image.height));
+      const s = Math.min(1, (modelKey === "pro" ? 640 : 512) / Math.max(image.width, image.height));
       if (s < 1) image = await image.resize(Math.round(image.width * s), Math.round(image.height * s));
     }
     const inputs = image ? await engine.processor(text, image) : await engine.processor(text);
     let acc = "";
     const streamer = new tf.TextStreamer(engine.processor.tokenizer, { skip_prompt: true, skip_special_tokens: true, callback_function: (piece) => { acc += piece; if (onPiece) onPiece(acc); } });
-    const out = await engine.model.generate({ ...inputs, max_new_tokens: maxTokens || 220, do_sample: true, temperature: 0.75, top_p: 0.9, repetition_penalty: 1.12, streamer });
+    const out = await engine.model.generate({ ...inputs, max_new_tokens: maxTokens || 220, do_sample: true, temperature: 0.7, top_p: 0.9, top_k: 40, repetition_penalty: 1.1, streamer });
     const decoded = engine.processor.batch_decode(out.slice(null, [inputs.input_ids.dims.at(-1), null]), { skip_special_tokens: true });
     return cleanOut(decoded[0] || acc);
   }
   const ENG_MSG = {
     no_gpu: "이 브라우저는 WebGPU가 안 돼서 AI가 아주 느릴 수 있어요. 안드로이드는 최신 Chrome, 아이폰은 iOS 26 이상 Safari를 쓰세요.",
-    memory: "폰 메모리가 부족해요. 다른 앱을 닫고 다시 해 주세요.",
+    memory: "폰 메모리가 부족해요. 다른 앱을 닫고 다시 해 주세요. 고급 AI라면 기본으로 바꿔 보세요.",
     network: "AI를 받다가 인터넷이 끊겼어요. 와이파이에서 다시 해 주세요.",
     empty: "AI가 대사를 비워서 돌려줬어요. 한 번 더 눌러 주세요."
   };
@@ -1525,13 +1598,17 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   }
   function bubbleToLine(u) { return { kind: u.shape === "oval" || u.shape === "round" ? "speech" : u.shape, speaker: u.who || "", text: u.text }; }
   const imageBlocks = () => P.blocks.filter((b) => b.type === "image");
-  const FORMAT_HELP = "형식은 아래처럼 한 줄에 하나씩, 다른 설명 없이 쓴다.\n이름: 대사\n(효과) 효과음\n(생각) 속마음\n예시)\n카일: 단장님! 괜찮으십니까?\n(효과) 쾅!";
+  const FORMAT_HELP = "형식은 아래처럼 한 줄에 하나씩, 다른 설명 없이 대사만 쓴다.\n이름: 대사\n(효과) 효과음\n(생각) 속마음\n\n좋은 예시)\n카일: 단장님! 괜찮으십니까?!\n(효과) 쾅!\n(생각) 설마… 내 목소리가 왜 이래?\n\n나쁜 예시 (이렇게 쓰지 마라)\n- 그림 설명이나 해설 문장\n- '대사:' 같은 머리말이나 번호\n- 앞 컷 대사를 그대로 반복";
 
   async function autoLinesFor(blob, ctx) {
-    const prompt = "너는 한국 세로 웹툰 작가다. " + (blob ? "이 그림은 웹툰의 컷 " + ctx.i + " / " + ctx.n + "이다. 그림 속 인물의 표정, 동작, 분위기를 보고" : "아래 장면을 보고") + " 이 컷의 대사를 1~3줄 써라. 한 줄은 30자 이내의 자연스러운 한국어 구어체.\n" +
+    const prompt = "너는 인기 한국 세로 웹툰 작가다. " + (blob ? "이 그림은 웹툰의 컷 " + ctx.i + " / " + ctx.n + "이다. 먼저 그림 속 인물이 누구고, 표정이 어떻고, 무슨 행동을 하는지 속으로 파악한 다음" : "아래 장면을 보고") + " 이 컷에 딱 맞는 대사를 1~3줄 써라. 한 줄은 25자 안팎의 짧고 생생한 한국어 구어체. 감정이 드러나게, 웹툰처럼 말맛 있게 쓴다. 이야기가 앞 컷에서 자연스럽게 이어져야 한다.\n" +
       (ctx.scene ? "장면: " + ctx.scene + "\n" : "") + (ctx.story ? "전체 이야기: " + ctx.story + "\n" : "") + (ctx.chars ? "등장인물: " + ctx.chars + "\n" : "") + (ctx.prev ? "앞 컷 대본:\n" + ctx.prev + "\n" : "") + FORMAT_HELP;
-    const raw = await runLLM(prompt, blob, 160);
-    const sec = scriptFromModel(raw, 3);
+    let raw = await runLLM(prompt, blob, 180);
+    let sec = scriptFromModel(raw, 3);
+    if (!sec.items.length) { raw = await runLLM(prompt + "\n\n반드시 '이름: 대사' 형식으로 한 줄 이상 써라.", blob, 140); }
+    sec = scriptFromModel(raw, 3);
+    const prevSet = new Set(String(ctx.prev || "").split("\n").map((l) => l.replace(/^[^:：]{1,12}[:：]\s*/, "").trim()));
+    sec.items = sec.items.filter((it, i, arr) => !prevSet.has(it.text.trim()) && arr.findIndex((x) => x.text === it.text) === i);
     if (!sec.items.length) throw { code: "empty" };
     return { before: sec.before[0] || "", lines: sec.items, after: "" };
   }
@@ -1773,14 +1850,21 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     if ($("engBody") !== b) return;
     b.innerHTML = "";
     b.append(stRow(hasGPU() ? "ok" : "part", "그래픽 가속 (WebGPU)", hasGPU() ? "지원돼요. 폰 AI가 빠르게 돌아가요." : ENG_MSG.no_gpu));
-    const state = engine.ready ? ["ok", "준비됐어요 · Qwen3.5 0.8B (그림 보기 + 한국어)"] : engine.loading ? ["part", "받는 중… " + engine.pct + "%"] : engine.cached ? ["part", "폰에 받아 뒀어요. 쓸 때 자동으로 켜져요."] : ["off", "아직 안 받았어요. 처음 한 번 약 1GB를 받아요 (와이파이 추천)."];
+    b.append(h("div", { class: "fld" }, h("span", { class: "fld-l", text: "AI 성능" }), seg(Object.entries(MODELS).map(([k, m]) => [k, m.label + " (" + m.size + ")"]), modelKey, (v) => {
+      if (v === modelKey || engine.loading) return;
+      modelKey = v; try { localStorage.setItem("sedo-model", v); } catch (e) { /* ignore */ }
+      try { engine.model && engine.model.dispose && engine.model.dispose(); } catch (e) { /* ignore */ }
+      engine.model = null; engine.processor = null; engine.ready = false; engine.err = "";
+      refreshEngine().then(renderEngine);
+    }), h("p", { class: "hint", text: curModel().note })));
+    const state = engine.ready ? ["ok", "준비됐어요 · " + curModel().label + " (그림 보기 + 한국어)"] : engine.loading ? ["part", "받는 중… " + engine.pct + "%"] : engine.cached ? ["part", "폰에 받아 뒀어요. 쓸 때 자동으로 켜져요."] : ["off", "아직 안 받았어요. 처음 한 번 " + curModel().size + "를 받아요 (와이파이 추천)."];
     b.append(stRow(state[0], "폰 AI", state[1]));
     if (engine.err) b.append(h("p", { class: "status err", text: ENG_MSG[engine.err] || "AI를 켜지 못했어요: " + engine.err }));
     if (engine.loading) {
       const bar = h("div", { class: "bar" }, h("i", { style: "width:" + engine.pct + "%" }));
       b.append(bar, h("p", { class: "hint", text: "화면을 켜 둔 채로 기다려 주세요. 받은 뒤에는 인터넷이 없어도 돼요." }));
     } else if (!engine.ready) {
-      b.append(h("button", { type: "button", class: "btn primary wide", onclick: () => loadModel() }, engine.cached ? "폰 AI 켜기" : "폰 AI 받기 (약 1GB)"));
+      b.append(h("button", { type: "button", class: "btn primary wide", onclick: () => loadModel() }, engine.cached ? "폰 AI 켜기" : "폰 AI 받기 (" + curModel().size + ")"));
     }
     if (est && est.quota) b.append(h("p", { class: "hint", text: "이 앱 저장 공간: " + (est.usage / 1e9).toFixed(2) + "GB 사용 · 최대 " + (est.quota / 1e9).toFixed(1) + "GB" }));
     b.append(h("div", { class: "sec" }, h("div", { class: "sec-l", text: "그림은 폰 그림 앱으로" }),
@@ -2065,13 +2149,13 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     const [k] = await importFiles([f]); if (!k) return;
     b.img = k; renderStrip(); commit(); toast("사진을 바꿨어요");
   });
-  $("addNarr").addEventListener("click", () => { const n = makeNarr("나레이션"); P.blocks.push(n); renderStrip(); commit(); select({ block: n.id }, { focus: true, selectAll: true, reveal: true }); });
-  $("addSpace").addEventListener("click", () => { const s = { id: nid("s"), type: "space", h: 240 }; P.blocks.push(s); renderStrip(); commit(); select({ block: s.id }, { reveal: true }); });
+  $("addNarr").addEventListener("click", () => { const n = makeNarr("나레이션"); P.blocks.push(n); renderStrip(); commit(); select({ block: n.id }, { open: true, focus: true, selectAll: true, reveal: true }); });
+  $("addSpace").addEventListener("click", () => { const s = { id: nid("s"), type: "space", h: 240 }; P.blocks.push(s); renderStrip(); commit(); select({ block: s.id }, { open: true, reveal: true }); });
   const stage = $("stage");
   stage.addEventListener("dragover", (e) => { if (e.dataTransfer && [...e.dataTransfer.types].includes("Files")) { e.preventDefault(); stage.classList.add("dropping"); } });
   stage.addEventListener("dragleave", (e) => { if (!stage.contains(e.relatedTarget)) stage.classList.remove("dropping"); });
   stage.addEventListener("drop", async (e) => { e.preventDefault(); stage.classList.remove("dropping"); const files = Array.from(e.dataTransfer.files || []); if (files.length) await appendPhotos(files); });
-  stage.addEventListener("pointerdown", (e) => { if (e.target === stage) select({}); });
+  stage.addEventListener("click", (e) => { if (e.target === stage) select({}); });
 
   // ---------- header & keys ----------
   $("bUndo").addEventListener("click", undo);
@@ -2107,7 +2191,7 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     try { restored = await restoreSaved(); } catch (e) { restored = false; }
     if (!restored) await loadSample();
     renderStrip(); commit(); select({});
-    undoUI();
+    undoUI(); updateFab();
     ensureFonts().then(() => { iconCache.clear(); P.blocks.forEach((b) => renderBlock(b.id)); buildInspector(); });
     engineUI(); refreshEngine(); loadSB().then(takeShared);
     if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")) navigator.serviceWorker.register("sw.js").catch(() => {});
