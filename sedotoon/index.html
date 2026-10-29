@@ -1077,17 +1077,165 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     g.drawImage(c, 0, 0, w, L);
   }
   function outOf(b) { const nx = P.blocks[P.blocks.indexOf(b) + 1]; return trOn(b.tout) && !(nx && isMix(nx)) ? b.tout : null; }
+  // ---------- photo effects (사진에만 들어가고 말풍선은 그대로) ----------
+  const EFX = [["none", "없음"], ["blur", "흐리게"], ["dim", "눈앞 흐려짐"], ["outfocus", "주변 흐림"], ["double", "겹쳐 보임"], ["motion", "흔들림"], ["dream", "몽환·회상"], ["vignette", "어두운 테두리"], ["danger", "붉은 위기"], ["glitch", "지지직"], ["grain", "옛날 필름"]];
+  const EFX_CENTER = { dim: 1, outfocus: 1, vignette: 1, danger: 1, dream: 1 };
+  const efxOn = (e) => !!(e && e.kind && e.kind !== "none");
+  function boxBlur(d, w, h, r) {
+    const tmp = new Uint8ClampedArray(d.length), inv = 1 / (2 * r + 1);
+    const pass = (src, dst, horiz) => {
+      const len = horiz ? w : h, lines = horiz ? h : w, step = horiz ? 4 : w * 4, lstep = horiz ? w * 4 : 4, last = len - 1;
+      for (let l = 0; l < lines; l++) {
+        const base = l * lstep;
+        for (let c = 0; c < 4; c++) {
+          let acc = 0;
+          for (let i = -r; i <= r; i++) acc += src[base + (i < 0 ? 0 : i > last ? last : i) * step + c];
+          for (let i = 0; i < len; i++) {
+            dst[base + i * step + c] = acc * inv;
+            const add = i + r + 1, rem = i - r;
+            acc += src[base + (add > last ? last : add) * step + c] - src[base + (rem < 0 ? 0 : rem) * step + c];
+          }
+        }
+      }
+    };
+    for (let k = 0; k < 3; k++) { pass(d, tmp, true); pass(tmp, d, false); }
+  }
+  // blurred copy of a picture; radius in the picture's own pixels; worked at low resolution (blur hides it) so it is fast on phones
+  function blurOf(base, sw, sh, rSrc) {
+    const r = Math.max(1, rSrc), ws = Math.min(1, 3 / r, 720 / Math.max(sw, sh)), w = Math.max(2, Math.round(sw * ws)), hh = Math.max(2, Math.round(sh * ws));
+    const c = document.createElement("canvas"); c.width = w; c.height = hh;
+    const g = c.getContext("2d"); g.drawImage(base, 0, 0, w, hh);
+    try { const id = g.getImageData(0, 0, w, hh); boxBlur(id.data, w, hh, Math.max(1, Math.round(r * ws))); g.putImageData(id, 0, 0); } catch (e) { /* tainted: leave as a soft downscale */ }
+    return c;
+  }
+  const blurCache = new Map();
+  function srcInfo(key, look) { const im = images.get(key); if (!im) return null; const base = lookSrc(key, look) || im.el; return { base, sw: base === im.el ? im.w : base.width, sh: base === im.el ? im.h : base.height }; }
+  function blurSrc(key, look, rSrc) {
+    const si = srcInfo(key, look); if (!si) return null;
+    const rq = Math.max(1, Math.round(rSrc)), ck = key + "|" + JSON.stringify(look || 0) + "|" + rq;
+    if (blurCache.has(ck)) { const c = blurCache.get(ck); blurCache.delete(ck); blurCache.set(ck, c); return c; }
+    const c = blurOf(si.base, si.sw, si.sh, rq);
+    while (blurCache.size > 18) blurCache.delete(blurCache.keys().next().value);
+    blurCache.set(ck, c); return c;
+  }
+  function ellipseGrad(g, x, y, w, h, cxp, cyp, stops) {
+    const cx = x + w * cxp, cy = y + h * cyp, R = Math.hypot(Math.max(cxp, 1 - cxp) * w, Math.max(cyp, 1 - cyp) * h) || 1;
+    const gr = g.createRadialGradient(cx, cy, 0, cx, cy, R); stops.forEach(([t, c]) => gr.addColorStop(Math.max(0, Math.min(1, t)), c));
+    g.fillStyle = gr; g.fillRect(x, y, w, h);
+  }
+  function layerCanvas(g, o) {
+    let q = 1; try { q = Math.abs(g.getTransform().a) || 1; } catch (e) { /* ignore */ }
+    q = Math.min(2, q);
+    const t = document.createElement("canvas"); t.width = Math.max(1, Math.round(o.w * q)); t.height = Math.max(1, Math.round(o.h * q));
+    const tg = t.getContext("2d"); tg.scale(t.width / o.w, t.height / o.h); tg.translate(-o.x, -o.y);
+    return { t, tg };
+  }
+  function maskedDraw(g, src, o, cxp, cyp, inner, outer) {
+    if (!src) return;
+    const { t, tg } = layerCanvas(g, o);
+    o.draw(tg, src);
+    tg.globalCompositeOperation = "destination-in";
+    ellipseGrad(tg, o.x, o.y, o.w, o.h, cxp, cyp, [[0, "rgba(0,0,0,0)"], [inner, "rgba(0,0,0,0)"], [outer, "rgba(0,0,0,1)"], [1, "rgba(0,0,0,1)"]]);
+    g.drawImage(t, o.x, o.y, o.w, o.h);
+  }
+  let grainTile = null;
+  function grainPattern(g) {
+    if (!grainTile) {
+      grainTile = document.createElement("canvas"); grainTile.width = grainTile.height = 160;
+      const tg = grainTile.getContext("2d"), id = tg.createImageData(160, 160), d = id.data, R = rng(9137);
+      for (let i = 0; i < d.length; i += 4) { const v = 128 + (R() - 0.5) * 200; d[i] = d[i + 1] = d[i + 2] = v; d[i + 3] = 255; }
+      tg.putImageData(id, 0, 0);
+    }
+    return g.createPattern(grainTile, "repeat");
+  }
+  // o = { src, blur(rDisplayPx), draw(target, src, dx, dy), x, y, w, h, seed, k }
+  function applyEfx(g, e, o) {
+    if (!efxOn(e) || !o.src) return;
+    const a = (e.amt == null ? 60 : e.amt) / 100, { x, y, w, h } = o, B = (f) => o.blur(f * w);
+    const cx = (e.cx == null ? 50 : e.cx) / 100, cy = (e.cy == null ? 45 : e.cy) / 100, clear = "rgba(0,0,0,0)";
+    g.save(); g.beginPath(); g.rect(x, y, w, h); g.clip();
+    switch (e.kind) {
+      case "blur": o.draw(g, B(0.003 + a * 0.022)); break;
+      case "outfocus": maskedDraw(g, B(0.006 + a * 0.018), o, cx, cy, 0.16 + (1 - a) * 0.22, 0.6 - a * 0.12); break;
+      case "dim": {
+        g.globalAlpha = 0.3 + a * 0.4; o.draw(g, B(0.003 + a * 0.007)); g.globalAlpha = 1;
+        maskedDraw(g, B(0.01 + a * 0.022), o, cx, cy, 0.1, 0.55);
+        g.fillStyle = "rgba(8,8,16," + (0.06 + a * 0.14).toFixed(3) + ")"; g.fillRect(x, y, w, h);
+        ellipseGrad(g, x, y, w, h, cx, cy, [[0, clear], [0.36 - a * 0.14, clear], [0.82, "rgba(0,0,0," + (0.4 + a * 0.42).toFixed(3) + ")"], [1, "rgba(0,0,0," + (0.62 + a * 0.36).toFixed(3) + ")"]]);
+        break;
+      }
+      case "double": {
+        o.draw(g, B(0.002 + a * 0.005));
+        const d = (0.012 + a * 0.05) * w;
+        g.globalAlpha = 0.4; o.draw(g, o.src, d, -d * 0.12); g.globalAlpha = 0.22; o.draw(g, o.src, -d * 0.7, d * 0.1); g.globalAlpha = 1;
+        break;
+      }
+      case "motion": {
+        const n = 12, d = (0.012 + a * 0.07) * w, dir = e.dir || "h", vx = dir === "v" ? 0 : dir === "d" ? 0.7071 : 1, vy = dir === "v" ? 1 : dir === "d" ? 0.7071 : 0;
+        for (let i = 0; i < n; i++) { const t = i / (n - 1) - 0.5; g.globalAlpha = 1 / (i + 1); o.draw(g, o.src, vx * d * t * 2, vy * d * t * 2); }
+        g.globalAlpha = 1; break;
+      }
+      case "dream": {
+        g.globalCompositeOperation = "screen"; g.globalAlpha = 0.3 + a * 0.45; o.draw(g, B(0.014 + a * 0.016)); g.globalAlpha = 1; g.globalCompositeOperation = "source-over";
+        g.fillStyle = "rgba(255,236,214," + (0.05 + a * 0.1).toFixed(3) + ")"; g.fillRect(x, y, w, h);
+        ellipseGrad(g, x, y, w, h, cx, cy, [[0, "rgba(255,255,255,0)"], [0.42 - a * 0.12, "rgba(255,255,255,0)"], [1, "rgba(255,255,255," + (0.5 + a * 0.45).toFixed(3) + ")"]]);
+        break;
+      }
+      case "vignette": ellipseGrad(g, x, y, w, h, cx, cy, [[0, clear], [0.48 - a * 0.2, clear], [1, "rgba(0,0,0," + (0.5 + a * 0.46).toFixed(3) + ")"]]); break;
+      case "danger": {
+        g.globalCompositeOperation = "multiply"; g.fillStyle = "rgba(255,80,80," + (0.15 + a * 0.32).toFixed(3) + ")"; g.fillRect(x, y, w, h); g.globalCompositeOperation = "source-over";
+        ellipseGrad(g, x, y, w, h, cx, cy, [[0, "rgba(140,0,0,0)"], [0.38 - a * 0.15, "rgba(140,0,0,0)"], [0.8, "rgba(150,0,0," + (0.32 + a * 0.36).toFixed(3) + ")"], [1, "rgba(50,0,0," + (0.7 + a * 0.28).toFixed(3) + ")"]]);
+        break;
+      }
+      case "glitch": {
+        const R = rng(hashStr(o.seed + "glitch")), d = (0.006 + a * 0.02) * w;
+        const { t, tg } = layerCanvas(g, o); o.draw(tg, o.src);
+        const chan = (col) => { const c = document.createElement("canvas"); c.width = t.width; c.height = t.height; const cg = c.getContext("2d"); cg.drawImage(t, 0, 0); cg.globalCompositeOperation = "multiply"; cg.fillStyle = col; cg.fillRect(0, 0, c.width, c.height); cg.globalCompositeOperation = "destination-in"; cg.drawImage(t, 0, 0); return c; };
+        const cr = chan("#ff0000"), cgn = chan("#00ff00"), cb = chan("#0000ff");
+        g.fillStyle = "#000"; g.fillRect(x, y, w, h);
+        g.globalCompositeOperation = "lighter";
+        g.drawImage(cr, x - d, y, w, h); g.drawImage(cgn, x, y, w, h); g.drawImage(cb, x + d, y + d * 0.2, w, h);
+        g.globalCompositeOperation = "source-over";
+        const bands = 3 + Math.round(a * 7);
+        for (let i = 0; i < bands; i++) {
+          const by = R() * h, bh = h * (0.01 + R() * 0.05), off = (R() - 0.5) * w * (0.04 + a * 0.12), sy = by / h * t.height, sh = Math.max(1, bh / h * t.height);
+          g.drawImage(t, 0, sy, t.width, sh, x + off, y + by, w, bh);
+          if (R() < 0.35) { g.globalAlpha = 0.35; g.fillStyle = R() < 0.5 ? "#00e5ff" : "#ff2bd6"; g.fillRect(x + R() * w * 0.7, y + by, w * (0.1 + R() * 0.3), Math.max(1, bh * 0.3)); g.globalAlpha = 1; }
+        }
+        g.fillStyle = "rgba(0,0,0," + (0.08 + a * 0.14).toFixed(3) + ")";
+        const step = Math.max(2, 3 * o.k); for (let yy = y; yy < y + h; yy += step) g.fillRect(x, yy, w, Math.max(0.6, step * 0.34));
+        break;
+      }
+      case "grain": {
+        g.globalCompositeOperation = "multiply"; g.fillStyle = "rgba(255,226,186," + (0.25 + a * 0.4).toFixed(3) + ")"; g.fillRect(x, y, w, h);
+        g.globalCompositeOperation = "source-over"; g.fillStyle = "rgba(255,246,230," + (0.04 + a * 0.08).toFixed(3) + ")"; g.fillRect(x, y, w, h);
+        g.globalCompositeOperation = "overlay"; g.globalAlpha = 0.16 + a * 0.3; g.fillStyle = grainPattern(g); g.fillRect(x, y, w, h);
+        g.globalAlpha = 1; g.globalCompositeOperation = "source-over";
+        const R = rng(hashStr(o.seed + "film")), n = 2 + Math.round(a * 5);
+        g.lineWidth = Math.max(0.6, 1.1 * o.k);
+        for (let i = 0; i < n; i++) { const sx = x + R() * w; g.strokeStyle = "rgba(255,250,235," + (0.15 + R() * 0.35).toFixed(3) + ")"; g.beginPath(); g.moveTo(sx, y + R() * h * 0.3); g.lineTo(sx + (R() - 0.5) * 6 * o.k, y + h * (0.6 + R() * 0.4)); g.stroke(); }
+        ellipseGrad(g, x, y, w, h, 0.5, 0.5, [[0, clear], [0.55, clear], [1, "rgba(20,10,0," + (0.3 + a * 0.35).toFixed(3) + ")"]]);
+        break;
+      }
+    }
+    g.restore();
+  }
+  function efxForImage(key, look, x, y, w, h, dw, dh, ox, oy, seed, k) {
+    const si = srcInfo(key, look); if (!si) return null;
+    return { src: si.base, blur: (rd) => blurSrc(key, look, rd * si.sw / dw), draw: (t, src, dx, dy) => t.drawImage(src, ox + (dx || 0), oy + (dy || 0), dw, dh), x, y, w, h, seed, k };
+  }
   const trCache = new Map();
   function trImage(b, S, scale) {
     const W = P.settings.width, mix = isMix(b);
     const tin = mix ? { kind: "fade" } : trOn(b.tin) && b.tin.kind !== "mix" ? b.tin : null, tout = outOf(b);
     const Lin = mix ? Math.max(1, mixOverlap(b, W) - S.iy) : tin ? trLen(tin, S.ih) : 0, Lout = tout ? trLen(tout, S.ih) : 0;
-    const key = [b.id, b.img, JSON.stringify(b.look || 0), JSON.stringify(b.fxl || 0), tin ? tin.kind : "", Lin, tout ? tout.kind : "", Lout, S.iw, S.ih, scale.toFixed(3)].join("|");
+    const key = [b.id, b.img, JSON.stringify(b.look || 0), JSON.stringify(b.fxl || 0), JSON.stringify(b.efx || 0), tin ? tin.kind : "", Lin, tout ? tout.kind : "", Lout, S.iw, S.ih, scale.toFixed(3)].join("|");
     if (trCache.has(key)) { const c = trCache.get(key); trCache.delete(key); trCache.set(key, c); return c; }
     const im = images.get(b.img), cw = Math.max(1, Math.round(S.iw * scale)), ch = Math.max(1, Math.round(S.ih * scale));
     const c = document.createElement("canvas"); c.width = cw; c.height = ch;
     const g = c.getContext("2d"); g.scale(cw / S.iw, ch / S.ih);
     g.drawImage(lookSrc(b.img, b.look) || im.el, 0, 0, S.iw, S.ih);
+    if (efxOn(b.efx)) applyEfx(g, b.efx, efxForImage(b.img, b.look, 0, 0, S.iw, S.ih, S.iw, S.ih, 0, 0, b.id, W / BASE));
     drawFxLines(g, b.fxl, 0, 0, S.iw, S.ih, b.id, W / BASE);
     g.globalCompositeOperation = "destination-out";
     const k = W / BASE;
@@ -1107,7 +1255,9 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
         ctx.save(); ctx.beginPath(); ctx.rect(r.x, r.y, r.w, r.h); ctx.clip();
         if (im) {
           const z = (pn.zoom || 100) / 100, sc = Math.max(r.w / im.w, r.h / im.h) * z, dw = im.w * sc, dh = im.h * sc;
-          ctx.drawImage(lookSrc(pn.img, pn.look) || im.el, r.x + (r.w - dw) * (pn.fx == null ? 50 : pn.fx) / 100, r.y + (r.h - dh) * (pn.fy == null ? 50 : pn.fy) / 100, dw, dh);
+          const ox = r.x + (r.w - dw) * (pn.fx == null ? 50 : pn.fx) / 100, oy = r.y + (r.h - dh) * (pn.fy == null ? 50 : pn.fy) / 100;
+          ctx.drawImage(lookSrc(pn.img, pn.look) || im.el, ox, oy, dw, dh);
+          if (efxOn(pn.efx)) applyEfx(ctx, pn.efx, efxForImage(pn.img, pn.look, r.x, r.y, r.w, r.h, dw, dh, ox, oy, b.id + ":" + i, k));
           drawFxLines(ctx, pn.fxl, r.x, r.y, r.w, r.h, b.id + ":" + i, k);
         } else if (preview) {
           ctx.fillStyle = dark ? "#2a2d33" : "#eceef1"; ctx.fillRect(r.x, r.y, r.w, r.h);
@@ -1140,7 +1290,7 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     }
     if (b.type !== "image") return;
     const im = images.get(b.img), bout = isComic() ? null : outOf(b), trs = !isComic() && !!im && (mixO > 0 || trOn(b.tin) || !!bout);
-    if (trs) {
+    if (trs || (im && efxOn(b.efx))) {
       let sc = 1; try { sc = Math.abs(ctx.getTransform().a) || 1; } catch (e) { /* old browser */ }
       if (!mixO && trOn(b.tin) && b.tin.kind !== "mix") { ctx.fillStyle = trCol(b.tin); ctx.fillRect(0, 0, W, S.iy + trLen(b.tin, S.ih)); }
       if (bout) { const y0 = S.iy + S.ih - trLen(bout, S.ih); ctx.fillStyle = trCol(bout); ctx.fillRect(0, y0, W, S.h - y0); }
@@ -2253,6 +2403,46 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     }
     return wrap;
   }
+  const efxIconCache = new Map();
+  function efxIcon(kind) {
+    if (efxIconCache.has(kind)) return efxIconCache.get(kind);
+    const W = 112, H = 84, p = document.createElement("canvas"); p.width = W; p.height = H;
+    const q = p.getContext("2d"), gr = q.createLinearGradient(0, 0, 0, H); gr.addColorStop(0, "#3c4f9c"); gr.addColorStop(1, "#e08a7a"); q.fillStyle = gr; q.fillRect(0, 0, W, H);
+    q.fillStyle = "rgba(255,236,214,.95)"; q.beginPath(); q.arc(W * 0.5, H * 0.42, 15, 0, Math.PI * 2); q.fill();
+    q.fillStyle = "#23263a"; q.fillRect(W * 0.5 - 9, H * 0.6, 18, H * 0.4);
+    q.fillStyle = "rgba(255,255,255,.85)"; for (let i = 0; i < 7; i++) q.fillRect(8 + i * 15, 8 + (i % 3) * 4, 3, 3);
+    const c = document.createElement("canvas"); c.width = W; c.height = H; const g = c.getContext("2d"); g.drawImage(p, 0, 0);
+    const bl = new Map();
+    applyEfx(g, { kind, amt: 75 }, { src: p, blur: (rd) => { const r = Math.max(1, Math.round(rd)); if (!bl.has(r)) bl.set(r, blurOf(p, W, H, r)); return bl.get(r); }, draw: (t, src, dx, dy) => t.drawImage(src, dx || 0, dy || 0, W, H), x: 0, y: 0, w: W, h: H, seed: "icon", k: 0.3 });
+    const url = c.toDataURL(); efxIconCache.set(kind, url); return url;
+  }
+  function efxSection(target, onChange, onAll) {
+    const E = target.efx || (target.efx = { kind: "none", amt: 60 });
+    const wrap = h("div", { class: "sec", style: "gap:12px" });
+    const grid = h("div", { class: "trs" });
+    EFX.forEach(([k, label]) => grid.appendChild(h("button", { type: "button", class: "shape-b", "data-v": k, "aria-pressed": String((E.kind || "none") === k),
+      onclick: () => { E.kind = k; if (E.amt == null) E.amt = 60; onChange(true); buildInspector(); } }, h("img", { src: efxIcon(k), alt: "" }), label)));
+    wrap.appendChild(grid);
+    if (efxOn(E)) {
+      const box = h("div", { class: "grid2" }, slider("세기", 0, 100, 5, E.amt == null ? 60 : E.amt, "", (v) => { E.amt = v; onChange(false); }));
+      if (EFX_CENTER[E.kind]) {
+        box.appendChild(slider("중심 가로", 0, 100, 2, E.cx == null ? 50 : E.cx, "", (v) => { E.cx = v; onChange(false); }));
+        box.appendChild(slider("중심 세로", 0, 100, 2, E.cy == null ? 45 : E.cy, "", (v) => { E.cy = v; onChange(false); }));
+      }
+      wrap.appendChild(box);
+      if (E.kind === "motion") wrap.appendChild(sec("흔들리는 방향", seg([["h", "가로"], ["v", "세로"], ["d", "대각선"]], E.dir || "h", (v) => { E.dir = v; onChange(true); }, "흔들리는 방향")));
+    }
+    wrap.appendChild(h("p", { class: "hint", text: "이펙트는 사진에만 들어가고 말풍선·글자는 또렷하게 남아요." }));
+    if (onAll) wrap.appendChild(h("div", { class: "row" },
+      h("button", { type: "button", class: "btn small", onclick: () => onAll(JSON.parse(JSON.stringify(E))) }, "모든 사진에 같은 이펙트"),
+      h("button", { type: "button", class: "btn small", disabled: !efxOn(E), onclick: () => { E.kind = "none"; onChange(true); buildInspector(); } }, "이펙트 빼기")));
+    return wrap;
+  }
+  function applyEfxAll(efx) {
+    let n = 0;
+    P.blocks.forEach((b) => { if (b.type === "image") { b.efx = JSON.parse(JSON.stringify(efx)); n++; } else if (b.type === "page") (b.panels || []).forEach((pn) => { if (pn && pn.img) { pn.efx = JSON.parse(JSON.stringify(efx)); n++; } }); });
+    renderStrip(); commit(); toast(efxOn(efx) ? "사진 " + n + "장에 같은 이펙트를 넣었어요" : "사진 " + n + "장의 이펙트를 뺐어요");
+  }
   function applyLookAll(look) {
     let n = 0;
     P.blocks.forEach((b) => { if (b.type === "image") { b.look = JSON.parse(JSON.stringify(look)); n++; } else if (b.type === "page") (b.panels || []).forEach((pn) => { if (pn && pn.img) { pn.look = JSON.parse(JSON.stringify(look)); n++; } }); });
@@ -2461,6 +2651,7 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
         } else body.appendChild(h("p", { class: "hint", text: "그림의 빈 곳을 두 번 누르면 그 자리에 말풍선이 생겨요." }));
       }, b.bubbles.length || null],
       images.has(b.img) ? ["photo", "사진 효과", () => body.appendChild(lookSection(b, (now) => { now ? renderBlock(b.id) : renderSoon(b.id); if (now) commit(); else commitSoon(); }, applyLookAll))] : null,
+      images.has(b.img) ? ["efx", "이펙트", () => body.appendChild(efxSection(b, (now) => { now ? renderBlock(b.id) : renderSoon(b.id); if (now) commit(); else commitSoon(); }, applyEfxAll)), efxOn(b.efx) ? "●" : null] : null,
       ["trans", "이어짐", () => body.appendChild(trSection(b)), nTr || null],
       ["cut", "컷", () => {
         body.appendChild(h("div", { class: "row" },
@@ -2573,6 +2764,7 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
             slider("세로 위치", 0, 100, 1, pn.fy == null ? 50 : pn.fy, "", (v) => { pn.fy = v; renderSoon(b.id); })));
           if (panelAiBox && has) { const box = panelAiBox(b, pi); if (box) body.appendChild(box); }
           if (has) body.appendChild(lookSection(pn, (now) => { now ? renderBlock(b.id) : renderSoon(b.id); if (now) commit(); else commitSoon(); }, applyLookAll));
+          if (has) body.appendChild(sec("이펙트", efxSection(pn, (now) => { now ? renderBlock(b.id) : renderSoon(b.id); if (now) commit(); else commitSoon(); }, applyEfxAll)));
         } else body.appendChild(h("p", { class: "hint", text: "그림에서 칸을 누르면 그 칸에 사진을 넣고 말풍선을 달 수 있어요." }));
       }],
       ["layout", "칸 나누기", () => {
