@@ -642,7 +642,7 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   function hashStr(s) { let x = 2166136261; for (let i = 0; i < s.length; i++) { x ^= s.charCodeAt(i); x = Math.imul(x, 16777619); } return x >>> 0; }
   function rng(seed) { let a = seed || 1; return function () { a |= 0; a = (a + 0x6d2b79f5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
   let toastTimer;
-  function toast(msg, err) { const t = $("toast"); t.textContent = msg; t.classList.toggle("err", !!err); t.classList.add("show"); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove("show"), err ? 4200 : 2800); }
+  function toast(msg, err) { const t = $("toast"); t.textContent = msg; t.classList.toggle("err", !!err); t.classList.add("show"); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove("show"), Math.max(err ? 4200 : 2800, String(msg).length * (err ? 95 : 70))); }
   function fontCss(key, px) { const f = FONTS[key] || FONTS.gothic; return f.w + " " + px + 'px "' + f.fam + '", "Noto Sans KR", sans-serif'; }
   function defaultFontFor(shape) { return SHAPES[shape] && SHAPES[shape].font ? SHAPES[shape].font : (P.settings.bubbleFont || "gothic"); }
 
@@ -1460,6 +1460,22 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   // ---------- pointer editing ----------
   let drag = null, lastTap = null, pend = null;
   const coarse = () => window.matchMedia("(pointer: coarse)").matches;
+  const pickHooks = { before: [], after: [] };
+  let picking = false;
+  document.addEventListener("click", (e) => {
+    const t = e.target;
+    if (!(t && t.tagName === "INPUT" && t.type === "file" && /image/.test(t.accept || ""))) return;
+    picking = true;
+    try { sessionStorage.setItem("sedo-picking", String(Date.now())); } catch (err) { /* ignore */ }
+    try { trCache.clear(); blurCache.clear(); lookCache.clear(); } catch (err) { /* ignore */ }
+    pickHooks.before.forEach((f) => { try { f(); } catch (err) { /* ignore */ } });
+  }, true);
+  function pickEnded() {
+    if (!picking) return; picking = false;
+    try { sessionStorage.removeItem("sedo-picking"); } catch (e) { /* ignore */ }
+  }
+  document.addEventListener("change", (e) => { if (e.target && e.target.type === "file") pickEnded(); }, true);
+  window.addEventListener("focus", () => setTimeout(() => { if (picking) { pickEnded(); pickHooks.after.forEach((f) => { try { f(); } catch (e) { /* ignore */ } }); } }, 1200));
   function localPt(cv, b, cx, cy) { const r = cv.getBoundingClientRect(), W = P.settings.width, S = blockSize(b, W); return { x: (cx - r.left) / r.width * W, y: (cy - r.top) / r.height * S.h, W, H: S.h, hs: r.width / W }; }
   function hitTest(b, pt) {
     const { W, H, hs } = pt, tol = (coarse() ? 32 : 22) / hs;
@@ -1958,27 +1974,82 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     images.set(key, { el, blob, w: el.naturalWidth, h: el.naturalHeight });
     return key;
   }
-  async function importFile(file) {
+  let heicLib = null;
+  function loadHeicLib() {
+    if (window.heic2any) return Promise.resolve(window.heic2any);
+    if (heicLib) return heicLib;
+    heicLib = new Promise((res, rej) => {
+      const sc = document.createElement("script"); sc.src = "https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"; sc.async = true;
+      sc.onload = () => (window.heic2any ? res(window.heic2any) : rej(new Error("heic-net")));
+      sc.onerror = () => { heicLib = null; sc.remove(); rej(new Error("heic-net")); };
+      document.head.appendChild(sc);
+    });
+    return heicLib;
+  }
+  async function looksHeic(file) {
+    if (/\.(heic|heif)$/i.test(file.name || "") || /hei[cf]/i.test(file.type || "")) return true;
+    try { const b = new Uint8Array(await file.slice(0, 16).arrayBuffer()); return /^ftyp(heic|heix|hevc|hevx|heim|heis|mif1|msf1)/.test(String.fromCharCode.apply(null, Array.from(b.slice(4, 12)))); } catch (e) { return false; }
+  }
+  async function decodeFile(file) {
     const url = URL.createObjectURL(file);
+    try { return { img: await loadImg(url), url, conv: false }; } catch (e) { URL.revokeObjectURL(url); }
+    if (await looksHeic(file)) {
+      toast("아이폰·갤럭시 HEIC 사진을 JPG로 바꾸는 중…");
+      const lib = await loadHeicLib();
+      let out = await lib({ blob: file, toType: "image/jpeg", quality: 0.92 });
+      if (Array.isArray(out)) out = out[0];
+      const u2 = URL.createObjectURL(out);
+      try { return { img: await loadImg(u2), url: u2, conv: true }; } catch (e) { URL.revokeObjectURL(u2); throw new Error("decode"); }
+    }
+    if (window.createImageBitmap) {
+      try {
+        const bm = await createImageBitmap(file), c = document.createElement("canvas"); c.width = bm.width; c.height = bm.height;
+        const g = c.getContext("2d"); if (!g) throw new Error("memory");
+        g.drawImage(bm, 0, 0); if (bm.close) bm.close();
+        const bl = await toBlob(c, "image/jpeg", 0.92); c.width = c.height = 1; if (!bl) throw new Error("memory");
+        const u3 = URL.createObjectURL(bl);
+        return { img: await loadImg(u3), url: u3, conv: true };
+      } catch (e) { /* fall through */ }
+    }
+    throw new Error("decode");
+  }
+  async function importFile(file) {
+    const { img, url, conv } = await decodeFile(file);
     try {
-      const img = await loadImg(url);
-      let w = img.naturalWidth, hh = img.naturalHeight, blob = file;
-      const MAX = 1600;
-      if (w > MAX || !/^image\/(png|jpeg|webp)$/.test(file.type)) {
-        const s = Math.min(1, MAX / w); const c = document.createElement("canvas");
-        c.width = Math.round(w * s); c.height = Math.round(hh * s);
-        c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+      const w = img.naturalWidth, hh = img.naturalHeight;
+      if (!w || !hh) throw new Error("decode");
+      let blob = file;
+      const s = Math.min(1, 1600 / w, Math.sqrt(1600 * 9000 / (w * hh)));
+      if (s < 1 || conv || !/^image\/(png|jpeg|webp)$/.test(file.type || "")) {
+        const c = document.createElement("canvas"); c.width = Math.max(1, Math.round(w * s)); c.height = Math.max(1, Math.round(hh * s));
+        const g = c.getContext("2d"); if (!g) throw new Error("memory");
+        g.drawImage(img, 0, 0, c.width, c.height);
         blob = await toBlob(c, file.type === "image/png" ? "image/png" : "image/jpeg", 0.92);
+        c.width = c.height = 1;
+        if (!blob) throw new Error("memory");
       }
       return await addBlob(blob);
     } finally { URL.revokeObjectURL(url); }
   }
+  let importNote = "", importErr = false;
+  const IMPORT_WHY = { "heic-net": "HEIC 사진을 바꾸려면 인터넷이 잠깐 필요해요. 연결을 확인하고 다시 올려 주세요.", memory: "사진이 너무 커서 폰 메모리가 모자라요. 몇 장씩 나눠서 올려 주세요.", type: "사진이 아닌 파일은 뺐어요.", decode: "이 폰 브라우저가 열 수 없는 형식이에요. 갤러리에서 JPG로 저장한 뒤 올려 주세요." };
   async function importFiles(files) {
-    const keys = [];
-    for (const f of files) {
-      if (!/^image\//.test(f.type) && !/\.(jpe?g|png|webp|gif|heic|heif|avif)$/i.test(f.name)) continue;
-      try { keys.push(await importFile(f)); } catch (e) { toast(f.name + " 파일을 읽지 못했어요. JPG나 PNG로 바꿔서 올려 주세요.", true); }
+    const keys = [], bad = [];
+    importNote = "";
+    for (let i = 0; i < files.length; i++) {
+      const f = files[i];
+      if (files.length > 1) toast("사진 읽는 중… " + (i + 1) + " / " + files.length);
+      if (f.type && /^(video|audio|text|application\/(pdf|zip|json))/.test(f.type)) { bad.push("type"); continue; }
+      try { keys.push(await importFile(f)); } catch (e) { bad.push(e && IMPORT_WHY[e.message] ? e.message : /memory|allocat/i.test(String(e && e.message)) ? "memory" : "decode"); }
     }
+    importErr = false;
+    if (bad.length) {
+      const real = bad.filter((b) => b !== "type");
+      importErr = real.length > 0;
+      importNote = real.length ? (keys.length ? real.length + "장은 못 넣었어요. " : "사진을 넣지 못했어요. ") + IMPORT_WHY[real[0]] : "사진이 아닌 파일 " + bad.length + "개는 뺐어요.";
+      if (!keys.length) toast(importNote, true);
+    }
+    pickHooks.after.forEach((f) => { try { f(); } catch (e) { /* ignore */ } });
     return keys;
   }
   async function panelBlob(key, max) {
@@ -3009,6 +3080,10 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     try { engine.model && engine.model.dispose && engine.model.dispose(); } catch (e) { /* ignore */ }
     engine.model = null; engine.processor = null; engine.ready = false; engine.mode = "";
   }
+  // picking photos on a phone: give the memory back first so Android does not restart the app behind the photo picker
+  let rewarm = false;
+  pickHooks.before.push(() => { if (engine.ready && !engine.busy && !engine.loading && coarse()) { rewarm = true; unloadModel(); engineUI(); } });
+  pickHooks.after.push(() => { if (rewarm) { rewarm = false; setTimeout(() => { if (!engine.ready && !engine.loading) loadModel(); }, 1500); } });
   function cleanOut(t) { return String(t || "").replace(/<think>[\s\S]*?<\/think>/g, "").replace(/<\/?think>/g, "").replace(/<\|[^|]*\|>/g, "").trim(); }
   async function runLLM(prompt, blob, maxTokens, onPiece) {
     if (window.__SEDO_MOCK__) return cleanOut(await window.__SEDO_MOCK__(prompt, !!blob));
@@ -3747,13 +3822,13 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
       }
       while (q.length) P.blocks.push(newPage(LAYOUT_FOR_N[per] || "4b", q.splice(0, per)));
       renderStrip(); commit();
-      toast("사진 " + keys.length + "장을 빈 칸에 차례로 넣었어요. 칸을 누르면 확대·위치를 바꿀 수 있어요.");
+      toast(importNote ? "사진 " + keys.length + "장을 넣었어요. " + importNote : "사진 " + keys.length + "장을 빈 칸에 차례로 넣었어요. 칸을 누르면 확대·위치를 바꿀 수 있어요.", importErr);
       return;
     }
     if (onlySamples() && P.blocks.length) P.blocks = [];
     keys.forEach((k) => P.blocks.push({ id: nid("b"), type: "image", img: k, bubbles: [] }));
     renderStrip(); commit();
-    toast(keys.length + "컷을 붙였어요. 빈 곳 두 번: 말풍선 · 꾹 눌러 끌기: 순서 바꾸기");
+    toast(importNote ? keys.length + "컷을 붙였어요. " + importNote : keys.length + "컷을 붙였어요. 빈 곳 두 번: 말풍선 · 꾹 눌러 끌기: 순서 바꾸기", importErr);
   }
   $("fileReplace").addEventListener("change", async (e) => {
     const f = e.target.files && e.target.files[0]; e.target.value = "";
@@ -3812,6 +3887,10 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     updateTitle();
     renderStrip(); commit(); select({});
     undoUI(); updateFab();
+    try {
+      const pk = Number(sessionStorage.getItem("sedo-picking")); sessionStorage.removeItem("sedo-picking");
+      if (pk && Date.now() - pk < 20 * 60 * 1000) setTimeout(() => toast("사진을 고르는 동안 폰 메모리가 모자라 앱이 다시 열렸어요. 다른 앱을 몇 개 닫고 다시 올려 보세요. 한 번에 몇 장씩 올리면 더 잘 돼요.", true), 900);
+    } catch (e) { /* ignore */ }
     ensureFonts().then(() => { iconCache.clear(); P.blocks.forEach((b) => renderBlock(b.id)); buildInspector(); });
     engineUI(); refreshEngine(); loadSB().then(takeShared);
     if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")) navigator.serviceWorker.register("sw.js").catch(() => {});
