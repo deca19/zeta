@@ -202,6 +202,17 @@ input[type="range"] { width: 100%; accent-color: var(--accent); height: 28px; }
 .kbd { font-size: 11px; color: var(--muted); }
 .switch { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 36px; }
 .switch input { width: 44px; height: 24px; accent-color: var(--accent); }
+@media (pointer: coarse) {
+  .btn.small { min-height: 42px; padding: 0 12px; font-size: 14px; }
+  .seg-b { min-height: 42px; padding: 0 14px; }
+  .chip-b { min-height: 40px; padding: 6px 12px; }
+  .itab { min-height: 46px; }
+  .tone-b { width: 40px; height: 40px; }
+  .pad { grid-template-columns: repeat(3, 50px); }
+  .pad button { height: 46px; }
+  .seg, .chips, .row { gap: 8px; }
+  button, .btn, .seg-b, .chip-b, .itab, .shape-b, .font-b { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+}
 .insp-tabs { display: flex; gap: 2px; overflow-x: auto; padding: 0 10px; border-bottom: 1px solid var(--line); scrollbar-width: none; flex: none; }
 .insp-tabs::-webkit-scrollbar { display: none; }
 .itab { flex: none; min-height: 42px; padding: 0 12px; border: 0; border-bottom: 2.5px solid transparent; background: none; color: var(--muted); font: inherit; font-weight: 600; font-size: 14px; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; margin-bottom: -1px; }
@@ -379,12 +390,23 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     <div class="m-head"><h2 id="lTitle">보관함</h2><button class="btn small" type="button" data-close>닫기</button></div>
     <p class="m-sub">작품마다 따로 저장돼요. 새 작품을 만들어도 예전 작품은 그대로 남아 있어요.</p>
     <label class="fld"><span class="fld-l">지금 작품 이름</span><input type="text" id="lName" maxlength="40" autocomplete="off"></label>
-    <div class="row"><button class="btn small" type="button" id="lImport">파일에서 작품 불러오기</button></div>
-    <input type="file" id="fileWork" accept=".json,application/json" hidden>
+    <div class="row"><button class="btn small" type="button" id="lImport">작품 파일 열기 (.json)</button></div>
+    <div id="lCloud"></div>
+    <input type="file" id="fileWork" hidden>
     <div class="seg" id="lTabs" role="tablist"></div>
     <div class="row"><button class="btn primary" type="button" id="lNew">+ 새 세로툰</button><button class="btn" type="button" id="lSample">예시로 새 세로툰</button></div>
     <div class="lib-list" id="lList"></div>
     <p class="hint" id="lHint"></p>
+  </div>
+</div>
+
+<div class="modal" id="mImport" hidden role="dialog" aria-modal="true" aria-labelledby="iTitle">
+  <div class="modal-card">
+    <div class="m-head"><h2 id="iTitle">작품 파일 열기</h2></div>
+    <p class="m-sub" id="iMsg" style="margin-top:0"></p>
+    <button class="btn primary wide" type="button" id="iReplace">파일 내용으로 바꾸기</button>
+    <button class="btn wide" type="button" id="iAdd">새 작품으로 추가</button>
+    <button class="btn small" type="button" id="iCancel">취소</button>
   </div>
 </div>
 
@@ -483,7 +505,8 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     <div class="fld"><span class="fld-l">형식</span><div class="seg" id="eFormat"></div></div>
     <p class="stat" id="eInfo"></p>
     <p class="hint">제타 인트로에는 이미지를 5장까지 넣을 수 있어요. 나눌 때는 컷 중간을 자르지 않고 컷 사이 여백에서 끊어요.</p>
-    <button class="btn primary wide" type="button" id="eSave">저장하기</button>
+    <button class="btn primary wide" type="button" id="eSave">이미지로 저장하기</button>
+    <button class="btn wide" type="button" id="eWork" data-label="이어서 고칠 수 있는 작품 파일(.json)로 저장">이어서 고칠 수 있는 작품 파일(.json)로 저장</button>
     <p class="status" id="eStatus" role="status"></p>
     <div class="results" id="eResults" hidden></div>
   </div>
@@ -1458,7 +1481,7 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   }
 
   // ---------- pointer editing ----------
-  let drag = null, lastTap = null, pend = null;
+  let drag = null, lastTap = null, pend = null, touchTap = null;
   const coarse = () => window.matchMedia("(pointer: coarse)").matches;
   const pickHooks = { before: [], after: [] };
   let picking = false;
@@ -1486,15 +1509,16 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
       if (Math.hypot(pt.x - rh.x, pt.y - rh.y) < tol) return { kind: "resize", u: su, G };
     }
     for (let i = b.bubbles.length - 1; i >= 0; i--) {
-      const u = b.bubbles[i], G = bubbleGeo(u, W, H), pad = 6 / hs;
+      const u = b.bubbles[i], G = bubbleGeo(u, W, H), pad = (coarse() ? 14 : 6) / hs;
       if (Math.abs(pt.x - G.cx) <= G.ex + pad && Math.abs(pt.y - G.cy) <= G.ey + pad) return { kind: "move", u, G };
     }
     return null;
   }
   function attachPointer(cv, id) {
     const onTouch = (e) => {
-      const b = findBlock(id); if (!b || e.touches.length !== 1) return;
+      const b = findBlock(id); if (!b || e.touches.length !== 1) { touchTap = null; return; }
       const t = e.touches[0];
+      touchTap = { id, x: t.clientX, y: t.clientY, t: performance.now(), sy: window.scrollY, done: false };
       const dblSoon = lastTap && lastTap.id === id && performance.now() - lastTap.t < 380 && Math.hypot(t.clientX - lastTap.x, t.clientY - lastTap.y) < 30;
       const uh = underHit(b, t.clientX, t.clientY);
       if (dblSoon || (hasBubbles(b) && hitTest(b, localPt(cv, b, t.clientX, t.clientY))) || (uh && hitTest(uh.pv, localPt(uh.pcv, uh.pv, t.clientX, t.clientY)))) e.preventDefault();
@@ -1533,8 +1557,16 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
       pend = pp;
     });
     cv.addEventListener("touchstart", onTouch, { passive: false });
+    cv.addEventListener("touchend", (e) => {
+      const tt = touchTap; touchTap = null;
+      if (!tt || tt.done || tt.id !== id || drag || reo || e.touches.length) return;
+      const ch = e.changedTouches && e.changedTouches[0]; if (!ch) return;
+      const moved = Math.hypot(ch.clientX - tt.x, ch.clientY - tt.y), scrolled = Math.abs(window.scrollY - tt.sy);
+      if (moved < 18 && scrolled < 18 && performance.now() - tt.t < 700) { pend = null; onTap(cv, id, { clientX: ch.clientX, clientY: ch.clientY }); }
+    });
+    cv.addEventListener("touchmove", (e) => { if (reo) e.preventDefault(); }, { passive: false });
     cv.addEventListener("pointermove", (e) => {
-      if (pend && pend.pid === e.pointerId) { if (Math.hypot(e.clientX - pend.x, e.clientY - pend.y) > 10) { clearTimeout(pend.lp); pend = null; } else { pend.lx = e.clientX; pend.ly = e.clientY; } }
+      if (pend && pend.pid === e.pointerId) { if (Math.hypot(e.clientX - pend.x, e.clientY - pend.y) > (e.pointerType === "touch" ? 16 : 8)) { clearTimeout(pend.lp); pend = null; } else { pend.lx = e.clientX; pend.ly = e.clientY; } }
       if (!drag || drag.pid !== e.pointerId) return;
       const b = findBlock(drag.id); if (!b) return;
       if (!drag.moved && Math.hypot(e.clientX - drag.sx, e.clientY - drag.sy) < 4) return;
@@ -1548,7 +1580,7 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     const end = (e) => {
       if (pend && pend.pid === e.pointerId) {
         const p = pend; pend = null; clearTimeout(p.lp);
-        if (e.type === "pointerup" && performance.now() - p.t < 700) onTap(cv, id, e);
+        if (e.type === "pointerup" && performance.now() - p.t < 1200) { if (touchTap) touchTap.done = true; onTap(cv, id, e); }
         return;
       }
       if (!drag || drag.pid !== e.pointerId) return;
@@ -1561,7 +1593,7 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     cv.addEventListener("pointercancel", end);
   }
   // ---------- long press: lift a cut and drop it elsewhere, or onto another cut to swap ----------
-  const LP_MS = 430;
+  const LP_MS = 520;
   let reo = null;
   const blkName = (b) => (!b ? "" : b.type === "page" ? "페이지" : b.type === "image" ? "컷" : b.type === "narration" ? "나레이션" : "빈 여백");
   const josaWa = (w) => { const c = w.charCodeAt(w.length - 1) - 0xac00; return w + (c >= 0 && c < 11172 && c % 28 ? "과" : "와"); };
@@ -1591,7 +1623,7 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     document.body.append(g, line, box, tip);
     if (panel < 0) cv.parentElement.classList.add("lifting");
     document.body.classList.add("reordering");
-    reo = { id, panel, pid: pp.pid, x: pp.lx, y: pp.ly, ghost: g, line, box, tip, target: null, raf: 0, swapEl: null };
+    reo = { id, panel, sx: pp.x, sy: pp.y, pid: pp.pid, x: pp.lx, y: pp.ly, ghost: g, line, box, tip, target: null, raf: 0, swapEl: null };
     moveReorder(pp.lx, pp.ly);
     reo.raf = requestAnimationFrame(reoTick);
   }
@@ -1655,7 +1687,12 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     if (r.swapEl) r.swapEl.classList.remove("swap-target");
     const cv0 = canvasMap.get(r.id); if (cv0) cv0.parentElement.classList.remove("lifting");
     document.body.classList.remove("reordering");
-    const t = drop ? r.target : null; if (!t) return;
+    const t = drop ? r.target : null;
+    if (!t) {
+      // held a little too long but never moved: treat it as a normal tap
+      if (drop && Math.hypot(r.x - r.sx, r.y - r.sy) < 16) { const b = findBlock(r.id), cv = canvasMap.get(r.id); if (b && cv) { const pt = localPt(cv, b, r.x, r.y); select({ block: r.id, panel: b.type === "page" ? panelAt(b, pt.x, pt.y) : null }); } }
+      return;
+    }
     if (t.kind === "panel") {
       const src = findBlock(r.id), dst = findBlock(t.id); src.panels = src.panels || []; dst.panels = dst.panels || [];
       const a = src.panels[r.panel] || null, bb = dst.panels[t.i] || null;
@@ -1680,7 +1717,6 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   window.addEventListener("pointermove", (e) => { if (reo && e.pointerId === reo.pid) { e.preventDefault(); moveReorder(e.clientX, e.clientY); } }, { passive: false });
   window.addEventListener("pointerup", (e) => { if (reo && e.pointerId === reo.pid) endReorder(true); });
   window.addEventListener("pointercancel", (e) => { if (reo && e.pointerId === reo.pid) endReorder(false); });
-  document.addEventListener("touchmove", (e) => { if (reo) e.preventDefault(); }, { passive: false });
   window.addEventListener("keydown", (e) => { if (reo && e.key === "Escape") endReorder(false); });
   window.addEventListener("blur", () => endReorder(false));
   strip.addEventListener("contextmenu", (e) => e.preventDefault());
@@ -2157,9 +2193,11 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   };
   const savedImgs = new Set();
   let saveTimer;
-  function scheduleSave() { clearTimeout(saveTimer); saveTimer = setTimeout(saveNow, 900); }
+  let dirtyAt = 0;
+  const lastSaved = new Map();
+  function scheduleSave() { dirtyAt = dirtyAt || Date.now(); clearTimeout(saveTimer); saveTimer = setTimeout(saveNow, 900); }
   let curId = null, lib = [], thumbFor = "";
-  const projectHooks = [];
+  const projectHooks = [], saveHooks = [], deleteHooks = [], libHooks = [], readyHooks = [];
   const projKey = (id) => "proj:" + id;
   const libEntry = (id) => lib.find((x) => x.id === id);
   function makeThumb() {
@@ -2181,18 +2219,23 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   }
   async function saveNow() {
     if (!store.db || !curId) return;
+    const js = JSON.stringify(P);
+    dirtyAt = 0;
+    if (lastSaved.get(curId) === js && libEntry(curId)) { await store.run("kv", "readwrite", (st) => st.put(curId, "current")); return; }
     for (const b of P.blocks) for (const key of blockImgs(b)) {
       if (key.startsWith("sample") || savedImgs.has(key)) continue;
       const im = images.get(key); if (!im || !im.blob) continue;
       if (await store.run("img", "readwrite", (st) => st.put(im.blob, key))) savedImgs.add(key);
     }
-    await store.run("kv", "readwrite", (st) => st.put(JSON.stringify(P), projKey(curId)));
+    await store.run("kv", "readwrite", (st) => st.put(js, projKey(curId)));
+    lastSaved.set(curId, js);
     let e = libEntry(curId);
     if (!e) { e = { id: curId }; lib.unshift(e); }
     Object.assign(e, { title: P.title || "제목 없는 작품", updated: Date.now(), cuts: P.blocks.filter((x) => x.type === (isComic() ? "page" : "image")).length, mode: P.mode || "webtoon", thumb: makeThumb() });
     await store.run("kv", "readwrite", (st) => st.put(JSON.stringify(lib), "library"));
     await store.run("kv", "readwrite", (st) => st.put(curId, "current"));
     if (!$("mLib").hidden) renderLib();
+    saveHooks.forEach((f) => { try { f(); } catch (e) { /* ignore */ } });
   }
   async function loadProjectData(id) {
     const raw = await store.run("kv", "readonly", (st) => st.get(projKey(id)));
@@ -2220,7 +2263,7 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     if (!libEntry(cur)) cur = lib[0].id;
     const p = await loadProjectData(cur);
     if (!p) return false;
-    P = p; curId = cur; thumbFor = "";
+    P = p; curId = cur; thumbFor = ""; lastSaved.set(curId, JSON.stringify(P));
     return true;
   }
   function resetHistory() { clearTimeout(commitTimer); commitTimer = null; hist.stack = []; hist.i = -1; }
@@ -2236,7 +2279,7 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     clearTimeout(saveTimer); await saveNow();
     const p = await loadProjectData(id);
     if (!p) { toast("이 작품을 열지 못했어요", true); return; }
-    P = p; curId = id; thumbFor = "";
+    P = p; curId = id; thumbFor = ""; lastSaved.set(curId, JSON.stringify(P));
     await store.run("kv", "readwrite", (st) => st.put(curId, "current"));
     closeModal("mLib");
     await afterSwitch("‘" + P.title + "’을 열었어요");
@@ -2270,12 +2313,13 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     renderLib(); toast("‘" + p.title + "’를 만들었어요");
   }
   async function deleteProject(id) {
+    deleteHooks.forEach((f) => { try { f(id); } catch (e) { /* ignore */ } });
     await store.run("kv", "readwrite", (st) => st.delete(projKey(id)));
     await store.run("kv", "readwrite", (st) => st.delete("sb:" + id));
     lib = lib.filter((x) => x.id !== id);
     await store.run("kv", "readwrite", (st) => st.put(JSON.stringify(lib), "library"));
     if (id === curId) {
-      if (lib.length) { curId = null; const next = lib[0].id; const p = await loadProjectData(next); P = p || { v: 2, settings: Object.assign({}, DEF), blocks: [], title: lib[0].title }; curId = next; await afterSwitch("작품을 지웠어요"); }
+      if (lib.length) { curId = null; const next = lib[0].id; const p = await loadProjectData(next); P = p || { v: 2, settings: Object.assign({}, DEF), blocks: [], title: lib[0].title }; curId = next; lastSaved.set(curId, JSON.stringify(P)); await afterSwitch("작품을 지웠어요"); }
       else { await newProject(false); }
     } else toast("작품을 지웠어요");
     await cleanImages();
@@ -2318,7 +2362,7 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
         h("div", { class: "lib-act" },
           cur ? h("span", { class: "cur-tag", text: "편집 중" }) : h("button", { type: "button", class: "btn small primary", onclick: () => openProject(e.id) }, "열기"),
           h("button", { type: "button", class: "btn small", onclick: () => duplicateProject(e.id) }, "복제"),
-          h("button", { type: "button", class: "btn small", onclick: (ev) => exportWork(e.id, ev.currentTarget) }, "파일로 백업"), del)));
+          h("button", { type: "button", class: "btn small", onclick: (ev) => exportWork(e.id, ev.currentTarget) }, "작품 파일 저장"), del)));
     });
   }
   function blobToDataURL(blob) { return new Promise((ok, no) => { const fr = new FileReader(); fr.onload = () => ok(fr.result); fr.onerror = no; fr.readAsDataURL(blob); }); }
@@ -2350,41 +2394,106 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
         if (blob) imgs[k] = await blobToDataURL(blob);
       }
       const e = libEntry(id) || {};
-      const out = { app: "sedotoon", v: 1, title: proj.title || e.title || "작품", mode: proj.mode || e.mode || "webtoon", savedAt: Date.now(), project: proj, storyboard: sbo, images: imgs };
+      const out = { app: "sedotoon", v: 2, workId: id, title: proj.title || e.title || "작품", mode: proj.mode || e.mode || "webtoon", savedAt: Date.now(), help: "이 파일을 세로툰에서 열면 말풍선·대사·효과까지 그대로 고칠 수 있어요. 메모장으로 대사(text)를 고쳐서 다시 열어도 돼요. images 아래는 사진 데이터라 건드리지 마세요.", project: proj, storyboard: sbo };
       const dt = new Date(), stamp = dt.getFullYear() + String(dt.getMonth() + 1).padStart(2, "0") + String(dt.getDate()).padStart(2, "0") + "_" + String(dt.getHours()).padStart(2, "0") + String(dt.getMinutes()).padStart(2, "0");
-      const r = await saveFileBlob(new Blob([JSON.stringify(out)], { type: "application/json" }), "sedotoon_" + (out.mode === "comic" ? "comic_" : "") + stamp + ".json");
-      toast(r === "declined" ? "백업을 취소했어요" : "‘" + out.title + "’를 파일로 백업했어요. 다른 폰에서도 불러올 수 있어요.");
+      // readable on top (hand-editable), one picture per line at the bottom
+      const head = JSON.stringify(out, null, 1).replace(/\n}$/, "");
+      const imgLines = Object.entries(imgs).map(([k, v]) => "  " + JSON.stringify(k) + ": " + JSON.stringify(v)).join(",\n");
+      const text = head + ',\n "images": {\n' + imgLines + "\n }\n}\n";
+      const r = await saveFileBlob(new Blob([text], { type: "application/json" }), "sedotoon_" + (out.mode === "comic" ? "comic_" : "") + stamp + ".json");
+      toast(r === "declined" ? "저장을 취소했어요" : "‘" + out.title + "’ 작품 파일을 저장했어요. 다시 열면 말풍선·대사까지 그대로 고칠 수 있어요.");
     } catch (er) { toast("백업 파일을 만들지 못했어요", true); }
-    if (btn) { btn.disabled = false; btn.textContent = "파일로 백업"; }
+    if (btn) { btn.disabled = false; btn.textContent = btn.dataset.label || "작품 파일 저장"; }
+  }
+  function jsonErrorWhere(text, err) {
+    const m = /position (\d+)/.exec(String(err && err.message)); if (!m) return "";
+    const pos = Number(m[1]), before = text.slice(0, pos), line = before.split("\n").length;
+    return " (" + line + "번째 줄 근처)";
+  }
+  // accept older/edited files: fill missing ids and fields so everything stays editable
+  function normalizeProject(p) {
+    if (Array.isArray(p)) p = { blocks: p };
+    if (!p || !Array.isArray(p.blocks)) return null;
+    const seen = new Set(), fresh = (pre, v) => { let id = typeof v === "string" && v ? v : nid(pre); while (seen.has(id)) id = nid(pre); seen.add(id); return id; };
+    p.blocks = p.blocks.filter((b) => b && typeof b === "object").map((b) => {
+      if (!b.type) b.type = b.img ? "image" : b.panels ? "page" : b.text != null ? "narration" : "space";
+      b.id = fresh(b.type === "page" ? "g" : b.type === "narration" ? "n" : b.type === "space" ? "s" : "b", b.id);
+      if (b.type === "image" || b.type === "page") {
+        b.bubbles = Array.isArray(b.bubbles) ? b.bubbles.filter((u) => u && typeof u === "object") : [];
+        b.bubbles.forEach((u) => {
+          u.id = fresh("u", u.id); u.text = String(u.text == null ? "" : u.text);
+          if (!SHAPES[u.shape]) u.shape = "oval";
+          const d = shapeDefaults(u.shape);
+          if (!(Number(u.size) > 0)) u.size = d.size; if (!(Number(u.cols) > 0)) u.cols = d.cols;
+          if (!FONTS[u.font]) u.font = defaultFontFor(u.shape);
+          if (!TONES[u.tone]) u.tone = "white";
+          const nx = Number(u.x), ny = Number(u.y); u.x = clamp(Number.isFinite(nx) && u.x !== null && u.x !== "" ? nx : 50, 0, 100); u.y = clamp(Number.isFinite(ny) && u.y !== null && u.y !== "" ? ny : 30, 0, 100);
+        });
+      }
+      if (b.type === "narration") { b.text = String(b.text == null ? "" : b.text); b.size = Number(b.size) || 28; b.pad = Number(b.pad) || 110; b.align = b.align === "left" ? "left" : "center"; }
+      if (b.type === "space") b.h = Number(b.h) || 200;
+      if (b.type === "page") { b.layout = LAYOUTS[b.layout] ? b.layout : "4b"; b.panels = Array.isArray(b.panels) ? b.panels : []; }
+      return b;
+    });
+    return p;
+  }
+  let importChoice = null;
+  function askImport(title) {
+    return new Promise((res) => {
+      importChoice = res;
+      $("iMsg").textContent = "‘" + title + "’ 작품이 이미 보관함에 있어요. 파일 내용으로 바꿀까요, 아니면 새 작품으로 추가할까요?";
+      openModal("mImport");
+    });
   }
   async function importWork(file) {
-    let data;
-    try { data = JSON.parse(await file.text()); } catch (e) { toast("세로툰 백업 파일이 아니에요", true); return; }
-    if (!data || data.app !== "sedotoon" || !data.project || !Array.isArray(data.project.blocks)) { toast("세로툰 백업 파일이 아니에요", true); return; }
+    let data, text = "";
+    try { text = await file.text(); data = JSON.parse(text.replace(/^﻿/, "")); }
+    catch (e) { toast("작품 파일을 읽지 못했어요" + jsonErrorWhere(text, e) + ". 메모장에서 고쳤다면 쉼표·따옴표·괄호를 확인해 주세요.", true); return; }
+    const proj = normalizeProject(data && data.project ? data.project : data);
+    if (!proj) { toast("세로툰 작품 파일이 아니에요", true); return; }
     clearTimeout(saveTimer); await saveNow();
+    const title = String((data && data.title) || proj.title || "불러온 작품").slice(0, 40);
+    let id = nid("p"), replace = false;
+    const old = data && data.workId ? libEntry(data.workId) : null;
+    if (old) {
+      const how = await askImport(old.title || title);
+      if (!how) return;
+      if (how === "replace") { id = data.workId; replace = true; }
+    }
     const map = {};
-    for (const [k, url] of Object.entries(data.images || {})) {
+    for (const [k, url] of Object.entries((data && data.images) || {})) {
       try { const blob = await (await fetch(url)).blob(); const nk = await addBlob(blob); map[k] = nk; await store.run("img", "readwrite", (st) => st.put(blob, nk)); savedImgs.add(nk); } catch (e) { /* skip broken image */ }
     }
     const fix = (k) => (k && map[k]) || k;
-    const proj = data.project;
     proj.blocks.forEach((b) => { if (b.type === "image") b.img = fix(b.img); if (b.type === "page") (b.panels || []).forEach((pn) => { if (pn) pn.img = fix(pn.img); }); });
     if (proj.blocks.some((b) => blockImgs(b).some((k) => k.startsWith("sample")))) await ensureSamples();
-    const id = nid("p"), title = (data.title || proj.title || "불러온 작품");
-    proj.title = title; proj.mode = data.mode || proj.mode || "webtoon";
+    proj.title = title; proj.mode = (data && data.mode) || proj.mode || "webtoon"; proj.v = 2;
     await store.run("kv", "readwrite", (st) => st.put(JSON.stringify(proj), projKey(id)));
-    if (data.storyboard && Array.isArray(data.storyboard.cuts)) { data.storyboard.cuts.forEach((c) => { c.img = fix(c.img); }); await store.run("kv", "readwrite", (st) => st.put(JSON.stringify(data.storyboard), "sb:" + id)); }
-    lib.unshift({ id, title, updated: Date.now(), cuts: 0, thumb: "", mode: proj.mode });
-    await store.run("kv", "readwrite", (st) => st.put(JSON.stringify(lib), "library"));
-    await openProject(id);
-    toast("‘" + title + "’를 불러왔어요");
+    const sb = data && data.storyboard;
+    if (sb && Array.isArray(sb.cuts)) { sb.cuts.forEach((c) => { c.img = fix(c.img); }); await store.run("kv", "readwrite", (st) => st.put(JSON.stringify(sb), "sb:" + id)); }
+    if (replace) {
+      Object.assign(old, { title, updated: Date.now(), mode: proj.mode });
+      await store.run("kv", "readwrite", (st) => st.put(JSON.stringify(lib), "library"));
+      if (id === curId) { const p = await loadProjectData(id); if (p) { P = p; thumbFor = ""; closeModal("mLib"); await afterSwitch("‘" + title + "’ 작품을 파일 내용으로 바꿨어요. 그대로 이어서 고치면 돼요."); await saveNow(); } }
+      else { curId = null; await openProject(id); toast("‘" + title + "’ 작품을 파일 내용으로 바꿨어요. 그대로 이어서 고치면 돼요."); }
+    } else {
+      lib.unshift({ id, title, updated: Date.now(), cuts: 0, thumb: "", mode: proj.mode });
+      await store.run("kv", "readwrite", (st) => st.put(JSON.stringify(lib), "library"));
+      await openProject(id);
+      toast("‘" + title + "’ 작품을 열었어요. 말풍선·대사·효과까지 그대로 고칠 수 있어요.");
+    }
+    await cleanImages();
   }
+  const isWorkFile = async (f) => /\.json$/i.test(f.name || "") || /json/.test(f.type || "") || (f.size < 400e6 && /^\s*[{[]/.test(await f.slice(0, 64).text().catch(() => "")));
   let libTab = "webtoon";
-  function openLib() { delArm = null; libTab = isComic() ? "comic" : "webtoon"; renderLib(); openModal("mLib"); }
+  function openLib() { delArm = null; libTab = isComic() ? "comic" : "webtoon"; renderLib(); openModal("mLib"); libHooks.forEach((f) => { try { f(); } catch (e) { /* ignore */ } }); }
   $("bLib").addEventListener("click", openLib);
   $("lNew").addEventListener("click", () => newProject(false, libTab));
   $("lImport").addEventListener("click", () => $("fileWork").click());
   $("fileWork").addEventListener("change", async (e) => { const f = e.target.files && e.target.files[0]; e.target.value = ""; if (f) await importWork(f); });
+  $("iReplace").addEventListener("click", () => { closeModal("mImport"); const r = importChoice; importChoice = null; if (r) r("replace"); });
+  $("iAdd").addEventListener("click", () => { closeModal("mImport"); const r = importChoice; importChoice = null; if (r) r("add"); });
+  $("iCancel").addEventListener("click", () => { closeModal("mImport"); const r = importChoice; importChoice = null; if (r) r(null); });
   $("lSample").addEventListener("click", () => newProject(true, libTab));
   $("lName").addEventListener("input", (e) => { P.title = e.target.value.trim() || "제목 없는 작품"; updateTitle(); const en = libEntry(curId); if (en) en.title = P.title; scheduleSave(); });
 
@@ -3508,6 +3617,250 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     document.body.appendChild(inbox);
   }
 
+
+  // ---------- Google 계정 저장: 내 구글 드라이브의 앱 전용 숨김 공간에 작품을 자동 저장 ----------
+  const GOOGLE_CLIENT_ID = "__GOOGLE_CLIENT_ID__";
+  const CLOUD_SCOPES = "https://www.googleapis.com/auth/drive.appdata openid email";
+  const DRIVE = "https://www.googleapis.com/drive/v3", DRIVE_UP = "https://www.googleapis.com/upload/drive/v3";
+  const cloud = { st: null, busy: false, again: false, timer: 0, status: "off", err: "", files: {}, nagged: false };
+  const cloudReady = () => !!GOOGLE_CLIENT_ID && GOOGLE_CLIENT_ID.indexOf("__") !== 0;
+  function cloudLoad() {
+    try { cloud.st = JSON.parse(localStorage.getItem("sedo-cloud") || "null"); } catch (e) { cloud.st = null; }
+    if (cloud.st) ["pushed", "imgs", "tomb"].forEach((k) => { cloud.st[k] = cloud.st[k] || {}; });
+  }
+  function cloudSave() { try { if (cloud.st) localStorage.setItem("sedo-cloud", JSON.stringify(cloud.st)); else localStorage.removeItem("sedo-cloud"); } catch (e) { /* ignore */ } }
+  const linked = () => !!(cloud.st && cloud.st.linked);
+  const tokenOk = () => !!(cloud.st && cloud.st.token && Date.now() < (cloud.st.exp || 0));
+  const unsynced = () => lib.filter((e) => (cloud.st.pushed[e.id] || 0) < (e.updated || 0)).length + (cloud.st.tombDirty ? 1 : 0);
+  const redirectUri = () => location.origin + location.pathname.replace(/[^/]*$/, "");
+
+  function cloudStatus(s, err) {
+    cloud.status = s; cloud.err = err || "";
+    const dot = $("cloudDot");
+    if (dot) {
+      dot.hidden = !linked();
+      const pend = linked() && unsynced();
+      dot.dataset.s = s === "ok" && !pend ? "ok" : s === "relink" || s === "err" ? "off" : "part";
+    }
+    if (!$("mLib").hidden) renderCloud();
+  }
+  function cloudGo(select) {
+    if (!cloudReady()) return;
+    const state = Math.random().toString(36).slice(2) + Date.now().toString(36);
+    try { sessionStorage.setItem("sedo-oauth", state); } catch (e) { /* ignore */ }
+    clearTimeout(saveTimer);
+    const go = () => {
+      const q = new URLSearchParams({ client_id: GOOGLE_CLIENT_ID, redirect_uri: redirectUri(), response_type: "token", scope: CLOUD_SCOPES, include_granted_scopes: "true", state });
+      if (select || !(cloud.st && cloud.st.email)) q.set("prompt", "select_account consent"); else q.set("login_hint", cloud.st.email);
+      location.assign("https://accounts.google.com/o/oauth2/v2/auth?" + q.toString());
+    };
+    saveNow().then(go, go);
+  }
+  function takeOAuthReturn() {
+    const hs = location.hash || "";
+    if (!/access_token=|error=/.test(hs)) return null;
+    const p = new URLSearchParams(hs.slice(1));
+    try { history.replaceState(null, "", location.pathname + location.search); } catch (e) { /* ignore */ }
+    let want = null; try { want = sessionStorage.getItem("sedo-oauth"); sessionStorage.removeItem("sedo-oauth"); } catch (e) { /* ignore */ }
+    if (p.get("error")) return { error: p.get("error") };
+    if (!want || p.get("state") !== want) return { error: "state" };
+    return { token: p.get("access_token"), exp: Date.now() + (Number(p.get("expires_in")) || 3600) * 1000 - 120000, scope: p.get("scope") || "" };
+  }
+
+  async function api(method, url, body, type) {
+    if (!tokenOk()) throw new Error("auth");
+    const r = await fetch(url, { method, headers: Object.assign({ Authorization: "Bearer " + cloud.st.token }, type ? { "Content-Type": type } : {}), body });
+    if (r.status === 401) { cloud.st.exp = 0; cloudSave(); throw new Error("auth"); }
+    if (r.status === 403) { const t = await r.text().catch(() => ""); throw new Error(/storageQuota|quotaExceeded/i.test(t) ? "quota" : /insufficient|scope|PERMISSION_DENIED/i.test(t) ? "scope" : "http403"); }
+    if (!r.ok && r.status !== 404) throw new Error("http" + r.status);
+    return r;
+  }
+  async function listFiles() {
+    const out = {}; let pt = "";
+    do {
+      const r = await api("GET", DRIVE + "/files?spaces=appDataFolder&pageSize=1000&fields=" + encodeURIComponent("nextPageToken,files(id,name,modifiedTime)") + (pt ? "&pageToken=" + encodeURIComponent(pt) : ""));
+      const j = await r.json();
+      (j.files || []).forEach((f) => { const o = out[f.name]; if (!o || o.t < f.modifiedTime) out[f.name] = { id: f.id, t: f.modifiedTime || "" }; });
+      pt = j.nextPageToken || "";
+    } while (pt);
+    cloud.files = {}; for (const [n, v] of Object.entries(out)) cloud.files[n] = v.id;
+    return cloud.files;
+  }
+  async function getJson(id) { const r = await api("GET", DRIVE + "/files/" + id + "?alt=media"); if (!r.ok) return null; try { return await r.json(); } catch (e) { return null; } }
+  async function getBlob(id) { const r = await api("GET", DRIVE + "/files/" + id + "?alt=media"); return r.ok ? r.blob() : null; }
+  async function upsert(name, body, type) {
+    const id = cloud.files[name];
+    if (id) { const r = await api("PATCH", DRIVE_UP + "/files/" + id + "?uploadType=media", body, type); if (r.ok) return; delete cloud.files[name]; }
+    const bnd = "sedo" + Math.random().toString(36).slice(2);
+    const blob = new Blob(["--" + bnd + "\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n" + JSON.stringify({ name, parents: ["appDataFolder"] }) + "\r\n--" + bnd + "\r\nContent-Type: " + type + "\r\n\r\n", body, "\r\n--" + bnd + "--"]);
+    const r = await api("POST", DRIVE_UP + "/files?uploadType=multipart&fields=id", blob, "multipart/related; boundary=" + bnd);
+    const j = await r.json(); cloud.files[name] = j.id;
+  }
+  const workImgs = (proj, sb) => { const keys = new Set(); (proj.blocks || []).forEach((b) => blockImgs(b).forEach((k) => keys.add(k))); if (sb && Array.isArray(sb.cuts)) sb.cuts.forEach((c) => c.img && keys.add(c.img)); return [...keys].filter((k) => k && !k.startsWith("sample")); };
+  function mergeIndex(remote) {
+    const tomb = Object.assign({}, (remote && remote.tomb) || {});
+    for (const [k, v] of Object.entries(cloud.st.tomb)) tomb[k] = Math.max(tomb[k] || 0, v);
+    const m = new Map();
+    ((remote && remote.works) || []).forEach((w) => m.set(w.id, w));
+    lib.forEach((w) => {
+      if ((cloud.st.pushed[w.id] || 0) < (w.updated || 0)) return; // not uploaded yet: list it once its file is there
+      const r = m.get(w.id);
+      if (!r || (w.updated || 0) >= (r.updated || 0)) m.set(w.id, { id: w.id, title: w.title, updated: w.updated || 0, cuts: w.cuts || 0, thumb: w.thumb || "", mode: w.mode || "webtoon" });
+    });
+    for (const [id, w] of m) if (tomb[id] && tomb[id] >= (w.updated || 0)) m.delete(id);
+    return { app: "sedotoon", v: 1, works: [...m.values()], tomb };
+  }
+
+  async function pullAll() {
+    if (!cloud.files["lib.json"]) return 0;
+    const remote = await getJson(cloud.files["lib.json"]);
+    if (!remote) return 0;
+    for (const [k, v] of Object.entries(remote.tomb || {})) cloud.st.tomb[k] = Math.max(cloud.st.tomb[k] || 0, v);
+    let n = 0, curChanged = false;
+    for (const rw of remote.works || []) {
+      if ((cloud.st.tomb[rw.id] || 0) >= (rw.updated || 0)) continue;
+      const le = libEntry(rw.id);
+      if (le && (le.updated || 0) >= (rw.updated || 0)) continue;
+      if (rw.id === curId && dirtyAt) continue;
+      const wf = cloud.files["w_" + rw.id + ".json"]; if (!wf) continue;
+      const data = await getJson(wf);
+      if (!data || !data.project || !Array.isArray(data.project.blocks)) continue;
+      for (const k of workImgs(data.project, data.storyboard)) {
+        if (await store.run("img", "readonly", (st) => st.count(k))) { cloud.st.imgs[k] = 1; continue; }
+        const f = cloud.files["i_" + k]; if (!f) continue;
+        const blob = await getBlob(f); if (!blob) continue;
+        await store.run("img", "readwrite", (st) => st.put(blob, k)); savedImgs.add(k); cloud.st.imgs[k] = 1;
+      }
+      await store.run("kv", "readwrite", (st) => st.put(JSON.stringify(data.project), projKey(rw.id)));
+      if (data.storyboard) await store.run("kv", "readwrite", (st) => st.put(JSON.stringify(data.storyboard), "sb:" + rw.id));
+      const ent = { id: rw.id, title: rw.title || data.project.title || "작품", updated: rw.updated || Date.now(), cuts: rw.cuts || 0, thumb: rw.thumb || "", mode: rw.mode || data.project.mode || "webtoon" };
+      if (le) Object.assign(le, ent); else lib.push(ent);
+      cloud.st.pushed[rw.id] = ent.updated;
+      n++; if (rw.id === curId) curChanged = true;
+    }
+    for (const [id, t] of Object.entries(cloud.st.tomb)) {
+      const le = libEntry(id);
+      if (le && id !== curId && (le.updated || 0) <= t) { lib.splice(lib.indexOf(le), 1); await store.run("kv", "readwrite", (st) => st.delete(projKey(id))); await store.run("kv", "readwrite", (st) => st.delete("sb:" + id)); n++; }
+    }
+    lib.sort((a, b) => (b.updated || 0) - (a.updated || 0));
+    await store.run("kv", "readwrite", (st) => st.put(JSON.stringify(lib), "library"));
+    cloudSave();
+    if (curChanged) {
+      const p = await loadProjectData(curId);
+      if (p) { P = p; thumbFor = ""; lastSaved.set(curId, JSON.stringify(P)); await afterSwitch("다른 기기에서 고친 내용을 불러왔어요"); }
+    }
+    if (!$("mLib").hidden) renderLib();
+    return n;
+  }
+  async function pushAll() {
+    let n = 0;
+    for (const e of lib.slice()) {
+      if ((cloud.st.pushed[e.id] || 0) >= (e.updated || 0)) continue;
+      const raw = await store.run("kv", "readonly", (st) => st.get(projKey(e.id))); if (!raw) continue;
+      let proj; try { proj = JSON.parse(raw); } catch (er) { continue; }
+      if (/^예시/.test(e.title || "") && (proj.blocks || []).every((b) => blockImgs(b).every((k) => k.startsWith("sample")))) { cloud.st.pushed[e.id] = e.updated || 0; continue; } // the built-in sample stays on this phone
+      const sbRaw = await store.run("kv", "readonly", (st) => st.get("sb:" + e.id));
+      let sb = null; try { sb = sbRaw ? JSON.parse(sbRaw) : null; } catch (er) { sb = null; }
+      for (const k of workImgs(proj, sb)) {
+        if (cloud.st.imgs[k] && cloud.files["i_" + k]) continue;
+        if (cloud.files["i_" + k]) { cloud.st.imgs[k] = 1; continue; }
+        const blob = (images.get(k) || {}).blob || await store.run("img", "readonly", (st) => st.get(k));
+        if (!blob) continue;
+        await upsert("i_" + k, blob, blob.type || "image/jpeg");
+        cloud.st.imgs[k] = 1; cloudSave();
+      }
+      await upsert("w_" + e.id + ".json", JSON.stringify({ id: e.id, updated: e.updated, project: proj, storyboard: sb }), "application/json");
+      cloud.st.pushed[e.id] = e.updated || 0; cloudSave(); n++;
+    }
+    if (n || cloud.st.tombDirty || !cloud.files["lib.json"]) {
+      const remote = cloud.files["lib.json"] ? await getJson(cloud.files["lib.json"]) : null;
+      await upsert("lib.json", JSON.stringify(mergeIndex(remote)), "application/json");
+      cloud.st.tombDirty = false;
+    }
+    cloud.st.lastSync = Date.now(); cloudSave();
+    return n;
+  }
+  async function cloudSync(mode) {
+    if (!cloudReady() || !linked()) return;
+    if (!tokenOk()) { cloudStatus("relink"); nagRelink(); return; }
+    if (cloud.busy) { cloud.again = cloud.again === "full" ? "full" : mode || "full"; return; }
+    cloud.busy = true; cloudStatus("sync");
+    try {
+      await listFiles();
+      if (mode !== "push") await pullAll();
+      await pushAll();
+      cloudStatus("ok");
+    } catch (e) {
+      const m = String((e && e.message) || e);
+      cloudStatus(m === "auth" ? "relink" : "err", m);
+      if (m === "auth") nagRelink();
+    } finally {
+      cloud.busy = false;
+      if (cloud.again) { const m = cloud.again; cloud.again = false; setTimeout(() => cloudSync(m), 400); }
+    }
+  }
+  function nagRelink() {
+    if (cloud.nagged || !linked() || !unsynced()) return;
+    cloud.nagged = true;
+    toast("구글 계정 저장이 잠깐 멈췄어요. 보관함에서 ‘다시 연결’을 누르면 이어서 저장돼요.", true);
+  }
+  const CLOUD_MSG = { quota: "구글 드라이브 용량이 가득 찼어요.", scope: "로그인할 때 ‘드라이브 앱 데이터’ 권한에 체크해 주세요.", net: "인터넷 연결을 확인해 주세요." };
+  function renderCloud() {
+    const box = $("lCloud"); if (!box) return;
+    box.innerHTML = "";
+    if (!cloudReady() || !store.db) return;
+    const card = h("div", { class: "auto-card cloud-card" });
+    if (!linked()) {
+      card.append(h("h3", { text: "☁ 구글 계정에 저장" }),
+        h("p", { text: "로그인하면 작품이 내 구글 드라이브의 앱 전용 공간에 자동으로 저장돼요. 폰을 바꾸거나 앱을 지워도 같은 계정으로 로그인하면 그대로 돌아와요." }),
+        h("button", { type: "button", class: "btn primary", onclick: () => cloudGo(true) }, "Google로 로그인"));
+    } else {
+      const pend = unsynced(), t = cloud.st.lastSync ? fmtDate(cloud.st.lastSync) : "";
+      const line = cloud.status === "sync" ? "저장하는 중…" : cloud.status === "relink" || !tokenOk() ? "연결이 잠깐 끊겼어요 · 다시 연결하면 이어서 저장돼요" + (pend ? " (저장할 작품 " + pend + "개)" : "")
+        : cloud.status === "err" ? "저장하지 못했어요. " + (CLOUD_MSG[cloud.err] || CLOUD_MSG.net) : pend ? "저장할 내용이 있어요 · 곧 저장돼요" : "모두 저장됨" + (t ? " · " + t : "");
+      card.append(h("h3", { text: "☁ " + (cloud.st.email || "구글 계정") }), h("p", { text: line }),
+        h("div", { class: "row" },
+          !tokenOk() ? h("button", { type: "button", class: "btn primary small", onclick: () => cloudGo(false) }, "다시 연결") : h("button", { type: "button", class: "btn small", disabled: cloud.status === "sync", onclick: () => cloudSync("full") }, "지금 저장·불러오기"),
+          h("button", { type: "button", class: "btn small", onclick: cloudLogout }, "로그아웃")));
+    }
+    box.appendChild(card);
+  }
+  function cloudLogout() {
+    const tok = cloud.st && cloud.st.token;
+    if (tok) fetch("https://oauth2.googleapis.com/revoke?token=" + encodeURIComponent(tok), { method: "POST" }).catch(() => {});
+    cloud.st = null; cloudSave(); cloudStatus("off"); renderCloud();
+    toast("로그아웃했어요. 작품은 이 폰에도 그대로 있어요.");
+  }
+  async function fetchEmail() {
+    try { const r = await api("GET", "https://www.googleapis.com/oauth2/v3/userinfo"); if (r.ok) { const j = await r.json(); if (j.email) { cloud.st.email = j.email; cloudSave(); } } } catch (e) { /* ignore */ }
+  }
+  saveHooks.push(() => { if (!linked()) return; cloudStatus(cloud.status === "sync" ? "sync" : tokenOk() ? cloud.status : "relink"); clearTimeout(cloud.timer); cloud.timer = setTimeout(() => cloudSync("push"), 4000); });
+  deleteHooks.push((id) => { if (!linked()) return; cloud.st.tomb[id] = Date.now(); cloud.st.tombDirty = true; cloudSave(); clearTimeout(cloud.timer); cloud.timer = setTimeout(() => cloudSync("push"), 1500); });
+  libHooks.push(() => { renderCloud(); if (linked() && tokenOk() && !cloud.busy && Date.now() - (cloud.st.lastSync || 0) > 20000) cloudSync("full"); });
+  document.addEventListener("visibilitychange", () => {
+    if (!linked() || !tokenOk()) return;
+    if (document.hidden) { if (unsynced()) { clearTimeout(cloud.timer); clearTimeout(saveTimer); saveNow().then(() => cloudSync("push")); } }
+    else if (Date.now() - (cloud.st.lastSync || 0) > 60000) cloudSync("full");
+  });
+  readyHooks.push(async () => {
+    if (!cloudReady()) return;
+    cloudLoad();
+    const bl = $("bLib"); if (bl && !$("cloudDot")) { const d = h("span", { class: "dot", id: "cloudDot" }); d.hidden = true; bl.appendChild(d); }
+    const back = takeOAuthReturn();
+    if (back && back.error) { if (back.error !== "access_denied") toast("구글 로그인을 마치지 못했어요. 다시 해 주세요.", true); cloudStatus(linked() ? "relink" : "off"); return; }
+    if (back && back.token) {
+      if (!/drive\.appdata/.test(back.scope)) { toast("‘드라이브 앱 데이터’ 권한이 꺼져 있어서 저장할 수 없어요. 로그인할 때 체크해 주세요.", true); return; }
+      const first = !linked();
+      cloud.st = Object.assign(cloud.st || { pushed: {}, imgs: {}, tomb: {} }, { linked: true, token: back.token, exp: back.exp });
+      cloudSave();
+      await fetchEmail();
+      toast(first ? "구글 계정에 연결했어요. 작품을 저장하는 중…" : "다시 연결했어요. 이어서 저장할게요.");
+      await cloudSync("full");
+      if (first && cloud.status === "ok") toast("구글 계정에 모두 저장했어요. 이제 고치면 자동으로 저장돼요.");
+      return;
+    }
+    if (linked()) { cloudStatus(tokenOk() ? "ok" : "relink"); if (tokenOk()) cloudSync("full"); }
+  });
   // ---------- quick build ----------
   const qb = { src: "new", photos: [], mode: "replace" };
   function onlySamples() { return P.blocks.every((b) => blockImgs(b).every((k) => k.startsWith("sample"))); }
@@ -3742,6 +4095,7 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     $("eInfo").innerHTML = "";
     $("eInfo").append("전체 ", h("b", { text: W + " × " + lay.total.toLocaleString() + "px" }), " · ", h("b", { text: parts.length + "장" }), "으로 저장 (" + parts.map((p) => (p[1] - p[0]).toLocaleString()).join(" / ") + "px)" + (forced ? " · 휴대폰에서도 열리도록 길이 제한에 맞춰 더 나눴어요" : ""));
   }
+  $("eWork").addEventListener("click", (ev) => exportWork(curId, ev.currentTarget));
   $("bExport").addEventListener("click", () => { if (!P.blocks.length) { toast("먼저 컷 사진을 올려 주세요", true); return; } renderExportUI(); $("eStatus").textContent = ""; $("eResults").hidden = true; openModal("mExport"); });
   $("eSave").addEventListener("click", async () => {
     const btn = $("eSave"), stEl = $("eStatus"), res = $("eResults");
@@ -3802,8 +4156,10 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   let replaceTarget = null, replacePanel = null;
   $("addPhotos").addEventListener("click", () => $("filePanels").click());
   $("filePanels").addEventListener("change", async (e) => {
-    const files = Array.from(e.target.files || []); e.target.value = "";
+    let files = Array.from(e.target.files || []); e.target.value = "";
     if (!files.length) return;
+    const works = []; for (const f of files) if (await isWorkFile(f)) works.push(f);
+    if (works.length) { files = files.filter((f) => !works.includes(f)); for (const w of works) await importWork(w); if (!files.length) return; }
     files.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
     await appendPhotos(files);
   });
@@ -3825,7 +4181,7 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
       toast(importNote ? "사진 " + keys.length + "장을 넣었어요. " + importNote : "사진 " + keys.length + "장을 빈 칸에 차례로 넣었어요. 칸을 누르면 확대·위치를 바꿀 수 있어요.", importErr);
       return;
     }
-    if (onlySamples() && P.blocks.length) P.blocks = [];
+    if (onlySamples() && P.blocks.length) { P.blocks = []; if (/^예시 /.test(P.title || "")) { const d = new Date(); P.title = "내 세로툰 " + (d.getMonth() + 1) + "/" + d.getDate(); updateTitle(); const en = libEntry(curId); if (en) en.title = P.title; } }
     keys.forEach((k) => P.blocks.push({ id: nid("b"), type: "image", img: k, bubbles: [] }));
     renderStrip(); commit();
     toast(importNote ? keys.length + "컷을 붙였어요. " + importNote : keys.length + "컷을 붙였어요. 빈 곳 두 번: 말풍선 · 꾹 눌러 끌기: 순서 바꾸기", importErr);
@@ -3848,7 +4204,13 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   const stage = $("stage");
   stage.addEventListener("dragover", (e) => { if (e.dataTransfer && [...e.dataTransfer.types].includes("Files")) { e.preventDefault(); stage.classList.add("dropping"); } });
   stage.addEventListener("dragleave", (e) => { if (!stage.contains(e.relatedTarget)) stage.classList.remove("dropping"); });
-  stage.addEventListener("drop", async (e) => { e.preventDefault(); stage.classList.remove("dropping"); const files = Array.from(e.dataTransfer.files || []); if (files.length) await appendPhotos(files); });
+  stage.addEventListener("drop", async (e) => {
+    e.preventDefault(); stage.classList.remove("dropping");
+    let files = Array.from(e.dataTransfer.files || []);
+    const works = []; for (const f of files) if (await isWorkFile(f)) works.push(f);
+    for (const w of works) await importWork(w);
+    files = files.filter((f) => !works.includes(f)); if (files.length) await appendPhotos(files);
+  });
   stage.addEventListener("click", (e) => { if (e.target === stage) select({}); });
 
   // ---------- header & keys ----------
@@ -3889,8 +4251,9 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     undoUI(); updateFab();
     try {
       const pk = Number(sessionStorage.getItem("sedo-picking")); sessionStorage.removeItem("sedo-picking");
-      if (pk && Date.now() - pk < 20 * 60 * 1000) setTimeout(() => toast("사진을 고르는 동안 폰 메모리가 모자라 앱이 다시 열렸어요. 다른 앱을 몇 개 닫고 다시 올려 보세요. 한 번에 몇 장씩 올리면 더 잘 돼요.", true), 900);
+      if (pk && Date.now() - pk < 20 * 60 * 1000 && !/access_token=|error=/.test(location.hash)) setTimeout(() => toast("사진을 고르는 동안 폰 메모리가 모자라 앱이 다시 열렸어요. 다른 앱을 몇 개 닫고 다시 올려 보세요. 한 번에 몇 장씩 올리면 더 잘 돼요.", true), 900);
     } catch (e) { /* ignore */ }
+    setTimeout(() => readyHooks.forEach((f) => { try { f(); } catch (e) { /* ignore */ } }), 0);
     ensureFonts().then(() => { iconCache.clear(); P.blocks.forEach((b) => renderBlock(b.id)); buildInspector(); });
     engineUI(); refreshEngine(); loadSB().then(takeShared);
     if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")) navigator.serviceWorker.register("sw.js").catch(() => {});
