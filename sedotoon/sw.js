@@ -1,5 +1,5 @@
 // 세로툰 서비스 워커: 앱을 오프라인에서도 열리게 하고, 다른 앱에서 공유한 그림을 받는다.
-const APP = "sedotoon-app-v17";
+const APP = "sedotoon-app-v18";
 const SHELL = ["./index.html", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png"];
 self.addEventListener("install", (e) => { e.waitUntil(caches.open(APP).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting())); });
 self.addEventListener("activate", (e) => {

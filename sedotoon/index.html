@@ -204,6 +204,9 @@ input[type="range"] { width: 100%; accent-color: var(--accent); height: 28px; }
 .kbd { font-size: 11px; color: var(--muted); }
 .switch { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 36px; }
 .switch input { width: 44px; height: 24px; accent-color: var(--accent); }
+.tb.lib { position: relative; }
+.cloud-dot { position: absolute; top: 5px; right: 5px; width: 9px; height: 9px; border-radius: 50%; border: 2px solid var(--panel); background: #9aa3b0; }
+.cloud-dot[data-s="ok"] { background: #2e9d5b; } .cloud-dot[data-s="part"] { background: #e0a326; } .cloud-dot[data-s="off"] { background: #c4472b; }
 @media (pointer: coarse) {
   .btn.small { min-height: 42px; padding: 0 12px; font-size: 14px; }
   .seg-b { min-height: 42px; padding: 0 14px; }
@@ -1503,9 +1506,15 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     if (ch.clientX < r.left - 6 || ch.clientX > r.right + 6 || ch.clientY < r.top - 6 || ch.clientY > r.bottom + 6) return;
     el.click();
   }, { passive: true, capture: true });
-  const downPointers = new Set();
-  document.addEventListener("pointerdown", (e) => { downPointers.add(e.pointerId); if (downPointers.size > 1 && pend) { clearTimeout(pend.lp); pend = null; } }, true);
-  ["pointerup", "pointercancel"].forEach((t) => document.addEventListener(t, (e) => downPointers.delete(e.pointerId), true));
+  let multiTouch = false;
+  document.addEventListener("pointerdown", (e) => {
+    if (e.isPrimary) {
+      multiTouch = false;
+      if (reo && reo.pid !== e.pointerId) endReorder(false);
+      if (drag && drag.pid !== e.pointerId) { const d = drag; drag = null; const b = findBlock(d.id); if (b && d.moved) { normalizeBubble(b, d.u); renderBlock(d.id); commit(); } }
+      if (pend && pend.pid !== e.pointerId) { clearTimeout(pend.lp); pend = null; }
+    } else { multiTouch = true; if (pend) { clearTimeout(pend.lp); pend = null; } }
+  }, true);
   const pickHooks = { before: [], after: [] };
   let picking = false;
   document.addEventListener("click", (e) => {
@@ -1577,7 +1586,7 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
       const uh = underHit(b, e.clientX, e.clientY);
       if (uh && grab(uh.pcv, uh.pv.id, uh.pv, e)) return;
       const pp = { id, pid: e.pointerId, x: e.clientX, y: e.clientY, lx: e.clientX, ly: e.clientY, t: performance.now() };
-      pp.lp = setTimeout(() => { if (pend === pp && downPointers.size <= 1) startReorder(id, pp); }, LP_MS);
+      pp.lp = setTimeout(() => { if (pend === pp && !multiTouch) startReorder(id, pp); }, LP_MS);
       pend = pp;
     });
     cv.addEventListener("touchstart", onTouch, { passive: false });
@@ -1618,6 +1627,7 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
       const b = findBlock(d.id); if (!b) return;
       if (d.moved) { normalizeBubble(b, d.u); renderBlock(d.id); commit(); syncInspector(); }
       else if (d.dbl) select({ block: d.id, bubble: d.u.id }, { open: true, focus: true, reveal: true });
+      else if (isMobile()) select({ block: d.id, bubble: d.u.id, panel: d.u.panel }, { open: true, reveal: true });
     };
     cv.addEventListener("pointerup", end);
     cv.addEventListener("pointercancel", end);
@@ -3081,8 +3091,11 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     tag.textContent = t; tag.hidden = !t;
     $("fab").setAttribute("aria-label", t ? t + " 편집 도구 열기" : "설정 열기");
   }
-  $("fab").addEventListener("click", () => { buildInspector(); openSheet(); });
-  $("inspDone").addEventListener("click", () => { if (isMobile()) closeSheet(); else select({}); });
+  let fabAt = 0;
+  const fabOpen = () => { if (performance.now() - fabAt < 450) return; fabAt = performance.now(); try { buildInspector(); } catch (err) { console.error(err); } openSheet(); };
+  $("fab").addEventListener("pointerup", (e) => { if (e.pointerType !== "mouse") fabOpen(); });
+  $("fab").addEventListener("click", fabOpen);
+  $("inspDone").addEventListener("click", () => { fabAt = performance.now(); if (isMobile()) closeSheet(); else select({}); });
   const toggleTall = () => { const t = $("insp").classList.toggle("tall"); $("inspSize").textContent = t ? "작게" : "크게"; $("inspSize").setAttribute("aria-label", t ? "창 작게" : "창 크게"); updateSheetH(); setTimeout(() => { updateSheetH(); if (sel.block) reveal(); }, 220); };
   $("inspSize").addEventListener("click", toggleTall);
   $("inspGrab").addEventListener("click", toggleTall);
