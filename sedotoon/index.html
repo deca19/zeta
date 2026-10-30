@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
 <title>세로툰</title>
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#15171c">
@@ -74,6 +74,8 @@ html, body { background: var(--bg); color: var(--ink); }
 body { margin: 0; }
 img { max-width: 100%; }
 :root { padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+html { touch-action: manipulation; -webkit-text-size-adjust: 100%; }
+button, .seg-b, .chip-b, .itab, .shape-b, .font-b, .tone-b, .layout-b, .tb, .fab { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
 body { font-family: var(--f-body); font-size: 14px; line-height: 1.5; -webkit-text-size-adjust: 100%; }
 body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 21; background: var(--bg); }
 button { font: inherit; color: inherit; }
@@ -293,7 +295,7 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
 .check input { width: 20px; height: 20px; accent-color: var(--accent); }
 @media (max-width: 560px) { .cut-body { grid-template-columns: 74px minmax(0, 1fr); } .cut-thumb { width: 74px; } .tb.hide-sm { display: none; } }
 @media (max-width: 860px) {
-  .app { grid-template-columns: minmax(0, 1fr); padding-bottom: calc(var(--sheet-h, 0px) + 28px); }
+  .app { grid-template-columns: minmax(0, 1fr); padding-bottom: calc(max(var(--sheet-h, 0px), 70px) + 28px + env(safe-area-inset-bottom, 0px)); }
   .strip, .empty, .addbar { width: 100%; }
   .insp { position: fixed; left: 0; right: 0; bottom: 0; top: auto; z-index: 30; max-height: 56vh; border-radius: 16px 16px 0 0; border-bottom: 0;
     padding-bottom: env(safe-area-inset-bottom, 0px); padding-left: env(safe-area-inset-left, 0px); padding-right: env(safe-area-inset-right, 0px); box-shadow: 0 -8px 30px rgba(0,0,0,.18); }
@@ -1501,6 +1503,9 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     if (ch.clientX < r.left - 6 || ch.clientX > r.right + 6 || ch.clientY < r.top - 6 || ch.clientY > r.bottom + 6) return;
     el.click();
   }, { passive: true, capture: true });
+  const downPointers = new Set();
+  document.addEventListener("pointerdown", (e) => { downPointers.add(e.pointerId); if (downPointers.size > 1 && pend) { clearTimeout(pend.lp); pend = null; } }, true);
+  ["pointerup", "pointercancel"].forEach((t) => document.addEventListener(t, (e) => downPointers.delete(e.pointerId), true));
   const pickHooks = { before: [], after: [] };
   let picking = false;
   document.addEventListener("click", (e) => {
@@ -1572,7 +1577,7 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
       const uh = underHit(b, e.clientX, e.clientY);
       if (uh && grab(uh.pcv, uh.pv.id, uh.pv, e)) return;
       const pp = { id, pid: e.pointerId, x: e.clientX, y: e.clientY, lx: e.clientX, ly: e.clientY, t: performance.now() };
-      pp.lp = setTimeout(() => { if (pend === pp) startReorder(id, pp); }, LP_MS);
+      pp.lp = setTimeout(() => { if (pend === pp && downPointers.size <= 1) startReorder(id, pp); }, LP_MS);
       pend = pp;
     });
     cv.addEventListener("touchstart", onTouch, { passive: false });
@@ -1585,7 +1590,11 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     });
     cv.addEventListener("touchmove", (e) => { if (reo || (drag && drag.id)) e.preventDefault(); }, { passive: false });
     cv.addEventListener("pointermove", (e) => {
-      if (pend && pend.pid === e.pointerId) { if (Math.hypot(e.clientX - pend.x, e.clientY - pend.y) > (e.pointerType === "touch" ? 16 : 8)) { clearTimeout(pend.lp); pend = null; } else { pend.lx = e.clientX; pend.ly = e.clientY; } }
+      if (pend && pend.pid === e.pointerId) {
+        const d = Math.hypot(e.clientX - pend.x, e.clientY - pend.y);
+        if (d > (e.pointerType === "touch" ? 16 : 8)) { clearTimeout(pend.lp); pend = null; }
+        else { if (d > 10) clearTimeout(pend.lp); pend.lx = e.clientX; pend.ly = e.clientY; }
+      }
       if (!drag || drag.pid !== e.pointerId) return;
       const b = findBlock(drag.id); if (!b) return;
       if (!drag.moved && Math.hypot(e.clientX - drag.sx, e.clientY - drag.sy) < 4) return;
@@ -1614,7 +1623,7 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     cv.addEventListener("pointercancel", end);
   }
   // ---------- long press: lift a cut and drop it elsewhere, or onto another cut to swap ----------
-  const LP_MS = 520;
+  const LP_MS = 600;
   let reo = null;
   const blkName = (b) => (!b ? "" : b.type === "page" ? "페이지" : b.type === "image" ? "컷" : b.type === "narration" ? "나레이션" : "빈 여백");
   const josaWa = (w) => { const c = w.charCodeAt(w.length - 1) - 0xac00; return w + (c >= 0 && c < 11172 && c % 28 ? "과" : "와"); };
@@ -1732,7 +1741,7 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     renderStrip(anchor); commit(); select({ block: r.id });
     const nw = canvasMap.get(r.id);
     if (nw) { const w = nw.parentElement; w.classList.add("moved"); setTimeout(() => w.classList.remove("moved"), 1400); }
-    toast(t.kind === "swap" ? "자리를 바꿨어요" : blkName(moved) + " 위치를 옮겼어요");
+    toast((t.kind === "swap" ? "자리를 바꿨어요" : blkName(moved) + " 위치를 옮겼어요") + " · 잘못 옮겼으면 ↶ 되돌리기");
   }
   window.addEventListener("pointermove", (e) => { if (reo && e.pointerId === reo.pid) { e.preventDefault(); moveReorder(e.clientX, e.clientY); } }, { passive: false });
   window.addEventListener("pointerup", (e) => { if (reo && e.pointerId === reo.pid) endReorder(true); });
@@ -2361,8 +2370,12 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   function updateTitle() { $("pTitle").textContent = P.title || "보관함"; $("bLib").title = "보관함 · " + (P.title || ""); }
   let delArm = null;
   function fmtDate(t) { if (!t) return ""; const d = new Date(t); return (d.getMonth() + 1) + "월 " + d.getDate() + "일 " + String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0"); }
+  let libSig = "";
   function renderLib() {
-    $("lName").value = P.title || "";
+    if (document.activeElement !== $("lName")) $("lName").value = P.title || "";
+    const sig = JSON.stringify([libTab, delArm, curId, lib.map((e) => [e.id, e.title, e.updated, e.cuts, (e.thumb || "").length, e.mode])]);
+    if (sig === libSig && $("lList").childElementCount) return;
+    libSig = sig;
     const box = $("lList"); box.innerHTML = "";
     if (!store.db) { $("lHint").textContent = "이 화면에서는 저장 공간을 쓸 수 없어서 보관함이 꺼져 있어요. 다 만들면 이미지로 저장해 주세요."; return; }
     $("lHint").textContent = "작품 " + lib.length + "개 · 이 기기의 브라우저에 저장돼요. 브라우저 데이터를 지우면 같이 지워지니, 다 만든 작품은 이미지로도 저장해 두세요.";
@@ -2506,7 +2519,7 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   }
   const isWorkFile = async (f) => /\.json$/i.test(f.name || "") || /json/.test(f.type || "") || (f.size < 400e6 && /^\s*[{[]/.test(await f.slice(0, 64).text().catch(() => "")));
   let libTab = "webtoon";
-  function openLib() { delArm = null; libTab = isComic() ? "comic" : "webtoon"; renderLib(); openModal("mLib"); libHooks.forEach((f) => { try { f(); } catch (e) { /* ignore */ } }); }
+  function openLib() { libSig = ""; delArm = null; libTab = isComic() ? "comic" : "webtoon"; renderLib(); openModal("mLib"); libHooks.forEach((f) => { try { f(); } catch (e) { /* ignore */ } }); }
   $("bLib").addEventListener("click", openLib);
   $("lNew").addEventListener("click", () => newProject(false, libTab));
   $("lImport").addEventListener("click", () => $("fileWork").click());
@@ -2527,7 +2540,8 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     await Promise.race([Promise.all(jobs), new Promise((r) => setTimeout(r, 5000))]);
   }
   let fontTimer;
-  if (document.fonts) document.fonts.addEventListener("loadingdone", () => { clearTimeout(fontTimer); fontTimer = setTimeout(() => { iconCache.clear(); P.blocks.forEach((b) => renderBlock(b.id)); if (!document.activeElement || !$("insp").contains(document.activeElement)) buildInspector(); }, 120); });
+  function refreshShapeIcons() { iconCache.clear(); document.querySelectorAll(".shape-b[data-shape] img").forEach((im) => { const k = im.parentElement.dataset.shape; if (SHAPES[k]) im.src = shapeIcon(k); }); }
+  if (document.fonts) document.fonts.addEventListener("loadingdone", () => { clearTimeout(fontTimer); fontTimer = setTimeout(() => { refreshShapeIcons(); P.blocks.forEach((b) => renderBlock(b.id)); }, 250); });
 
   // ---------- icons for shapes ----------
   const LOOKS = [["none", "원본"], ["mono", "흑백"], ["manga", "만화톤"], ["cel", "웹툰 채색"], ["sepia", "세피아"], ["vivid", "선명하게"]];
@@ -2757,7 +2771,7 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
       ["shape", "모양", () => {
         const shapes = h("div", { class: "shapes" });
         Object.entries(SHAPES).forEach(([k, s]) => {
-          shapes.appendChild(h("button", { type: "button", class: "shape-b", "aria-pressed": String(k === u.shape), onclick: () => setShape(b, u, k) },
+          shapes.appendChild(h("button", { type: "button", class: "shape-b", "data-shape": k, "aria-pressed": String(k === u.shape), onclick: () => setShape(b, u, k) },
             h("img", { src: shapeIcon(k), alt: "" }), s.label));
         });
         body.appendChild(shapes);
@@ -3825,8 +3839,12 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     toast("구글 계정 저장이 잠깐 멈췄어요. 보관함에서 ‘다시 연결’을 누르면 이어서 저장돼요.", true);
   }
   const CLOUD_MSG = { quota: "구글 드라이브 용량이 가득 찼어요.", scope: "로그인할 때 ‘드라이브 앱 데이터’ 권한에 체크해 주세요.", net: "인터넷 연결을 확인해 주세요." };
+  let cloudSig = "";
   function renderCloud() {
     const box = $("lCloud"); if (!box) return;
+    const sig = JSON.stringify([cloudReady(), !!store.db, linked(), cloud.st && cloud.st.email, cloud.status, cloud.err, linked() ? unsynced() : 0, tokenOk(), cloud.st && cloud.st.lastSync]);
+    if (sig === cloudSig && box.childElementCount) return;
+    cloudSig = sig;
     box.innerHTML = "";
     if (!cloudReady() || !store.db) return;
     const card = h("div", { class: "auto-card cloud-card" });
@@ -4274,7 +4292,7 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
       if (pk && Date.now() - pk < 20 * 60 * 1000 && !/access_token=|error=/.test(location.hash)) setTimeout(() => toast("사진을 고르는 동안 폰 메모리가 모자라 앱이 다시 열렸어요. 다른 앱을 몇 개 닫고 다시 올려 보세요. 한 번에 몇 장씩 올리면 더 잘 돼요.", true), 900);
     } catch (e) { /* ignore */ }
     setTimeout(() => readyHooks.forEach((f) => { try { f(); } catch (e) { /* ignore */ } }), 0);
-    ensureFonts().then(() => { iconCache.clear(); P.blocks.forEach((b) => renderBlock(b.id)); buildInspector(); });
+    ensureFonts().then(() => { refreshShapeIcons(); P.blocks.forEach((b) => renderBlock(b.id)); });
     engineUI(); refreshEngine(); loadSB().then(takeShared);
     if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")) navigator.serviceWorker.register("sw.js").catch(() => {});
     if (!restored) toast("예시 컷이 들어 있어요. 말풍선을 끌어 보거나 만들기를 눌러 보세요.");
