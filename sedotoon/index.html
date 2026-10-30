@@ -1483,6 +1483,24 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   // ---------- pointer editing ----------
   let drag = null, lastTap = null, pend = null, touchTap = null;
   const coarse = () => window.matchMedia("(pointer: coarse)").matches;
+  let btnTap = null;
+  const TAPPABLE = "button, .seg-b, .chip-b, .itab, .shape-b, .font-b, .tone-b, .layout-b, .lib-item .btn, label.switch";
+  document.addEventListener("touchstart", (e) => {
+    const el = e.touches.length === 1 && e.target && e.target.closest ? e.target.closest(TAPPABLE) : null;
+    btnTap = el ? { el, x: e.touches[0].clientX, y: e.touches[0].clientY, t: performance.now(), cancelled: false } : null;
+  }, { passive: true, capture: true });
+  document.addEventListener("pointercancel", (e) => { if (btnTap && e.pointerType === "touch") btnTap.cancelled = true; }, true);
+  document.addEventListener("touchend", (e) => {
+    const b = btnTap; btnTap = null;
+    if (!b || !b.cancelled || e.touches.length) return;
+    const ch = e.changedTouches && e.changedTouches[0]; if (!ch) return;
+    if (Math.hypot(ch.clientX - b.x, ch.clientY - b.y) > 14 || performance.now() - b.t > 650) return;
+    const el = b.el;
+    if (el.disabled || !document.contains(el) || !el.offsetParent) return;
+    const r = el.getBoundingClientRect();
+    if (ch.clientX < r.left - 6 || ch.clientX > r.right + 6 || ch.clientY < r.top - 6 || ch.clientY > r.bottom + 6) return;
+    el.click();
+  }, { passive: true, capture: true });
   const pickHooks = { before: [], after: [] };
   let picking = false;
   document.addEventListener("click", (e) => {
@@ -1540,6 +1558,7 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
           lastTap = { id, t: now, x: e.clientX, y: e.clientY, bubble: hit.u.id };
           const tx = hit.u.tail ? hit.u.tail.x / 100 * pt.W : 0, ty = hit.u.tail ? hit.u.tail.y / 100 * pt.H : 0;
           drag = { id, cv: tcv, u: hit.u, kind: hit.kind, pid: e.pointerId, sx: e.clientX, sy: e.clientY, ox: G.cx - pt.x, oy: G.cy - pt.y, tox: tx - pt.x, toy: ty - pt.y, cx0: G.cx, cy0: G.cy, size0: hit.u.size, d0: Math.max(10, Math.hypot(pt.x - G.cx, pt.y - G.cy)), moved: false, dbl };
+          if (touchTap) touchTap.done = true;
           if (sel.bubble !== hit.u.id) select({ block: id, bubble: hit.u.id, panel: hit.u.panel });
           return true;
         }
@@ -1559,12 +1578,12 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     cv.addEventListener("touchstart", onTouch, { passive: false });
     cv.addEventListener("touchend", (e) => {
       const tt = touchTap; touchTap = null;
-      if (!tt || tt.done || tt.id !== id || drag || reo || e.touches.length) return;
+      if (!tt || tt.done || !tt.cancelled || tt.id !== id || drag || reo || e.touches.length) return;
       const ch = e.changedTouches && e.changedTouches[0]; if (!ch) return;
       const moved = Math.hypot(ch.clientX - tt.x, ch.clientY - tt.y), scrolled = Math.abs(window.scrollY - tt.sy);
       if (moved < 18 && scrolled < 18 && performance.now() - tt.t < 700) { pend = null; onTap(cv, id, { clientX: ch.clientX, clientY: ch.clientY }); }
     });
-    cv.addEventListener("touchmove", (e) => { if (reo) e.preventDefault(); }, { passive: false });
+    cv.addEventListener("touchmove", (e) => { if (reo || (drag && drag.id)) e.preventDefault(); }, { passive: false });
     cv.addEventListener("pointermove", (e) => {
       if (pend && pend.pid === e.pointerId) { if (Math.hypot(e.clientX - pend.x, e.clientY - pend.y) > (e.pointerType === "touch" ? 16 : 8)) { clearTimeout(pend.lp); pend = null; } else { pend.lx = e.clientX; pend.ly = e.clientY; } }
       if (!drag || drag.pid !== e.pointerId) return;
@@ -1581,10 +1600,12 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
       if (pend && pend.pid === e.pointerId) {
         const p = pend; pend = null; clearTimeout(p.lp);
         if (e.type === "pointerup" && performance.now() - p.t < 1200) { if (touchTap) touchTap.done = true; onTap(cv, id, e); }
+        else if (e.type === "pointercancel" && touchTap) touchTap.cancelled = true;
         return;
       }
       if (!drag || drag.pid !== e.pointerId) return;
       const d = drag; drag = null;
+      if (touchTap) touchTap.done = true;
       const b = findBlock(d.id); if (!b) return;
       if (d.moved) { normalizeBubble(b, d.u); renderBlock(d.id); commit(); syncInspector(); }
       else if (d.dbl) select({ block: d.id, bubble: d.u.id }, { open: true, focus: true, reveal: true });
@@ -1604,7 +1625,6 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     pend = null; lastTap = null; drag = null;
     let panel = -1;
     if (b.type === "page") { const pt = localPt(cv, b, pp.x, pp.y), i = panelInside(b, pt.x, pt.y), pn = i >= 0 && (b.panels || [])[i]; if (pn && pn.img && images.has(pn.img)) panel = i; }
-    if (isMobile() && sheetOpen()) closeSheet();
     try { if (navigator.vibrate) navigator.vibrate(15); } catch (err) { /* ignore */ }
     const W = P.settings.width, S = blockSize(b, W), dpr = Math.min(2, window.devicePixelRatio || 1);
     let aw = W, ah = S.h, paint;
