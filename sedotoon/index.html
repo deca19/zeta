@@ -395,13 +395,14 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     <div class="m-head"><h2 id="lTitle">보관함</h2><button class="btn small" type="button" data-close>닫기</button></div>
     <p class="m-sub">작품마다 따로 저장돼요. 새 작품을 만들어도 예전 작품은 그대로 남아 있어요.</p>
     <label class="fld"><span class="fld-l">지금 작품 이름</span><input type="text" id="lName" maxlength="40" autocomplete="off"></label>
-    <div class="row"><button class="btn small" type="button" id="lImport">작품 파일 열기 (.json)</button></div>
+    <div class="row"><button class="btn small" type="button" id="lImport">작품 파일 열기 (.json)</button><button class="btn small" type="button" id="lExportAll">작품 모두 파일로 저장</button></div>
     <div id="lCloud"></div>
     <input type="file" id="fileWork" hidden>
     <div class="seg" id="lTabs" role="tablist"></div>
     <div class="row"><button class="btn primary" type="button" id="lNew">+ 새 세로툰</button><button class="btn" type="button" id="lSample">예시로 새 세로툰</button></div>
     <div class="lib-list" id="lList"></div>
     <p class="hint" id="lHint"></p>
+    <div id="lDiag"></div>
   </div>
 </div>
 
@@ -639,6 +640,23 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   const BGS = [["#000000", "검정"], ["#17181c", "먹색"], ["#ffffff", "흰색"], ["#f4efe6", "종이"]];
   const DEF = { width: 720, bg: "#000000", gap: 0, frame: "full", narrFont: "myeongjo", bubbleFont: "gothic", bubbleShape: "oval", parts: 1, format: "png", sign: "", pageRatio: "a4", perPage: 4, rtl: false, comicJoin: false };
 
+  const APP_VER = "v19";
+  const errLog = (() => { try { const a = JSON.parse(localStorage.getItem("sedo-errlog") || "[]"); return Array.isArray(a) ? a.slice(-30) : []; } catch (e) { return []; } })();
+  let errToasted = false;
+  function reportErr(err, where) {
+    try {
+      const msg = String((err && (err.stack || err.message)) || err || "?");
+      if (/ResizeObserver loop|^Script error\.?$/.test(msg)) return;
+      const line = new Date().toISOString().slice(5, 19).replace("T", " ") + " [" + (where || "?") + "] " + msg.split("\n").slice(0, 3).map((x) => x.trim()).join(" | ").slice(0, 500);
+      errLog.push(line); while (errLog.length > 30) errLog.shift();
+      try { localStorage.setItem("sedo-errlog", JSON.stringify(errLog)); } catch (e) { /* ignore */ }
+      console.error(err);
+      if (!errToasted && typeof toast === "function") { errToasted = true; setTimeout(() => toast("앗, 오류가 하나 났어요. 보관함 맨 아래 ‘문제 기록 복사’로 보내 주시면 고칠게요.", true), 50); }
+    } catch (e) { /* never throw from here */ }
+  }
+  window.addEventListener("error", (e) => reportErr(e.error || e.message, "page"));
+  window.addEventListener("unhandledrejection", (e) => reportErr(e.reason, "async"));
+  const safe = (fn, where) => function (e) { try { return fn.call(this, e); } catch (err) { reportErr(err, where); } };
   let P = { v: 2, settings: Object.assign({}, DEF), blocks: [] };
   const images = new Map(); // key -> {el, blob, w, h}
   let sel = { block: null, bubble: null };
@@ -1299,7 +1317,7 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
           ctx.strokeRect(r.x + 5 / selInfo.hs, r.y + 5 / selInfo.hs, r.w - 10 / selInfo.hs, r.h - 10 / selInfo.hs); ctx.restore();
         }
       });
-      b.bubbles.forEach((u) => drawBubble(ctx, u, W, S.h));
+      b.bubbles.forEach((u) => { try { drawBubble(ctx, u, W, S.h); } catch (err) { reportErr(err, "bubble"); } });
       if (selInfo && selInfo.bubble) { const u = findBubble(b, selInfo.bubble); if (u) drawSelection(ctx, u, W, S.h, selInfo.hs); }
       return;
     }
@@ -1336,12 +1354,12 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
       if (hasBubbles(pv) && pv.bubbles.length) {
         const PS = blockSize(pv, W);
         ctx.save(); ctx.beginPath(); ctx.rect(0, 0, W, mixO); ctx.clip(); ctx.translate(0, mixO - PS.h);
-        pv.bubbles.forEach((u) => drawBubble(ctx, u, W, PS.h));
+        pv.bubbles.forEach((u) => { try { drawBubble(ctx, u, W, PS.h); } catch (err) { reportErr(err, "bubble"); } });
         if (preview && sel.block === pv.id && sel.bubble) { const u = findBubble(pv, sel.bubble); if (u) drawSelection(ctx, u, W, PS.h, (strip.clientWidth || 360) / W); }
         ctx.restore();
       }
     }
-    b.bubbles.forEach((u) => drawBubble(ctx, u, W, S.h));
+    b.bubbles.forEach((u) => { try { drawBubble(ctx, u, W, S.h); } catch (err) { reportErr(err, "bubble"); } });
     if (selInfo && selInfo.bubble) { const u = findBubble(b, selInfo.bubble); if (u) drawSelection(ctx, u, W, S.h, selInfo.hs); }
   }
 
@@ -1447,7 +1465,7 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     const ctx = cv.getContext("2d");
     ctx.setTransform(s, 0, 0, s, 0, 0);
     ctx.clearRect(0, 0, W, S.h);
-    drawBlock(ctx, b, W, S, sel.block === id ? { bubble: sel.bubble, panel: sel.panel, hs: cssW / W } : null, true);
+    try { drawBlock(ctx, b, W, S, sel.block === id ? { bubble: sel.bubble, panel: sel.panel, hs: cssW / W } : null, true); } catch (err) { reportErr(err, "draw"); }
     cv.parentElement.classList.toggle("sel", sel.block === id && !sel.bubble);
     if (!isComic()) { const nx = P.blocks[P.blocks.indexOf(b) + 1]; if (nx && isMix(nx)) renderSoon(nx.id); }
   }
@@ -1459,12 +1477,12 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     opts = opts || {};
     const prev = sel.block;
     sel = { block: next.block || null, bubble: next.bubble || null, panel: next.panel == null ? null : next.panel };
-    if (prev && prev !== sel.block) renderBlock(prev);
-    if (sel.block) renderBlock(sel.block);
+    try { if (prev && prev !== sel.block) renderBlock(prev); if (sel.block) renderBlock(sel.block); } catch (err) { reportErr(err, "sel-draw"); }
     if (opts.focus) { inspTab.bubble = "text"; inspTab.narr = "text"; }
     buildInspector();
     if (opts.open) openSheet();
-    updateFab(); updateSheetH();
+    try { updateFab(); } catch (err) { reportErr(err, "fab"); }
+    updateSheetH();
     if (opts.focus) {
       const ta = $("uText") || $("nText");
       if (ta) { ta.focus({ preventScroll: true }); if (opts.selectAll) ta.select(); }
@@ -1487,19 +1505,23 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
 
   // ---------- pointer editing ----------
   let drag = null, lastTap = null, pend = null, touchTap = null;
+  const DBL_MS = 450, DBL_PX = 45;
+  let revealTimer = 0, sheetGuard = null, swallowUntil = 0, swallowDbl = false;
+  const guardSheet = (x, y, t, bubble) => { sheetGuard = { x, y, t, bubble }; };
   const coarse = () => window.matchMedia("(pointer: coarse)").matches;
   let btnTap = null;
   const TAPPABLE = "button, .seg-b, .chip-b, .itab, .shape-b, .font-b, .tone-b, .layout-b, .lib-item .btn, label.switch";
   document.addEventListener("touchstart", (e) => {
+    if (e.timeStamp < swallowUntil) { btnTap = null; return; }
     const el = e.touches.length === 1 && e.target && e.target.closest ? e.target.closest(TAPPABLE) : null;
-    btnTap = el ? { el, x: e.touches[0].clientX, y: e.touches[0].clientY, t: performance.now(), cancelled: false } : null;
+    btnTap = el ? { el, x: e.touches[0].clientX, y: e.touches[0].clientY, t: e.timeStamp, cancelled: false } : null;
   }, { passive: true, capture: true });
   document.addEventListener("pointercancel", (e) => { if (btnTap && e.pointerType === "touch") btnTap.cancelled = true; }, true);
   document.addEventListener("touchend", (e) => {
     const b = btnTap; btnTap = null;
     if (!b || !b.cancelled || e.touches.length) return;
     const ch = e.changedTouches && e.changedTouches[0]; if (!ch) return;
-    if (Math.hypot(ch.clientX - b.x, ch.clientY - b.y) > 14 || performance.now() - b.t > 650) return;
+    if (Math.hypot(ch.clientX - b.x, ch.clientY - b.y) > 16 || e.timeStamp - b.t > 900) return;
     const el = b.el;
     if (el.disabled || !document.contains(el) || !el.offsetParent) return;
     const r = el.getBoundingClientRect();
@@ -1547,14 +1569,14 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     return null;
   }
   function attachPointer(cv, id) {
-    const onTouch = (e) => {
+    const onTouch = safe((e) => {
       const b = findBlock(id); if (!b || e.touches.length !== 1) { touchTap = null; return; }
       const t = e.touches[0];
-      touchTap = { id, x: t.clientX, y: t.clientY, t: performance.now(), sy: window.scrollY, done: false };
-      const dblSoon = lastTap && lastTap.id === id && performance.now() - lastTap.t < 380 && Math.hypot(t.clientX - lastTap.x, t.clientY - lastTap.y) < 30;
+      touchTap = { id, x: t.clientX, y: t.clientY, t: e.timeStamp, sy: window.scrollY, done: false };
+      const dblSoon = lastTap && lastTap.id === id && e.timeStamp - lastTap.up < DBL_MS && Math.hypot(t.clientX - lastTap.x, t.clientY - lastTap.y) < DBL_PX;
       const uh = underHit(b, t.clientX, t.clientY);
       if (dblSoon || (hasBubbles(b) && hitTest(b, localPt(cv, b, t.clientX, t.clientY))) || (uh && hitTest(uh.pv, localPt(uh.pcv, uh.pv, t.clientX, t.clientY)))) e.preventDefault();
-    };
+    }, "touch");
     const underHit = (b, x, y) => {
       if (!isMix(b)) return null;
       const pv = prevBlock(b), pcv = canvasMap.get(pv.id);
@@ -1567,11 +1589,11 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
         if (hit) {
           e.preventDefault();
           try { cv.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ }
-          const G = hit.G || bubbleGeo(hit.u, pt.W, pt.H), now = performance.now();
-          const dbl = !!(lastTap && lastTap.bubble === hit.u.id && now - lastTap.t < 380);
-          lastTap = { id, t: now, x: e.clientX, y: e.clientY, bubble: hit.u.id };
+          const G = hit.G || bubbleGeo(hit.u, pt.W, pt.H), now = e.timeStamp;
+          const dbl = !!(lastTap && lastTap.bubble === hit.u.id && now - lastTap.up < DBL_MS);
+          lastTap = { id, t: now, up: now, x: e.clientX, y: e.clientY, bubble: hit.u.id };
           const tx = hit.u.tail ? hit.u.tail.x / 100 * pt.W : 0, ty = hit.u.tail ? hit.u.tail.y / 100 * pt.H : 0;
-          drag = { id, cv: tcv, u: hit.u, kind: hit.kind, pid: e.pointerId, sx: e.clientX, sy: e.clientY, ox: G.cx - pt.x, oy: G.cy - pt.y, tox: tx - pt.x, toy: ty - pt.y, cx0: G.cx, cy0: G.cy, size0: hit.u.size, d0: Math.max(10, Math.hypot(pt.x - G.cx, pt.y - G.cy)), moved: false, dbl };
+          drag = { id, cv: tcv, u: hit.u, kind: hit.kind, pid: e.pointerId, ptype: e.pointerType, sx: e.clientX, sy: e.clientY, ox: G.cx - pt.x, oy: G.cy - pt.y, tox: tx - pt.x, toy: ty - pt.y, cx0: G.cx, cy0: G.cy, size0: hit.u.size, d0: Math.max(10, Math.hypot(pt.x - G.cx, pt.y - G.cy)), moved: false, dbl };
           if (touchTap) touchTap.done = true;
           if (sel.bubble !== hit.u.id) select({ block: id, bubble: hit.u.id, panel: hit.u.panel });
           return true;
@@ -1579,26 +1601,26 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
       }
       return false;
     };
-    cv.addEventListener("pointerdown", (e) => {
+    cv.addEventListener("pointerdown", safe((e) => {
       if (e.button && e.button !== 0) return;
       const b = findBlock(id); if (!b) return;
       if (grab(cv, id, b, e)) return;
       const uh = underHit(b, e.clientX, e.clientY);
       if (uh && grab(uh.pcv, uh.pv.id, uh.pv, e)) return;
-      const pp = { id, pid: e.pointerId, x: e.clientX, y: e.clientY, lx: e.clientX, ly: e.clientY, t: performance.now() };
-      pp.lp = setTimeout(() => { if (pend === pp && !multiTouch) startReorder(id, pp); }, LP_MS);
+      const pp = { id, pid: e.pointerId, x: e.clientX, y: e.clientY, lx: e.clientX, ly: e.clientY, t: performance.now(), t0: e.timeStamp };
+      pp.lp = setTimeout(safe(() => { if (pend === pp && !multiTouch) startReorder(id, pp); }, "hold"), LP_MS);
       pend = pp;
-    });
+    }, "down"));
     cv.addEventListener("touchstart", onTouch, { passive: false });
-    cv.addEventListener("touchend", (e) => {
+    cv.addEventListener("touchend", safe((e) => {
       const tt = touchTap; touchTap = null;
       if (!tt || tt.done || !tt.cancelled || tt.id !== id || drag || reo || e.touches.length) return;
       const ch = e.changedTouches && e.changedTouches[0]; if (!ch) return;
       const moved = Math.hypot(ch.clientX - tt.x, ch.clientY - tt.y), scrolled = Math.abs(window.scrollY - tt.sy);
-      if (moved < 18 && scrolled < 18 && performance.now() - tt.t < 700) { pend = null; onTap(cv, id, { clientX: ch.clientX, clientY: ch.clientY }); }
-    });
+      if (moved < 18 && scrolled < 18 && e.timeStamp - tt.t < 900) { pend = null; onTap(cv, id, { clientX: ch.clientX, clientY: ch.clientY, timeStamp: e.timeStamp }, tt.t); }
+    }, "tap2"));
     cv.addEventListener("touchmove", (e) => { if (reo || (drag && drag.id)) e.preventDefault(); }, { passive: false });
-    cv.addEventListener("pointermove", (e) => {
+    cv.addEventListener("pointermove", safe((e) => {
       if (pend && pend.pid === e.pointerId) {
         const d = Math.hypot(e.clientX - pend.x, e.clientY - pend.y);
         if (d > (e.pointerType === "touch" ? 16 : 8)) { clearTimeout(pend.lp); pend = null; }
@@ -1606,18 +1628,18 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
       }
       if (!drag || drag.pid !== e.pointerId) return;
       const b = findBlock(drag.id); if (!b) return;
-      if (!drag.moved && Math.hypot(e.clientX - drag.sx, e.clientY - drag.sy) < 4) return;
+      if (!drag.moved && Math.hypot(e.clientX - drag.sx, e.clientY - drag.sy) < (drag.ptype === "mouse" ? 4 : 12)) return;
       drag.moved = true;
       const pt = localPt(drag.cv, b, e.clientX, e.clientY), u = drag.u;
       if (drag.kind === "move") { u.x = (pt.x + drag.ox) / pt.W * 100; u.y = (pt.y + drag.oy) / pt.H * 100; }
       else if (drag.kind === "tail") { u.tail.x = clamp((pt.x + drag.tox) / pt.W * 100, 0, 100); u.tail.y = clamp((pt.y + drag.toy) / pt.H * 100, 0, 100); }
       else { const f = Math.hypot(pt.x - drag.cx0, pt.y - drag.cy0) / drag.d0; u.size = clamp(Math.round(drag.size0 * f), 12, 170); }
       renderSoon(drag.id);
-    });
-    const end = (e) => {
+    }, "move"));
+    const end = safe((e) => {
       if (pend && pend.pid === e.pointerId) {
         const p = pend; pend = null; clearTimeout(p.lp);
-        if (e.type === "pointerup" && performance.now() - p.t < 1200) { if (touchTap) touchTap.done = true; onTap(cv, id, e); }
+        if (e.type === "pointerup" && e.timeStamp - p.t0 < 1500) { if (touchTap) touchTap.done = true; onTap(cv, id, e, p.t0); }
         else if (e.type === "pointercancel" && touchTap) touchTap.cancelled = true;
         return;
       }
@@ -1625,10 +1647,15 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
       const d = drag; drag = null;
       if (touchTap) touchTap.done = true;
       const b = findBlock(d.id); if (!b) return;
+      if (lastTap && lastTap.bubble === d.u.id) { if (d.moved || e.type !== "pointerup") lastTap = null; else lastTap.up = e.timeStamp; }
       if (d.moved) { normalizeBubble(b, d.u); renderBlock(d.id); commit(); syncInspector(); }
-      else if (d.dbl) select({ block: d.id, bubble: d.u.id }, { open: true, focus: true, reveal: true });
-      else if (isMobile()) select({ block: d.id, bubble: d.u.id, panel: d.u.panel }, { open: true, reveal: true });
-    };
+      else if (d.dbl) { clearTimeout(revealTimer); sheetGuard = null; select({ block: d.id, bubble: d.u.id }, { open: true, focus: true, reveal: true }); }
+      else if (isMobile()) {
+        select({ block: d.id, bubble: d.u.id, panel: d.u.panel }, { open: true });
+        guardSheet(e.clientX, e.clientY, e.timeStamp, true);
+        clearTimeout(revealTimer); const uid = d.u.id; revealTimer = setTimeout(() => { if (sel.bubble === uid) reveal(); }, DBL_MS);
+      }
+    }, "up");
     cv.addEventListener("pointerup", end);
     cv.addEventListener("pointercancel", end);
   }
@@ -1662,7 +1689,7 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     document.body.append(g, line, box, tip);
     if (panel < 0) cv.parentElement.classList.add("lifting");
     document.body.classList.add("reordering");
-    reo = { id, panel, sx: pp.x, sy: pp.y, pid: pp.pid, x: pp.lx, y: pp.ly, ghost: g, line, box, tip, target: null, raf: 0, swapEl: null };
+    reo = { id, panel, t0: pp.t0, sx: pp.x, sy: pp.y, pid: pp.pid, x: pp.lx, y: pp.ly, ghost: g, line, box, tip, target: null, raf: 0, swapEl: null };
     moveReorder(pp.lx, pp.ly);
     reo.raf = requestAnimationFrame(reoTick);
   }
@@ -1719,7 +1746,7 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     if (v) { const y0 = window.scrollY; window.scrollBy(0, v); if (window.scrollY !== y0) moveReorder(reo.x, reo.y); }
     reo.raf = requestAnimationFrame(reoTick);
   }
-  function endReorder(drop) {
+  function endReorder(drop, ev) {
     if (!reo) return;
     const r = reo; reo = null;
     cancelAnimationFrame(r.raf); r.ghost.remove(); r.line.remove(); r.box.remove(); r.tip.remove();
@@ -1729,7 +1756,13 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     const t = drop ? r.target : null;
     if (!t) {
       // held a little too long but never moved: treat it as a normal tap
-      if (drop && Math.hypot(r.x - r.sx, r.y - r.sy) < 16) { const b = findBlock(r.id), cv = canvasMap.get(r.id); if (b && cv) { const pt = localPt(cv, b, r.x, r.y); select({ block: r.id, panel: b.type === "page" ? panelAt(b, pt.x, pt.y) : null }); } }
+      if (drop && Math.hypot(r.x - r.sx, r.y - r.sy) < 16) {
+        const b = findBlock(r.id), cv = canvasMap.get(r.id);
+        if (b && cv) {
+          if (ev && r.t0 != null && ev.timeStamp - r.t0 < LP_MS + 60) onTap(cv, r.id, { clientX: r.x, clientY: r.y, timeStamp: ev.timeStamp }, r.t0);
+          else { const pt = localPt(cv, b, r.x, r.y); select({ block: r.id, panel: b.type === "page" ? panelAt(b, pt.x, pt.y) : null }); }
+        }
+      }
       return;
     }
     if (t.kind === "panel") {
@@ -1754,16 +1787,16 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     toast((t.kind === "swap" ? "자리를 바꿨어요" : blkName(moved) + " 위치를 옮겼어요") + " · 잘못 옮겼으면 ↶ 되돌리기");
   }
   window.addEventListener("pointermove", (e) => { if (reo && e.pointerId === reo.pid) { e.preventDefault(); moveReorder(e.clientX, e.clientY); } }, { passive: false });
-  window.addEventListener("pointerup", (e) => { if (reo && e.pointerId === reo.pid) endReorder(true); });
+  window.addEventListener("pointerup", (e) => { if (reo && e.pointerId === reo.pid) endReorder(true, e); });
   window.addEventListener("pointercancel", (e) => { if (reo && e.pointerId === reo.pid) endReorder(false); });
   window.addEventListener("keydown", (e) => { if (reo && e.key === "Escape") endReorder(false); });
   window.addEventListener("blur", () => endReorder(false));
   strip.addEventListener("contextmenu", (e) => e.preventDefault());
-  function onTap(cv, id, e) {
+  function onTap(cv, id, e, downT) {
     const b = findBlock(id); if (!b) return;
-    const now = performance.now();
-    const dbl = !!(lastTap && lastTap.id === id && !lastTap.bubble && now - lastTap.t < 380 && Math.hypot(e.clientX - lastTap.x, e.clientY - lastTap.y) < 30);
-    lastTap = dbl ? null : { id, t: now, x: e.clientX, y: e.clientY, bubble: null };
+    const up = e.timeStamp || performance.now(), down = downT == null ? up : downT;
+    const dbl = !!(lastTap && lastTap.id === id && !lastTap.bubble && down - lastTap.up < DBL_MS && Math.hypot(e.clientX - lastTap.x, e.clientY - lastTap.y) < DBL_PX);
+    lastTap = dbl ? null : { id, t: up, up, x: e.clientX, y: e.clientY, bubble: null };
     if (hasBubbles(b)) {
       const pt = localPt(cv, b, e.clientX, e.clientY);
       if (dbl) { addBubbleAt(b, pt.x / pt.W * 100, pt.y / pt.H * 100); return; }
@@ -2280,6 +2313,7 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     const raw = await store.run("kv", "readonly", (st) => st.get(projKey(id)));
     if (!raw) return null;
     let p; try { p = JSON.parse(raw); } catch (e) { return null; }
+    try { p = normalizeProject(p); } catch (e) { reportErr(e, "repair"); }
     if (!p || !Array.isArray(p.blocks)) return null;
     for (const b of p.blocks) for (const key of blockImgs(b)) {
       if (images.has(key)) continue;
@@ -2287,7 +2321,7 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
       const blob = await store.run("img", "readonly", (st) => st.get(key));
       if (blob) { try { await addBlob(blob, key); savedImgs.add(key); } catch (e) { /* missing image */ } }
     }
-    return { v: 2, mode: p.mode || "webtoon", settings: Object.assign({}, DEF, p.settings || {}), blocks: p.blocks, title: p.title || (libEntry(id) || {}).title || "제목 없는 작품" };
+    return { v: 2, mode: p.mode === "comic" ? "comic" : "webtoon", settings: normSettings(p.settings), blocks: p.blocks, title: String(p.title || (libEntry(id) || {}).title || "제목 없는 작품").slice(0, 60) };
   }
   async function restoreSaved() {
     if (!store.db) return false;
@@ -2419,6 +2453,77 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     setTimeout(() => URL.revokeObjectURL(href), 60000);
     return "downloaded";
   }
+  async function workPack(id, imgs) {
+    if (id === curId) { clearTimeout(saveTimer); await saveNow(); }
+    const raw = await store.run("kv", "readonly", (st) => st.get(projKey(id)));
+    if (!raw) return null;
+    const proj = JSON.parse(raw), sbRaw = await store.run("kv", "readonly", (st) => st.get("sb:" + id));
+    const sbo = sbRaw ? JSON.parse(sbRaw) : null, keys = new Set();
+    (proj.blocks || []).forEach((b) => blockImgs(b).forEach((k) => keys.add(k)));
+    if (sbo && Array.isArray(sbo.cuts)) sbo.cuts.forEach((c) => c.img && keys.add(c.img));
+    for (const k of keys) {
+      if (!k || k.startsWith("sample") || imgs[k]) continue;
+      let blob = images.has(k) ? images.get(k).blob : null;
+      if (!blob) blob = await store.run("img", "readonly", (st) => st.get(k));
+      if (blob) imgs[k] = await blobToDataURL(blob);
+    }
+    const e = libEntry(id) || {};
+    return { workId: id, title: proj.title || e.title || "작품", mode: proj.mode || e.mode || "webtoon", updated: e.updated || Date.now(), project: proj, storyboard: sbo };
+  }
+  const fileStamp = () => { const dt = new Date(); return dt.getFullYear() + String(dt.getMonth() + 1).padStart(2, "0") + String(dt.getDate()).padStart(2, "0") + "_" + String(dt.getHours()).padStart(2, "0") + String(dt.getMinutes()).padStart(2, "0"); };
+  async function exportAll(btn) {
+    if (!store.db || !lib.length) { toast("저장할 작품이 없어요", true); return; }
+    const label = btn ? btn.textContent : "";
+    if (btn) { btn.disabled = true; btn.textContent = "만드는 중…"; }
+    try {
+      const imgs = {}, works = [];
+      for (const e of lib.slice()) { const w = await workPack(e.id, imgs); if (w) works.push(w); }
+      const out = { app: "sedotoon", kind: "library", v: 2, savedAt: Date.now(), help: "세로툰의 작품 전부를 담은 파일이에요. 세로툰 보관함의 ‘작품 파일 열기’로 열면 모든 작품이 그대로 들어가요.", works };
+      const head = JSON.stringify(out, null, 1).replace(/\n}$/, "");
+      const imgLines = Object.entries(imgs).map(([k, v]) => "  " + JSON.stringify(k) + ": " + JSON.stringify(v)).join(",\n");
+      const text = head + ',\n "images": {\n' + imgLines + "\n }\n}\n";
+      const r = await saveFileBlob(new Blob([text], { type: "application/json" }), "sedotoon_all_" + fileStamp() + ".json");
+      toast(r === "declined" ? "저장을 취소했어요" : "작품 " + works.length + "개를 파일 하나로 저장했어요. 다른 곳의 세로툰 보관함에서 ‘작품 파일 열기’로 열면 모두 들어가요.");
+    } catch (er) { reportErr(er, "export-all"); toast("파일을 만들지 못했어요", true); }
+    if (btn) { btn.disabled = false; btn.textContent = label; }
+  }
+  async function importLibrary(data) {
+    const map = {};
+    for (const [k, url] of Object.entries(data.images || {})) {
+      try { const blob = await (await fetch(url)).blob(); const nk = await addBlob(blob); map[k] = nk; await store.run("img", "readwrite", (st) => st.put(blob, nk)); savedImgs.add(nk); } catch (e) { /* skip broken image */ }
+    }
+    const fix = (k) => (k && map[k]) || k;
+    let added = 0, updated = 0, skipped = 0, firstId = null;
+    clearTimeout(saveTimer); await saveNow();
+    for (const w of data.works) {
+      if (!w || typeof w !== "object") continue;
+      const proj = normalizeProject(w.project);
+      if (!proj) continue;
+      proj.blocks.forEach((b) => { if (b.type === "image") b.img = fix(b.img); if (b.type === "page") (b.panels || []).forEach((pn) => { if (pn) pn.img = fix(pn.img); }); });
+      const title = String(w.title || proj.title || "불러온 작품").slice(0, 40), mode = w.mode === "comic" ? "comic" : "webtoon";
+      proj.title = title; proj.mode = mode; proj.v = 2;
+      let id = typeof w.workId === "string" && w.workId ? w.workId : nid("p");
+      const old = libEntry(id), when = Number(w.updated) || Date.now();
+      if (old && (old.updated || 0) >= when) { skipped++; continue; }
+      if (old && id === curId) { id = nid("p"); }
+      await store.run("kv", "readwrite", (st) => st.put(JSON.stringify(proj), projKey(id)));
+      const sb = w.storyboard;
+      if (sb && Array.isArray(sb.cuts)) { sb.cuts.forEach((c) => { c.img = fix(c.img); }); await store.run("kv", "readwrite", (st) => st.put(JSON.stringify(sb), "sb:" + id)); }
+      const ent = { id, title, updated: Math.max(when, Date.now() - 1000), cuts: proj.blocks.filter((b) => b.type === "image" || b.type === "page").length, thumb: "", mode };
+      const ex = libEntry(id);
+      if (ex) { Object.assign(ex, ent); updated++; } else { lib.push(ent); added++; }
+      if (!firstId) firstId = id;
+    }
+    if (proj0IsSample() && firstId) { lib.sort((a, b) => (b.updated || 0) - (a.updated || 0)); }
+    await store.run("kv", "readwrite", (st) => st.put(JSON.stringify(lib), "library"));
+    if (firstId && proj0IsSample()) await openProject(firstId);
+    libSig = ""; if (!$("mLib").hidden) renderLib();
+    saveHooks.forEach((f) => { try { f(); } catch (e) { /* ignore */ } });
+    libHooks.forEach((f) => { try { f(); } catch (e) { /* ignore */ } });
+    toast(added || updated ? "작품 " + (added + updated) + "개를 보관함에 넣었어요" + (skipped ? " (이미 같은 작품 " + skipped + "개는 그대로 뒀어요)" : "") : skipped ? "이미 보관함에 있는 작품들이에요" : "넣을 작품이 없었어요");
+    await cleanImages();
+  }
+  const proj0IsSample = () => /^예시/.test(P.title || "") && onlySamples();
   async function exportWork(id, btn) {
     if (btn) { btn.disabled = true; btn.textContent = "만드는 중…"; }
     try {
@@ -2453,31 +2558,71 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     const pos = Number(m[1]), before = text.slice(0, pos), line = before.split("\n").length;
     return " (" + line + "번째 줄 근처)";
   }
-  // accept older/edited files: fill missing ids and fields so everything stays editable
+  // accept older/edited files: fill missing ids and fields so everything stays editable, whatever wrote the file
+  const numOr = (v, d) => { const n = typeof v === "string" && v.trim() !== "" ? Number(v) : v; return typeof n === "number" && Number.isFinite(n) ? n : d; };
+  const textOf = (v) => Array.isArray(v) ? v.map((x) => (x == null || typeof x === "object" ? "" : String(x))).join("\n") : v == null || typeof v === "object" ? "" : String(v);
+  const SHAPE_ALIAS = (() => { const m = {}; Object.entries(SHAPES).forEach(([k, sh]) => { m[k.toLowerCase()] = k; m[sh.label] = k; m[sh.label.replace(/\s/g, "")] = k; }); Object.assign(m, { "말풍선": "oval", "타원": "oval", "나레이션": "box", "내레이션": "box", "칸": "box", "효과": "sfx", "효과음": "sfx", "외침": "shout", "생각": "thought", "속삭임": "whisper", "떨림": "wobble", "네모": "rect", "강조": "flash", "하트": "heart", "폭발": "burst", "전화": "electric", "번쩍": "flash", "오싹": "fear", "회상": "memory", "시스템": "system" }); return m; })();
+  const shapeKey = (v) => { if (typeof v !== "string") return "oval"; if (SHAPES[v]) return v; const t = v.trim(); return SHAPE_ALIAS[t] || SHAPE_ALIAS[t.toLowerCase()] || SHAPE_ALIAS[t.replace(/\s/g, "")] || "oval"; };
+  function normSettings(src) {
+    const st = Object.assign({}, DEF), o = src && typeof src === "object" && !Array.isArray(src) ? src : {};
+    for (const k of Object.keys(o)) {
+      const d = DEF[k], v = o[k];
+      if (d === undefined) st[k] = v;
+      else if (typeof d === "number") { const n = numOr(v, null); if (n != null) st[k] = n; }
+      else if (typeof d === "boolean") st[k] = v === true || v === "true" || v === 1;
+      else if (typeof v === "string") st[k] = v;
+    }
+    if (!FONTS[st.narrFont]) st.narrFont = DEF.narrFont;
+    if (!FONTS[st.bubbleFont]) st.bubbleFont = DEF.bubbleFont;
+    if (!SHAPES[st.bubbleShape]) st.bubbleShape = DEF.bubbleShape;
+    if (!RATIOS[st.pageRatio]) st.pageRatio = DEF.pageRatio;
+    if (!/^#[0-9a-f]{3,8}$/i.test(st.bg)) st.bg = DEF.bg;
+    st.width = clamp(Math.round(st.width), 320, 2400); st.gap = clamp(st.gap, 0, 800);
+    st.perPage = clamp(Math.round(st.perPage), 1, 6); st.parts = clamp(Math.round(st.parts), 1, 30);
+    return st;
+  }
   function normalizeProject(p) {
     if (Array.isArray(p)) p = { blocks: p };
-    if (!p || !Array.isArray(p.blocks)) return null;
-    const seen = new Set(), fresh = (pre, v) => { let id = typeof v === "string" && v ? v : nid(pre); while (seen.has(id)) id = nid(pre); seen.add(id); return id; };
-    p.blocks = p.blocks.filter((b) => b && typeof b === "object").map((b) => {
-      if (!b.type) b.type = b.img ? "image" : b.panels ? "page" : b.text != null ? "narration" : "space";
+    if (!p || typeof p !== "object" || !Array.isArray(p.blocks)) return null;
+    const seen = new Set(), fresh = (pre, v) => { let id = typeof v === "string" && v ? v : typeof v === "number" ? String(v) : nid(pre); while (seen.has(id)) id = nid(pre); seen.add(id); return id; };
+    const isObj = (o) => !!o && typeof o === "object" && !Array.isArray(o);
+    p.blocks = p.blocks.filter(isObj).map((b) => {
+      if (!["image", "page", "narration", "space"].includes(b.type)) b.type = typeof b.img === "string" && b.img ? "image" : Array.isArray(b.panels) ? "page" : b.text != null ? "narration" : "space";
       b.id = fresh(b.type === "page" ? "g" : b.type === "narration" ? "n" : b.type === "space" ? "s" : "b", b.id);
-      if (b.type === "image" || b.type === "page") {
-        b.bubbles = Array.isArray(b.bubbles) ? b.bubbles.filter((u) => u && typeof u === "object") : [];
-        b.bubbles.forEach((u) => {
-          u.id = fresh("u", u.id); u.text = String(u.text == null ? "" : u.text);
-          if (!SHAPES[u.shape]) u.shape = "oval";
-          const d = shapeDefaults(u.shape);
-          if (!(Number(u.size) > 0)) u.size = d.size; if (!(Number(u.cols) > 0)) u.cols = d.cols;
-          if (!FONTS[u.font]) u.font = defaultFontFor(u.shape);
-          if (!TONES[u.tone]) u.tone = "white";
-          const nx = Number(u.x), ny = Number(u.y); u.x = clamp(Number.isFinite(nx) && u.x !== null && u.x !== "" ? nx : 50, 0, 100); u.y = clamp(Number.isFinite(ny) && u.y !== null && u.y !== "" ? ny : 30, 0, 100);
+      if (b.type === "image") b.img = typeof b.img === "string" && b.img ? b.img : "missing";
+      if (b.type === "page") {
+        if (!LAYOUTS[b.layout]) b.layout = LAYOUT_FOR_N[clamp(Array.isArray(b.panels) ? b.panels.length : 4, 1, 6)] || "4b";
+        b.panels = (Array.isArray(b.panels) ? b.panels : []).slice(0, panelCount(b.layout)).map((pn) => {
+          if (!isObj(pn) || typeof pn.img !== "string" || !pn.img) return null;
+          ["zoom", "fx", "fy"].forEach((k) => { if (pn[k] == null) return; const v = numOr(pn[k], null); if (v == null) delete pn[k]; else pn[k] = v; });
+          return pn;
         });
       }
-      if (b.type === "narration") { b.text = String(b.text == null ? "" : b.text); b.size = Number(b.size) || 28; b.pad = Number(b.pad) || 110; b.align = b.align === "left" ? "left" : "center"; }
-      if (b.type === "space") b.h = Number(b.h) || 200;
-      if (b.type === "page") { b.layout = LAYOUTS[b.layout] ? b.layout : "4b"; b.panels = Array.isArray(b.panels) ? b.panels : []; }
+      if (b.type === "image" || b.type === "page") {
+        const np = b.type === "page" ? panelCount(b.layout) : 0;
+        b.bubbles = Array.isArray(b.bubbles) ? b.bubbles.filter(isObj) : [];
+        b.bubbles.forEach((u) => {
+          u.id = fresh("u", u.id); u.text = textOf(u.text); u.who = textOf(u.who).slice(0, 40);
+          u.shape = shapeKey(u.shape);
+          const d = shapeDefaults(u.shape);
+          u.size = clamp(numOr(u.size, 0) > 0 ? numOr(u.size, d.size) : d.size, 8, 400);
+          u.cols = clamp(Math.round(numOr(u.cols, 0) > 0 ? numOr(u.cols, d.cols) : d.cols), 2, 40);
+          u.rot = clamp(numOr(u.rot, d.rot), -90, 90);
+          if (!FONTS[u.font]) u.font = defaultFontFor(u.shape);
+          if (!TONES[u.tone]) u.tone = "white";
+          u.x = clamp(numOr(u.x, 50), 0, 100); u.y = clamp(numOr(u.y, 30), 0, 100);
+          ["padX", "padY", "tailW", "tailBend"].forEach((k) => { if (u[k] == null) return; const v = numOr(u[k], null); if (v == null) delete u[k]; else u[k] = v; });
+          const t = isObj(u.tail) ? u.tail : {}, tx = numOr(t.x, null), ty = numOr(t.y, null);
+          const on = t.on == null ? !!SHAPES[u.shape].tail : !!t.on && t.on !== "false" && t.on !== "0";
+          u.tail = Object.assign(t, { on, x: clamp(tx == null ? u.x + (u.x < 50 ? 9 : -9) : tx, 0, 100), y: clamp(ty == null ? u.y + 20 : ty, 0, 100) });
+          if (b.type === "page") { const pi = Math.round(numOr(u.panel, -1)); u.panel = pi >= 0 && pi < np ? pi : null; } else delete u.panel;
+        });
+      }
+      if (b.type === "narration") { b.text = textOf(b.text); b.size = clamp(numOr(b.size, 28) || 28, 10, 140); b.pad = clamp(numOr(b.pad, 110), 0, 800); b.align = b.align === "left" ? "left" : "center"; }
+      if (b.type === "space") b.h = clamp(numOr(b.h, 200) || 200, 4, 4000);
       return b;
     });
+    if (p.settings != null) p.settings = normSettings(p.settings);
     return p;
   }
   let importChoice = null;
@@ -2492,7 +2637,8 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     let data, text = "";
     try { text = await file.text(); data = JSON.parse(text.replace(/^﻿/, "")); }
     catch (e) { toast("작품 파일을 읽지 못했어요" + jsonErrorWhere(text, e) + ". 메모장에서 고쳤다면 쉼표·따옴표·괄호를 확인해 주세요.", true); return; }
-    const proj = normalizeProject(data && data.project ? data.project : data);
+    if (data && data.kind === "library" && Array.isArray(data.works)) { try { await importLibrary(data); } catch (er) { reportErr(er, "import-all"); toast("작품 파일을 다 넣지 못했어요", true); } return; }
+    let proj = null; try { proj = normalizeProject(data && data.project ? data.project : data); } catch (er) { reportErr(er, "import"); }
     if (!proj) { toast("세로툰 작품 파일이 아니에요", true); return; }
     clearTimeout(saveTimer); await saveNow();
     const title = String((data && data.title) || proj.title || "불러온 작품").slice(0, 40);
@@ -2533,12 +2679,28 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   $("bLib").addEventListener("click", openLib);
   $("lNew").addEventListener("click", () => newProject(false, libTab));
   $("lImport").addEventListener("click", () => $("fileWork").click());
+  $("lExportAll").addEventListener("click", (e) => exportAll(e.currentTarget));
   $("fileWork").addEventListener("change", async (e) => { const f = e.target.files && e.target.files[0]; e.target.value = ""; if (f) await importWork(f); });
   $("iReplace").addEventListener("click", () => { closeModal("mImport"); const r = importChoice; importChoice = null; if (r) r("replace"); });
   $("iAdd").addEventListener("click", () => { closeModal("mImport"); const r = importChoice; importChoice = null; if (r) r("add"); });
   $("iCancel").addEventListener("click", () => { closeModal("mImport"); const r = importChoice; importChoice = null; if (r) r(null); });
   $("lSample").addEventListener("click", () => newProject(true, libTab));
   $("lName").addEventListener("input", (e) => { P.title = e.target.value.trim() || "제목 없는 작품"; updateTitle(); const en = libEntry(curId); if (en) en.title = P.title; scheduleSave(); });
+
+  // ---------- problem log ----------
+  function renderDiag() {
+    const box = $("lDiag"); if (!box) return;
+    box.innerHTML = "";
+    if (!errLog.length) return;
+    const text = () => ["세로툰 " + APP_VER + " · " + navigator.userAgent, "화면 " + innerWidth + "×" + innerHeight + " · " + (window.claude ? "claude.ai" : location.protocol === "file:" ? "내려받은 파일" : location.host)].concat(errLog).join("\n");
+    const out = h("textarea", { rows: 4, readonly: true, "aria-label": "문제 기록" }); out.hidden = true;
+    box.appendChild(h("div", { class: "auto-card" }, h("h3", { text: "문제 기록 " + errLog.length + "개" }),
+      h("p", { text: "오류가 났던 기록이에요. 복사해서 보내 주시면 원인을 찾아 고칠게요." }),
+      h("div", { class: "row" },
+        h("button", { type: "button", class: "btn small", onclick: async () => { const t = text(); try { await navigator.clipboard.writeText(t); toast("문제 기록을 복사했어요"); } catch (e) { out.hidden = false; out.value = t; out.focus(); out.select(); toast("아래 글을 길게 눌러 복사해 주세요"); } } }, "문제 기록 복사"),
+        h("button", { type: "button", class: "btn small", onclick: () => { errLog.length = 0; try { localStorage.removeItem("sedo-errlog"); } catch (e) { /* ignore */ } renderDiag(); } }, "기록 지우기")), out));
+  }
+  libHooks.push(renderDiag);
 
   // ---------- fonts ----------
   async function ensureFonts() {
@@ -2731,6 +2893,13 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   function setTitle(t, hint) { const el = $("inspTitle"); el.innerHTML = ""; el.append(t); if (hint) el.appendChild(h("span", { class: "insp-hint", text: hint })); }
 
   function buildInspector() {
+    try { buildInspector0(); }
+    catch (err) {
+      reportErr(err, "panel");
+      try { body.innerHTML = ""; $("inspTabs").innerHTML = ""; $("inspTabs").hidden = true; $("inspDone").hidden = false; setTitle(sel.bubble ? "말풍선" : "편집"); body.appendChild(h("p", { class: "hint", text: "이 부분을 여는 중에 문제가 생겼어요. 다른 그림이나 말풍선을 눌러 보세요." })); } catch (e2) { /* ignore */ }
+    }
+  }
+  function buildInspector0() {
     const b = findBlock(sel.block), u = findBubble(b, sel.bubble);
     const key = (sel.block || "") + "/" + (sel.bubble || "");
     const keep = key === inspKey ? body.scrollTop : 0;
@@ -2759,7 +2928,8 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
       onclick: () => { if (inspTab[kind] === k) return; inspTab[kind] = k; inspKey = ""; buildInspector(); } }, label, badge ? h("span", { class: "itab-n", text: String(badge) }) : null)));
     const on = bar.querySelector('[aria-selected="true"]');
     if (on && !bar.hidden) requestAnimationFrame(() => { const l = on.offsetLeft - 12, r = on.offsetLeft + on.offsetWidth + 12; if (l < bar.scrollLeft) bar.scrollLeft = l; else if (r > bar.scrollLeft + bar.clientWidth) bar.scrollLeft = r - bar.clientWidth; });
-    tabs.find((t) => t[0] === cur)[2]();
+    try { tabs.find((t) => t[0] === cur)[2](); }
+    catch (err) { reportErr(err, "tab:" + cur); body.appendChild(h("p", { class: "hint", text: "이 탭을 여는 중에 문제가 생겼어요. 다른 탭을 눌러 보세요." })); }
   }
   function syncInspector() { const a = document.activeElement; if (a && body.contains(a) && (a.tagName === "TEXTAREA" || a.type === "text")) return; buildInspector(); }
 
@@ -3083,8 +3253,36 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
 
   // sheet behaviour (phone)
   function sheetOpen() { return isMobile() && !$("insp").classList.contains("collapsed"); }
-  function openSheet() { $("insp").classList.remove("collapsed"); document.body.classList.toggle("sheet-open", isMobile()); updateSheetH(); }
-  function closeSheet() { $("insp").classList.add("collapsed"); document.body.classList.remove("sheet-open"); updateSheetH(); }
+  let sheetOpenedAt = -1, lastDownT = -1e9;
+  document.addEventListener("pointerdown", (e) => { if (e.isPrimary) lastDownT = e.timeStamp; }, true);
+  const ghostTap = (e) => isMobile() && e.detail !== 0 && lastDownT < sheetOpenedAt && $("insp").contains(e.target);
+  ["mousedown", "click"].forEach((t) => document.addEventListener(t, (e) => { if (ghostTap(e)) { e.preventDefault(); e.stopImmediatePropagation(); } }, true));
+  // deleting from the panel takes two presses, so a stray tap can never remove a cut
+  let armBtn = null, armTimer = 0;
+  document.addEventListener("click", (e) => {
+    const btn = e.target && e.target.closest ? e.target.closest("#insp .btn.danger") : null;
+    if (!btn || btn.disabled) return;
+    if (armBtn === btn) { armBtn = null; clearTimeout(armTimer); return; }
+    if (armBtn && armBtn.dataset.lbl) armBtn.textContent = armBtn.dataset.lbl;
+    armBtn = btn; btn.dataset.lbl = btn.textContent; btn.textContent = "한 번 더 누르면 지워져요";
+    e.preventDefault(); e.stopImmediatePropagation();
+    clearTimeout(armTimer); armTimer = setTimeout(() => { if (armBtn === btn) { btn.textContent = btn.dataset.lbl; armBtn = null; } }, 3000);
+  }, true);
+  function openSheet() { if ($("insp").classList.contains("collapsed")) sheetOpenedAt = performance.now(); $("insp").classList.remove("collapsed"); document.body.classList.toggle("sheet-open", isMobile()); updateSheetH(); }
+  function closeSheet() { $("insp").classList.add("collapsed"); document.body.classList.remove("sheet-open"); updateSheetH(); sheetGuard = null; }
+  $("insp").addEventListener("pointerdown", (e) => {
+    const g = sheetGuard; if (!g || !e.isPrimary) return;
+    sheetGuard = null;
+    if (e.timeStamp - g.t > DBL_MS + 150 || Math.hypot(e.clientX - g.x, e.clientY - g.y) > DBL_PX) return;
+    swallowUntil = e.timeStamp + 1000; swallowDbl = g.bubble;
+    e.preventDefault(); e.stopPropagation();
+  }, true);
+  document.addEventListener("pointerup", (e) => {
+    if (!(e.timeStamp < swallowUntil) || !$("insp").contains(e.target)) return;
+    e.stopPropagation();
+    if (swallowDbl && sel.bubble) { swallowDbl = false; clearTimeout(revealTimer); select({ block: sel.block, bubble: sel.bubble, panel: sel.panel }, { open: true, focus: true, reveal: true }); }
+  }, true);
+  document.addEventListener("click", (e) => { if (e.timeStamp < swallowUntil && $("insp").contains(e.target)) { e.preventDefault(); e.stopPropagation(); swallowUntil = 0; } }, true);
   function updateFab() {
     const b = findBlock(sel.block), u = findBubble(b, sel.bubble), tag = $("fabTag");
     const t = u ? "말풍선" : b ? (b.type === "page" ? (sel.panel != null ? "칸 " + (sel.panel + 1) : "페이지") : b.type === "image" ? "컷" : b.type === "narration" ? "글" : "여백") : "";
@@ -3092,10 +3290,9 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     $("fab").setAttribute("aria-label", t ? t + " 편집 도구 열기" : "설정 열기");
   }
   let fabAt = 0;
-  const fabOpen = () => { if (performance.now() - fabAt < 450) return; fabAt = performance.now(); try { buildInspector(); } catch (err) { console.error(err); } openSheet(); };
-  $("fab").addEventListener("pointerup", (e) => { if (e.pointerType !== "mouse") fabOpen(); });
+  const fabOpen = (e) => { if (performance.now() - fabAt < 450) return; fabAt = performance.now(); try { buildInspector(); } catch (err) { console.error(err); } openSheet(); if (e && e.pointerType && e.pointerType !== "mouse") guardSheet(e.clientX, e.clientY, e.timeStamp, false); };
   $("fab").addEventListener("click", fabOpen);
-  $("inspDone").addEventListener("click", () => { fabAt = performance.now(); if (isMobile()) closeSheet(); else select({}); });
+  $("inspDone").addEventListener("click", () => { if (isMobile()) closeSheet(); else select({}); });
   const toggleTall = () => { const t = $("insp").classList.toggle("tall"); $("inspSize").textContent = t ? "작게" : "크게"; $("inspSize").setAttribute("aria-label", t ? "창 작게" : "창 크게"); updateSheetH(); setTimeout(() => { updateSheetH(); if (sel.block) reveal(); }, 220); };
   $("inspSize").addEventListener("click", toggleTall);
   $("inspGrab").addEventListener("click", toggleTall);
@@ -3691,14 +3888,19 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     }
     if (!$("mLib").hidden) renderCloud();
   }
-  function cloudGo(select) {
+  const autoRelinkOk = () => {
+    if (!linked() || !(cloud.st && cloud.st.email) || navigator.onLine === false) return false;
+    try { if (sessionStorage.getItem("sedo-picking")) return false; if (Date.now() - Number(localStorage.getItem("sedo-cloud-auto") || 0) < 15 * 60000) return false; } catch (e) { return false; }
+    return true;
+  };
+  function cloudGo(select, silent) {
     if (!cloudReady()) return;
     const state = Math.random().toString(36).slice(2) + Date.now().toString(36);
-    try { sessionStorage.setItem("sedo-oauth", state); } catch (e) { /* ignore */ }
+    try { sessionStorage.setItem("sedo-oauth", state); if (silent) { sessionStorage.setItem("sedo-oauth-silent", "1"); localStorage.setItem("sedo-cloud-auto", String(Date.now())); } else sessionStorage.removeItem("sedo-oauth-silent"); } catch (e) { /* ignore */ }
     clearTimeout(saveTimer);
     const go = () => {
       const q = new URLSearchParams({ client_id: GOOGLE_CLIENT_ID, redirect_uri: redirectUri(), response_type: "token", scope: CLOUD_SCOPES, include_granted_scopes: "true", state });
-      if (select || !(cloud.st && cloud.st.email)) q.set("prompt", "select_account consent"); else q.set("login_hint", cloud.st.email);
+      if (select || !(cloud.st && cloud.st.email)) q.set("prompt", "select_account consent"); else { q.set("login_hint", cloud.st.email); if (silent) q.set("prompt", "none"); }
       location.assign("https://accounts.google.com/o/oauth2/v2/auth?" + q.toString());
     };
     saveNow().then(go, go);
@@ -3708,8 +3910,8 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     if (!/access_token=|error=/.test(hs)) return null;
     const p = new URLSearchParams(hs.slice(1));
     try { history.replaceState(null, "", location.pathname + location.search); } catch (e) { /* ignore */ }
-    let want = null; try { want = sessionStorage.getItem("sedo-oauth"); sessionStorage.removeItem("sedo-oauth"); } catch (e) { /* ignore */ }
-    if (p.get("error")) return { error: p.get("error") };
+    let want = null, silent = false; try { want = sessionStorage.getItem("sedo-oauth"); sessionStorage.removeItem("sedo-oauth"); silent = sessionStorage.getItem("sedo-oauth-silent") === "1"; sessionStorage.removeItem("sedo-oauth-silent"); } catch (e) { /* ignore */ }
+    if (p.get("error")) return { error: p.get("error"), silent };
     if (!want || p.get("state") !== want) return { error: "state" };
     return { token: p.get("access_token"), exp: Date.now() + (Number(p.get("expires_in")) || 3600) * 1000 - 120000, scope: p.get("scope") || "" };
   }
@@ -3846,8 +4048,8 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
       if (cloud.again) { const m = cloud.again; cloud.again = false; setTimeout(() => cloudSync(m), 400); }
     }
   }
-  function nagRelink() {
-    if (cloud.nagged || !linked() || !unsynced()) return;
+  function nagRelink(force) {
+    if (cloud.nagged || !linked() || (!force && !unsynced())) return;
     cloud.nagged = true;
     toast("구글 계정 저장이 잠깐 멈췄어요. 보관함에서 ‘다시 연결’을 누르면 이어서 저장돼요.", true);
   }
@@ -3888,29 +4090,35 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   saveHooks.push(() => { if (!linked()) return; cloudStatus(cloud.status === "sync" ? "sync" : tokenOk() ? cloud.status : "relink"); clearTimeout(cloud.timer); cloud.timer = setTimeout(() => cloudSync("push"), 4000); });
   deleteHooks.push((id) => { if (!linked()) return; cloud.st.tomb[id] = Date.now(); cloud.st.tombDirty = true; cloudSave(); clearTimeout(cloud.timer); cloud.timer = setTimeout(() => cloudSync("push"), 1500); });
   libHooks.push(() => { renderCloud(); if (linked() && tokenOk() && !cloud.busy && Date.now() - (cloud.st.lastSync || 0) > 20000) cloudSync("full"); });
+  let hiddenAt = 0;
   document.addEventListener("visibilitychange", () => {
-    if (!linked() || !tokenOk()) return;
-    if (document.hidden) { if (unsynced()) { clearTimeout(cloud.timer); clearTimeout(saveTimer); saveNow().then(() => cloudSync("push")); } }
-    else if (Date.now() - (cloud.st.lastSync || 0) > 60000) cloudSync("full");
+    if (!linked()) return;
+    if (document.hidden) { hiddenAt = Date.now(); if (tokenOk() && unsynced()) { clearTimeout(cloud.timer); clearTimeout(saveTimer); saveNow().then(() => cloudSync("push")); } return; }
+    if (!tokenOk()) { if (hiddenAt && Date.now() - hiddenAt > 3 * 60000 && autoRelinkOk() && !document.querySelector(".modal:not([hidden])") && !sheetOpen()) cloudGo(false, true); return; }
+    if (Date.now() - (cloud.st.lastSync || 0) > 60000) cloudSync("full");
   });
   readyHooks.push(async () => {
     if (!cloudReady()) return;
     cloudLoad();
     const bl = $("bLib"); if (bl && !$("cloudDot")) { const d = h("span", { class: "dot", id: "cloudDot" }); d.hidden = true; bl.appendChild(d); }
     const back = takeOAuthReturn();
-    if (back && back.error) { if (back.error !== "access_denied") toast("구글 로그인을 마치지 못했어요. 다시 해 주세요.", true); cloudStatus(linked() ? "relink" : "off"); return; }
+    if (back && back.error) { if (!back.silent && back.error !== "access_denied") toast("구글 로그인을 마치지 못했어요. 다시 해 주세요.", true); cloudStatus(linked() ? "relink" : "off"); if (back.silent && linked()) nagRelink(true); return; }
     if (back && back.token) {
       if (!/drive\.appdata/.test(back.scope)) { toast("‘드라이브 앱 데이터’ 권한이 꺼져 있어서 저장할 수 없어요. 로그인할 때 체크해 주세요.", true); return; }
       const first = !linked();
       cloud.st = Object.assign(cloud.st || { pushed: {}, imgs: {}, tomb: {} }, { linked: true, token: back.token, exp: back.exp });
       cloudSave();
       await fetchEmail();
-      toast(first ? "구글 계정에 연결했어요. 작품을 저장하는 중…" : "다시 연결했어요. 이어서 저장할게요.");
+      if (first) toast("구글 계정에 연결했어요. 작품을 저장하는 중…");
       await cloudSync("full");
       if (first && cloud.status === "ok") toast("구글 계정에 모두 저장했어요. 이제 고치면 자동으로 저장돼요.");
       return;
     }
-    if (linked()) { cloudStatus(tokenOk() ? "ok" : "relink"); if (tokenOk()) cloudSync("full"); }
+    if (linked()) {
+      if (tokenOk()) { cloudStatus("ok"); cloudSync("full"); }
+      else if (autoRelinkOk()) { cloudStatus("sync"); cloudGo(false, true); }
+      else cloudStatus("relink");
+    }
   });
   // ---------- quick build ----------
   const qb = { src: "new", photos: [], mode: "replace" };
