@@ -8,6 +8,8 @@ on:
       max:
         description: "읽을 작품 수 (5~60)"
         default: "36"
+  push:
+    paths: [ "tools/zeta-crawl.mjs" ]   # 탐사봇 코드가 바뀌면 한 번 실행해서 확인
 permissions:
   contents: write
 concurrency:
