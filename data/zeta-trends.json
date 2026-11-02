@@ -1,0 +1,4704 @@
+{
+ "updatedAt": "2026-11-02T17:25:46.388Z",
+ "run": "41490750873",
+ "topic": "zeta-studio-deca19-live-7f3k2",
+ "works": [
+  {
+   "id": "9e3a8651-78d2-4dcb-af3d-a4e92a0cbc1e",
+   "url": "https://zeta-ai.io/ko/plots/9e3a8651-78d2-4dcb-af3d-a4e92a0cbc1e/profile",
+   "name": "표건택",
+   "creator": "세물간 내만 내먹 유리",
+   "count": 12136998,
+   "rank": null,
+   "tags": [
+    "오지콤",
+    "조직보스",
+    "재벌",
+    "절륜",
+    "키잡",
+    "무심",
+    "다정",
+    "로맨스",
+    "hl",
+    "bl"
+   ],
+   "genres": [
+    "로맨스",
+    "BL·GL",
+    "조직·느와르"
+   ],
+   "short": "하.. 꼬맹아 아저씨말고 회장님이라 불러야지, 자꾸 말 안들으면 혼난다?",
+   "introExcerpt": "*어둠이 짙게 깔린 어느 늦은밤 표건택의 사무실* *통유리 너머 보이는 도시의 야경과 토독토독-.. 유리창에 부딪혀 맺히는 빗방울 소리. 이윽고 하루일과의 마지막을 알리는 타박타박, 신나는 발걸음 소리와 노크도 없이 벌컥- 문을 열고 들어서는 Guest의 모습에 그는 저도 모르게 입가에…",
+   "longExcerpt": "세상에 낮과 밤이 존재하듯 표건택이 이끄는 \"창설\" 또한 두가지로 나뉜다. 하나는 이름만 들어도 알 정도로 세계적으로 유명한 대기업 \"창설그룹\" 또 다른 하나는 청부,암살,마약,불법무기,인신매매,사채업 등 어느 것 …",
+   "charNames": [
+    "표건택"
+   ],
+   "mode": "STORY_CHAT",
+   "releasedAt": "2025-06-22T06:47:15.020245Z",
+   "f": {
+    "shortLen": 40,
+    "introLen": 244,
+    "longLen": 840,
+    "charCount": 1,
+    "charDescLen": 388,
+    "exampleConvs": 0,
+    "lorebooks": 0,
+    "tagCount": 10,
+    "introNarration": 90,
+    "introDialogue": 8,
+    "introEndsOpen": 1,
+    "userMention": 6,
+    "commentLen": 38,
+    "plugins": 4,
+    "ageDays": 498,
+    "perDay": 24350
+   },
+   "score": 84
+  },
+  {
+   "id": "c796ed2a-e547-4c08-99c0-057c3c893eaf",
+   "url": "https://zeta-ai.io/ko/plots/c796ed2a-e547-4c08-99c0-057c3c893eaf/profile",
+   "name": "서 휘",
+   "creator": "w4t3r",
+   "count": 16671110,
+   "rank": null,
+   "tags": [
+    "로맨스",
+    "아저씨",
+    "오지콤",
+    "존댓말",
+    "다정함",
+    "깡패즈"
+   ],
+   "genres": [
+    "로맨스"
+   ],
+   "short": "보스의 딸인 당신을 어린 시절부터 맡아준 보스의 오른팔",
+   "introExcerpt": "*정말 자그마한 고양이 같았는데, 언제 이렇게 컸나 싶어 그녀의 뒤에서 가만히 지켜본다. 교복을 입고 보스에게 따박따박 말대답 하던 그녀는 어느새 구두를 신을 나이가 되었다는 게 새삼 새롭다.* *다 컸나 싶다가도 풀어진 구두 끈을 보면 아직 어린 아이 같다. 얼른 그녀의 앞에 한 쪽 …",
+   "longExcerpt": "최대 폭력 조직 '화천'의 보스에게 딸려있는 단 하나의 자식, 외동딸인 그녀를 처음 만난 날은... 서휘가 26살이던 어느 여름, 장맛비가 쏟아지던 날이었다. 자신의 아버지인 보스에게 따박따박 말대답하며 덤벼드는 1…",
+   "charNames": [
+    "서 휘"
+   ],
+   "mode": "STORY_CHAT",
+   "releasedAt": "2024-07-01T02:23:14.710550Z",
+   "f": {
+    "shortLen": 30,
+    "introLen": 296,
+    "longLen": 992,
+    "charCount": 1,
+    "charDescLen": 0,
+    "exampleConvs": 2,
+    "lorebooks": 0,
+    "tagCount": 6,
+    "introNarration": 88,
+    "introDialogue": 10,
+    "introEndsOpen": 0,
+    "userMention": 0,
+    "commentLen": 148,
+    "plugins": 0,
+    "ageDays": 855,
+    "perDay": 19507
+   },
+   "score": 47
+  },
+  {
+   "id": "b0fa89fb-3a5a-4948-9427-a6b3b08e4c13",
+   "url": "https://zeta-ai.io/ko/plots/b0fa89fb-3a5a-4948-9427-a6b3b08e4c13/profile",
+   "name": "채 원혁",
+   "creator": "w4t3r",
+   "count": 7337898,
+   "rank": null,
+   "tags": [
+    "아저씨",
+    "오지콤",
+    "깡패",
+    "로맨스",
+    "다정함",
+    "깡패즈"
+   ],
+   "genres": [
+    "로맨스"
+   ],
+   "short": "어린 당신을 거두어 키워준 아빠 같은 아저씨",
+   "introExcerpt": "*원혁이 바닥에 쓰러져 있는 남자를 발로 한 번 툭, 건드려 보고는 숨을 크게 고른 뒤에 뒤쪽에서 대기 중이던 부하들에게 이거 치우라는 듯 턱짓하고 안주머니에서 담배를 꺼내 피운다.* *손이며 얼굴에 묻은 피를 대충 씻어내고 있는데 핸드폰이 울리고, 발신자를 확인해보니 '내 새끼' 라고…",
+   "longExcerpt": "채 원혁, 40세. 원혁의 동료 조직원이었고 친구였던 녀석의 딸인 그녀를 거두게 된 이유는, 조직 간의 파벌 싸움이 극에 달했던 어느 날... 원혁을 구하려다 그만 목숨을 잃었기 때문이다. 12살이었던 그녀를 거둬들…",
+   "charNames": [
+    "채 원혁"
+   ],
+   "mode": "STORY_CHAT",
+   "releasedAt": "2024-07-03T20:01:40.785130Z",
+   "f": {
+    "shortLen": 24,
+    "introLen": 296,
+    "longLen": 994,
+    "charCount": 1,
+    "charDescLen": 0,
+    "exampleConvs": 0,
+    "lorebooks": 0,
+    "tagCount": 6,
+    "introNarration": 88,
+    "introDialogue": 10,
+    "introEndsOpen": 0,
+    "userMention": 0,
+    "commentLen": 148,
+    "plugins": 0,
+    "ageDays": 852,
+    "perDay": 8614
+   },
+   "score": 47
+  },
+  {
+   "id": "22957df9-0a8b-4245-aa8f-5ad7750a0031",
+   "url": "https://zeta-ai.io/ko/plots/22957df9-0a8b-4245-aa8f-5ad7750a0031/profile",
+   "name": "다른 학교 남녀무리",
+   "creator": "「 MERRY 」",
+   "count": 6495349,
+   "rank": null,
+   "tags": [
+    "존잘",
+    "남녀무리",
+    "존예",
+    "hl",
+    "짝사랑",
+    "무리",
+    "로맨스",
+    "다른학교",
+    "학교",
+    "bl"
+   ],
+   "genres": [
+    "로맨스",
+    "BL·GL",
+    "학원",
+    "다인캐"
+   ],
+   "short": "옆학교에서 전학 온 남자애들이 다 너무 존잘이다..!",
+   "introExcerpt": "@선생님: 자, 오늘 전학생 3명이 왔다. 애들아, 들어오렴~ *문을 열고 3명이 들어와 자기소개를 하며* 안녕, 난 이유승이라고 해 잘 지내보자. *싸가지 없이 대충 자기소개하며* 난 박서호라고 해. *장난끼 가득한 표정으로* 난 한재현~ 잘 부탁해 애들아~! *애들이 존잘 전학생들을…",
+   "longExcerpt": "하... 옆학교 남자애들이 전학왔는데... 싹 다 존잘이면 어떡하라고!! 100만 🎉 200만 🎉 300만 🥳 500만🎉",
+   "charNames": [
+    "최설아",
+    "노하율",
+    "김시아",
+    "이유승",
+    "박서호",
+    "한재현"
+   ],
+   "mode": "STORY_CHAT",
+   "releasedAt": "2026-03-21T03:07:40.056327Z",
+   "f": {
+    "shortLen": 29,
+    "introLen": 277,
+    "longLen": 71,
+    "charCount": 6,
+    "charDescLen": 123,
+    "exampleConvs": 0,
+    "lorebooks": 2,
+    "tagCount": 10,
+    "introNarration": 46,
+    "introDialogue": 51,
+    "introEndsOpen": 1,
+    "userMention": 1,
+    "commentLen": 76,
+    "plugins": 0,
+    "ageDays": 227,
+    "perDay": 28665
+   },
+   "score": 67
+  },
+  {
+   "id": "4b70ae79-1afa-4755-94ed-f31e8c686c7a",
+   "url": "https://zeta-ai.io/ko/plots/4b70ae79-1afa-4755-94ed-f31e8c686c7a/profile",
+   "name": "다른학교 남녀무리",
+   "creator": "슈슈팥떡",
+   "count": 11042259,
+   "rank": null,
+   "tags": [
+    "hl",
+    "남녀무리",
+    "존잘",
+    "존예",
+    "철벽",
+    "다정",
+    "능글",
+    "무뚝뚝",
+    "여우",
+    "짝사랑"
+   ],
+   "genres": [
+    "로맨스",
+    "다인캐"
+   ],
+   "short": "여우 때문에 유명한 제타남고의 남학생무리를 꼬시러 가야 한다..?",
+   "introExcerpt": "*어쩌다가 제타남자고등학교에서 잘생긴 남자애들을 보게 된 지희가 친구인 Guest,고은,체린,예빈에게 부탁해서 제타남자고등학교에 남학생들을 꼬시러가게 되어 준비를 하는 중이다.* *책상에 앉아서 다리를 꼬고 핸드폰을 보며*한지희,언제까지 준비할거야? *Guest에게 볼을 잡힌채로 젤리를…",
+   "longExcerpt": "여우 때문에 유명한 제타남고의 남학생무리를 꼬시러 가야 한다..? 남학생들 무리 - 제타남자고등학교 여학샐들 무리 - 제타여자고등학교",
+   "charNames": [
+    "유저",
+    "유고은",
+    "박체린",
+    "신예빈",
+    "한지희",
+    "김도훈"
+   ],
+   "mode": "STORY_CHAT",
+   "releasedAt": "2026-01-11T15:44:43.273413Z",
+   "f": {
+    "shortLen": 36,
+    "introLen": 306,
+    "longLen": 74,
+    "charCount": 9,
+    "charDescLen": 107,
+    "exampleConvs": 2,
+    "lorebooks": 0,
+    "tagCount": 10,
+    "introNarration": 73,
+    "introDialogue": 27,
+    "introEndsOpen": 1,
+    "userMention": 3,
+    "commentLen": 0,
+    "plugins": 0,
+    "ageDays": 295,
+    "perDay": 37423
+   },
+   "score": 82
+  },
+  {
+   "id": "b4e10763-abf0-43bd-ac72-70e43c44ce0c",
+   "url": "https://zeta-ai.io/ko/plots/b4e10763-abf0-43bd-ac72-70e43c44ce0c/profile",
+   "name": "제타고등학교",
+   "creator": "슈슈팥떡",
+   "count": 4833276,
+   "rank": null,
+   "tags": [
+    "hl",
+    "남녀무리",
+    "짝사랑",
+    "철벽",
+    "능글",
+    "다정",
+    "무뚝뚝",
+    "츤데레",
+    "여우",
+    "유저바라기"
+   ],
+   "genres": [
+    "로맨스",
+    "다인캐"
+   ],
+   "short": "건물이 달라서 마주칠일 없는 남자애들을 마주쳤다..?",
+   "introExcerpt": "*제타고등학교는 여자와 남자가 샐황하는 건물이 달라서 마주칠일이 거의 없다. 선생님의 심부름으로 태영,승호,승규,윤호는 여자애들이 생활하는 신관에 갔다가 Guest,하람,민정을 발견한다.* *핸드폰을 보고 걸으며*야,저기 그 여자애들 아니냐? *하람을 보며*야야,저기 저 여자애 존나 귀…",
+   "longExcerpt": "건물이 달라서 마주칠일 전혀 없는 남자애들을 마주쳤다..?! 제타고등학교 남자 반 : 1반 ~ 5반 (본관) 여자 반 : 6반 ~10반 (신관)",
+   "charNames": [
+    "유저",
+    "백하람",
+    "김민정",
+    "이예리",
+    "권태영",
+    "최승호"
+   ],
+   "mode": "STORY_CHAT",
+   "releasedAt": "2026-01-09T03:28:58.095954Z",
+   "f": {
+    "shortLen": 29,
+    "introLen": 254,
+    "longLen": 80,
+    "charCount": 8,
+    "charDescLen": 123,
+    "exampleConvs": 0,
+    "lorebooks": 0,
+    "tagCount": 10,
+    "introNarration": 65,
+    "introDialogue": 34,
+    "introEndsOpen": 0,
+    "userMention": 2,
+    "commentLen": 0,
+    "plugins": 0,
+    "ageDays": 298,
+    "perDay": 16242
+   },
+   "score": 62
+  },
+  {
+   "id": "e088fc1f-bc75-4962-a2f2-f8ee59d6a509",
+   "url": "https://zeta-ai.io/ko/plots/e088fc1f-bc75-4962-a2f2-f8ee59d6a509/profile",
+   "name": "권이태",
+   "creator": "단귤",
+   "count": 4435618,
+   "rank": null,
+   "tags": [
+    "경호원",
+    "연예인",
+    "나이차이",
+    "아저씨",
+    "오지콤",
+    "퇴폐미",
+    "나른",
+    "무심",
+    "철벽",
+    "블랙실드"
+   ],
+   "genres": [],
+   "short": "애새끼 키우는 취미, 딱히 없는데.",
+   "introExcerpt": "*밤샘 촬영이 끝난 뒤, 대기실은 난장판이다. 비명, 파편, 발광. 꼴이 참 가관이다. 노크는 생략하고 대신 문을 발로 깐다. 관심 구걸하는 놈 상대할 시간은 없다. 안에서 개지랄을 떨든 말든 내 알 바 아니다. 화내는 건 네 습관이고, 말려주길 바라는 눈빛은 가볍게 무시한다. 내 일은…",
+   "longExcerpt": "안하무인 성격으로 업계에서 악명 높은 톱스타 Guest. 계속되는 스토킹 등 협박, 위협에 소속사는 업계 최고의 ‘블랙 실드’ 소속 경호원 권이태를 고용한다. Guest은 새로 온 경호원이 나이차이도 많고 딱딱해 보…",
+   "charNames": [
+    "권이태"
+   ],
+   "mode": "STORY_CHAT",
+   "releasedAt": "2026-01-31T03:02:36.247780Z",
+   "f": {
+    "shortLen": 19,
+    "introLen": 232,
+    "longLen": 613,
+    "charCount": 1,
+    "charDescLen": 425,
+    "exampleConvs": 0,
+    "lorebooks": 0,
+    "tagCount": 10,
+    "introNarration": 92,
+    "introDialogue": 7,
+    "introEndsOpen": 0,
+    "userMention": 9,
+    "commentLen": 88,
+    "plugins": 6,
+    "ageDays": 276,
+    "perDay": 16094
+   },
+   "score": 69
+  },
+  {
+   "id": "5b6464b7-b4ca-4313-9700-b25bd4cba848",
+   "url": "https://zeta-ai.io/ko/plots/5b6464b7-b4ca-4313-9700-b25bd4cba848/profile",
+   "name": "임윤찬",
+   "creator": "Linear",
+   "count": 26874530,
+   "rank": null,
+   "tags": [
+    "경호원",
+    "갑을관계",
+    "혐관",
+    "로맨스",
+    "능글",
+    "강압적",
+    "불안",
+    "혐오",
+    "꼬시기",
+    "Elib"
+   ],
+   "genres": [
+    "로맨스",
+    "혐관·후회"
+   ],
+   "short": "오늘도 지 멋대로 구십니다, 아주-.",
+   "introExcerpt": "*웬수같은 수장의 딸을 지키겠노라 서약한건, 그야말로 굴욕에 가까웠다. 당장 목숨이 아쉬워 선택한 것이긴 하다만, 이 쥐콩만한 여자한테 목줄이 쥐어졌다-, 생각하니 속에서 열불이 끓는 것 같았다.* *나름 도련님 대우받고 자란 내가, 이 한줌도 안되는 여자 옆에 서서 경호 해야하는것도 …",
+   "longExcerpt": "거대 청부업 조직 \"Elib (일립)\"은 매년 어마어마한 돈을 쓸어모으고 있다. 일립은 우두머리를 \"수장 (首長)\"이라 칭하는데, 그 수장이 워낙 딸을 애지중지하여 귀하게 키운단건 일립의 말단 조직원도 알정도다. 그…",
+   "charNames": [
+    "임윤찬"
+   ],
+   "mode": "STORY_CHAT",
+   "releasedAt": "2025-03-01T14:51:36.314423Z",
+   "f": {
+    "shortLen": 20,
+    "introLen": 278,
+    "longLen": 162,
+    "charCount": 1,
+    "charDescLen": 727,
+    "exampleConvs": 0,
+    "lorebooks": 2,
+    "tagCount": 10,
+    "introNarration": 88,
+    "introDialogue": 11,
+    "introEndsOpen": 1,
+    "userMention": 0,
+    "commentLen": 45,
+    "plugins": 3,
+    "ageDays": 611,
+    "perDay": 43977
+   },
+   "score": 56
+  },
+  {
+   "id": "7210783e-58d7-40db-88f0-f91935d4477e",
+   "url": "https://zeta-ai.io/ko/plots/7210783e-58d7-40db-88f0-f91935d4477e/profile",
+   "name": "이혁일",
+   "creator": "백여우",
+   "count": 18905448,
+   "rank": null,
+   "tags": [
+    "조직",
+    "조직보스",
+    "부보스",
+    "능글",
+    "느와르",
+    "싸가지",
+    "hl",
+    "집착",
+    "피폐",
+    "소유욕"
+   ],
+   "genres": [
+    "로맨스",
+    "집착·광기",
+    "조직·느와르"
+   ],
+   "short": "대드는 부보스 × 유일하게 당신에게만 옆자릴 허락하는 보스",
+   "introExcerpt": "*어둠 진 회의실, 보고서를 쓱 넘기며 낮게 웃는다*. 하… 또 지들 멋대로 했네. 손만 잘라오랬더니 머리를 들고 오냐. *서류를 덮으며 Guest에게 다가가 책상에 걸터앉는다* 우와 보스가 말씀하시는데 다리 꼬고 듣지도 않아요 우리 부보스님~? *당신이 반응 없이 피식 웃고만 있자 그…",
+   "longExcerpt": "흑사파. 세계가 뒤흔들릴 때마다 그 중심엔 언제나 그들의 그림자가 있었다. 그리고 그 가운데 단 한 사람— 이혁일. 잔혹과 무자비를 일상처럼 씹어 삼키는 남자. 그의 심기를 건드리는 자? 없다. 아니, 있었지만… 다…",
+   "charNames": [
+    "이혁일"
+   ],
+   "mode": "STORY_CHAT",
+   "releasedAt": "2025-12-03T14:08:57.050575Z",
+   "f": {
+    "shortLen": 32,
+    "introLen": 202,
+    "longLen": 504,
+    "charCount": 1,
+    "charDescLen": 142,
+    "exampleConvs": 1,
+    "lorebooks": 0,
+    "tagCount": 10,
+    "introNarration": 43,
+    "introDialogue": 54,
+    "introEndsOpen": 1,
+    "userMention": 1,
+    "commentLen": 0,
+    "plugins": 0,
+    "ageDays": 334,
+    "perDay": 56580
+   },
+   "score": 60
+  },
+  {
+   "id": "b3585b10-9941-4bfc-bab1-6b1186b1544c",
+   "url": "https://zeta-ai.io/ko/plots/b3585b10-9941-4bfc-bab1-6b1186b1544c/profile",
+   "name": "은시우",
+   "creator": "익명",
+   "count": 12916758,
+   "rank": null,
+   "tags": [
+    "군인",
+    "떡대",
+    "능글",
+    "유저바라기",
+    "순애",
+    "또라이",
+    "hl",
+    "bl",
+    "로맨스"
+   ],
+   "genres": [
+    "로맨스",
+    "BL·GL"
+   ],
+   "short": "화내는 것도 섹시하시지 말입니다.",
+   "introExcerpt": "*현재 중대장실 내부는 차갑게 식어가고 있었다. 눈치 없이 생글 웃으며 제 눈앞에 엎드려뻗쳐를 하고 있는 저 놈이 문제였다.* *아침부터 연병장에 훈련을 시키며 관찰을 하고 있는 제 귀에 바람을 불지 않나, 식당에서 마시라고 준 초코우유를 내것까지 탐내 빤히 쳐다본다던가, 심지어는 별 …",
+   "longExcerpt": "",
+   "charNames": [
+    "은시우"
+   ],
+   "mode": "STORY_CHAT",
+   "releasedAt": "2026-04-24T14:48:56.079063Z",
+   "f": {
+    "shortLen": 18,
+    "introLen": 598,
+    "longLen": 0,
+    "charCount": 1,
+    "charDescLen": 0,
+    "exampleConvs": 0,
+    "lorebooks": 3,
+    "tagCount": 9,
+    "introNarration": 94,
+    "introDialogue": 4,
+    "introEndsOpen": 0,
+    "userMention": 2,
+    "commentLen": 0,
+    "plugins": 0,
+    "ageDays": 192,
+    "perDay": 67237
+   },
+   "score": 62
+  },
+  {
+   "id": "359af999-b52d-4994-b2c9-a81e6468fe34",
+   "url": "https://zeta-ai.io/ko/plots/359af999-b52d-4994-b2c9-a81e6468fe34/profile",
+   "name": "문기태",
+   "creator": "시가",
+   "count": 11570400,
+   "rank": null,
+   "tags": [
+    "경찰",
+    "문란",
+    "능글",
+    "까칠",
+    "시골",
+    "로맨스"
+   ],
+   "genres": [
+    "로맨스"
+   ],
+   "short": "당신이 사는 시골로 발령받은 문란한 경위.",
+   "introExcerpt": "*전날 밤, 문기태는 거의 잠들지 못했다.* *숨막히게 따분한 깡촌 마을. 의미 없는 순찰 속에서 우연히 마주친 얼굴 하나가, 생각보다 성가시게 머릿속에 남아 있었기 때문이었다.* *어디까지 다가가면 겁을 먹을지, 어느 선에서 흔들어야 모르는 척 넘어올지. 늘 해오던 계산이었다.* *여…",
+   "longExcerpt": "이런 곳이 아직도 존재할까 싶을 만큼, 드라마에서나 볼 법한 외곽의 시골 마을. 버스를 놓치면 하루가 통째로 날아가고, 병원 하나 가려면 차로 몇 시간을 달려야 했다. 볕에 그을린 밭과 계절마다 색만 바뀌는 논, 그…",
+   "charNames": [
+    "문기태"
+   ],
+   "mode": "STORY_CHAT",
+   "releasedAt": "2025-12-27T12:49:23.696189Z",
+   "f": {
+    "shortLen": 23,
+    "introLen": 640,
+    "longLen": 655,
+    "charCount": 1,
+    "charDescLen": 509,
+    "exampleConvs": 0,
+    "lorebooks": 0,
+    "tagCount": 6,
+    "introNarration": 94,
+    "introDialogue": 2,
+    "introEndsOpen": 1,
+    "userMention": 0,
+    "commentLen": 13,
+    "plugins": 3,
+    "ageDays": 310,
+    "perDay": 37301
+   },
+   "score": 62
+  },
+  {
+   "id": "d441a1b5-650f-4419-90a5-44414fd733d0",
+   "url": "https://zeta-ai.io/ko/plots/d441a1b5-650f-4419-90a5-44414fd733d0/profile",
+   "name": "권이태",
+   "creator": "수월",
+   "count": 7821937,
+   "rank": null,
+   "tags": [
+    "경찰",
+    "특수부대",
+    "떡대",
+    "혐관",
+    "괴롭힘",
+    "집착",
+    "소유욕",
+    "hl",
+    "bl",
+    "테토"
+   ],
+   "genres": [
+    "로맨스",
+    "BL·GL",
+    "집착·광기",
+    "혐관·후회"
+   ],
+   "short": "표정이 왜 그래, 신입? 너만 갈구니까 억울해 죽겠어?",
+   "introExcerpt": "*특공대 사격 훈련장의 공기는 화약 냄새와 긴장감으로 무겁게 가라앉아 있었다.* *사선에 선 대원들 사이로, 압도적인 그림자가 드리워졌다.* *196cm의 거구, **권이태**였다.* *그는 검은 전술복 소매를 걷어붙인 채, 한 손에는 타이머를 들고 대원들의 뒤를 느릿하게 배회했다.* …",
+   "longExcerpt": "",
+   "charNames": [
+    "권이태"
+   ],
+   "mode": "STORY_CHAT",
+   "releasedAt": "2026-03-18T08:13:47.034465Z",
+   "f": {
+    "shortLen": 30,
+    "introLen": 866,
+    "longLen": 0,
+    "charCount": 1,
+    "charDescLen": 0,
+    "exampleConvs": 2,
+    "lorebooks": 0,
+    "tagCount": 10,
+    "introNarration": 62,
+    "introDialogue": 35,
+    "introEndsOpen": 1,
+    "userMention": 13,
+    "commentLen": 68,
+    "plugins": 9,
+    "ageDays": 229,
+    "perDay": 34100
+   },
+   "score": 91
+  },
+  {
+   "id": "b565345e-ea63-41d0-9f5d-1a3e07013649",
+   "url": "https://zeta-ai.io/ko/plots/b565345e-ea63-41d0-9f5d-1a3e07013649/profile",
+   "name": "도이한",
+   "creator": "한주",
+   "count": 6978206,
+   "rank": null,
+   "tags": [
+    "전남친",
+    "재회",
+    "데이트폭력",
+    "후회",
+    "무뚝뚝",
+    "피폐",
+    "집착",
+    "가스라이팅",
+    "hl",
+    "bl"
+   ],
+   "genres": [
+    "로맨스",
+    "BL·GL",
+    "집착·광기",
+    "혐관·후회"
+   ],
+   "short": "현애인에게 맞고 돌아가는 길, 전남친과 마주쳤다.",
+   "introExcerpt": "*자정을 넘긴 거리는 텅 비어있었다. 간간이 멀리서 고양이 울음소리가 들려왔고, Guest은 그저 후드티를 뒤집어쓴 채 정처 없이 걸었다. 공허한 눈빛은 흔들려 눈앞을 흐리게 만들었고, 목적지는 없었다. Guest의 그림자는 어느새 가로등 아래로 짧게 웅크려 있었다.* *그 순간. 한산…",
+   "longExcerpt": "3년 전, \"우린 서로에게 비효율적이야\"라는 이한의 차가운 말 한 마디에 둘은 끝났다. 그러나 이별을 고했던 그는 당신을 잊지 못한 채 후회심을 기반으로 성공에 집착했고, 현재는 잘나가는 IT 기업의 전무가 되었다.…",
+   "charNames": [
+    "도이한",
+    "현재민"
+   ],
+   "mode": "STORY_CHAT",
+   "releasedAt": "2026-03-28T15:25:47.396816Z",
+   "f": {
+    "shortLen": 27,
+    "introLen": 999,
+    "longLen": 437,
+    "charCount": 2,
+    "charDescLen": 378,
+    "exampleConvs": 0,
+    "lorebooks": 1,
+    "tagCount": 10,
+    "introNarration": 94,
+    "introDialogue": 4,
+    "introEndsOpen": 0,
+    "userMention": 8,
+    "commentLen": 60,
+    "plugins": 0,
+    "ageDays": 219,
+    "perDay": 31852
+   },
+   "score": 76
+  },
+  {
+   "id": "ef92bd0b-72ed-45fb-a613-18be67df136f",
+   "url": "https://zeta-ai.io/ko/plots/ef92bd0b-72ed-45fb-a613-18be67df136f/profile",
+   "name": "이중원",
+   "creator": "삐뽀",
+   "count": 5080850,
+   "rank": null,
+   "tags": [
+    "상처",
+    "시한부",
+    "애증",
+    "오해",
+    "부부",
+    "조직물",
+    "순애",
+    "HL",
+    "HL권장"
+   ],
+   "genres": [
+    "로맨스",
+    "조직·느와르"
+   ],
+   "short": "당신이 떠난 날, 다정했던 남편은 죽었다.",
+   "introExcerpt": "*진료실에서 나온 Guest은 한참 동안 손에 쥔 진단서를 바라보다 천천히 접어 가방 안에 넣었다. 의사는 지금이라면 아직 수술이 가능하다고 했다. 하지만 그 가능성은 막대한 수술비를 마련했을 때의 이야기였다. 가진 것은 이미 대부분 처분했고, 받을 수 있는 대출도 모두 알아봤지만 남은…",
+   "longExcerpt": "",
+   "charNames": [
+    "이중원"
+   ],
+   "mode": "STORY_CHAT",
+   "releasedAt": "2026-07-23T20:15:04.877514Z",
+   "f": {
+    "shortLen": 23,
+    "introLen": 1017,
+    "longLen": 0,
+    "charCount": 1,
+    "charDescLen": 0,
+    "exampleConvs": 0,
+    "lorebooks": 4,
+    "tagCount": 9,
+    "introNarration": 90,
+    "introDialogue": 2,
+    "introEndsOpen": 0,
+    "userMention": 3,
+    "commentLen": 86,
+    "plugins": 5,
+    "ageDays": 102,
+    "perDay": 49870
+   },
+   "score": 60
+  },
+  {
+   "id": "fc588617-5317-4207-8bfc-ee391d4a0898",
+   "url": "https://zeta-ai.io/ko/plots/fc588617-5317-4207-8bfc-ee391d4a0898/profile",
+   "name": "이안 킹슬리",
+   "creator": "수월",
+   "count": 11909830,
+   "rank": null,
+   "tags": [
+    "영국",
+    "대학생",
+    "철벽",
+    "츤데레",
+    "집착",
+    "싸가지",
+    "까칠",
+    "순애",
+    "hl",
+    "bl"
+   ],
+   "genres": [
+    "로맨스",
+    "BL·GL",
+    "집착·광기",
+    "학원"
+   ],
+   "short": "소개팅에 대타로 왔는데 상대가 지독한 철벽남이다.",
+   "introExcerpt": "*최고급 호텔 라운지의 클래식한 재즈 음악조차 숨죽이게 만드는 위압감이었다.* *잔뜩 흐트러진 금발 아래로 비치는 흑안은 며칠 밤을 설친 듯 나른하면서도, 상대를 짓누를 것처럼 날카로웠다.* *196cm의 거대한 체구로 소파에 깊숙이 기대앉은 이안 킹슬리는 연신 귀에 걸린 피어싱을 만지…",
+   "longExcerpt": "",
+   "charNames": [
+    "이안 킹슬리"
+   ],
+   "mode": "STORY_CHAT",
+   "releasedAt": "2026-07-17T15:50:54.295487Z",
+   "f": {
+    "shortLen": 27,
+    "introLen": 425,
+    "longLen": 0,
+    "charCount": 1,
+    "charDescLen": 0,
+    "exampleConvs": 0,
+    "lorebooks": 1,
+    "tagCount": 10,
+    "introNarration": 91,
+    "introDialogue": 4,
+    "introEndsOpen": 0,
+    "userMention": 2,
+    "commentLen": 0,
+    "plugins": 9,
+    "ageDays": 108,
+    "perDay": 110210
+   },
+   "score": 62
+  },
+  {
+   "id": "0acd577c-5acc-46f5-9c91-c8a89da007d2",
+   "url": "https://zeta-ai.io/ko/plots/0acd577c-5acc-46f5-9c91-c8a89da007d2/profile",
+   "name": "차윤조",
+   "creator": "우왓",
+   "count": 15659984,
+   "rank": null,
+   "tags": [
+    "권태기",
+    "남편",
+    "쓰레기",
+    "후회",
+    "피폐",
+    "나쁜남자",
+    "집착",
+    "애증",
+    "소유욕",
+    "로맨스"
+   ],
+   "genres": [
+    "로맨스",
+    "집착·광기",
+    "혐관·후회"
+   ],
+   "short": "영상이라도 틀어보라는 남편",
+   "introExcerpt": "*침대 헤드에 비스듬히 기댄 윤조가 영혼 없는 눈으로 핸드폰 화면만 스크롤한다.* *어떻게든 관계를 회복해보려 용기 내 다가간 Guest의 손길에도, 그의 탄탄한 몸은 아무것도 느끼지 못하는 듯 차갑게 식어있을 뿐이다.* *어색하고 냉랭한 침묵 속, 한숨을 푹 쉰 윤조가 한심하다는 눈빛…",
+   "longExcerpt": "",
+   "charNames": [
+    "차윤조"
+   ],
+   "mode": "STORY_CHAT",
+   "releasedAt": "2026-07-23T12:41:39.823547Z",
+   "f": {
+    "shortLen": 14,
+    "introLen": 260,
+    "longLen": 0,
+    "charCount": 1,
+    "charDescLen": 0,
+    "exampleConvs": 0,
+    "lorebooks": 2,
+    "tagCount": 10,
+    "introNarration": 80,
+    "introDialogue": 17,
+    "introEndsOpen": 0,
+    "userMention": 2,
+    "commentLen": 119,
+    "plugins": 11,
+    "ageDays": 102,
+    "perDay": 153234
+   },
+   "score": 56
+  },
+  {
+   "id": "9e90db1f-57e2-4614-84c3-4bc0c8f99079",
+   "url": "https://zeta-ai.io/ko/plots/9e90db1f-57e2-4614-84c3-4bc0c8f99079/profile",
+   "name": "류자헌",
+   "creator": "Seiyan",
+   "count": 7974689,
+   "rank": null,
+   "tags": [
+    "능글",
+    "로코",
+    "다정",
+    "능청",
+    "사극",
+    "집착",
+    "유저바라기",
+    "순애",
+    "hl",
+    "bl"
+   ],
+   "genres": [
+    "로맨스",
+    "BL·GL",
+    "집착·광기"
+   ],
+   "short": "5년만에 돌아온 꼬마 서방님이 너무 남자가 되었다",
+   "introExcerpt": "*1776년 3월 12일.* *실로 5년 만이었다, 고향에 돌아가는 것은.* *마을에서는 이미 경사라며 잔치를 준비 중이었다. 이제 막 약관을 넘긴 나이에 장원급제를 이루고, 현감이 되어 돌아오고 있었으니까.* *그러나 정작 고향에 돌아온 류자헌이 제일 먼저 찾은 곳은 잔치가 열리는 관…",
+   "longExcerpt": "",
+   "charNames": [
+    "류자헌"
+   ],
+   "mode": "STORY_CHAT",
+   "releasedAt": "2026-06-28T16:29:44.490252Z",
+   "f": {
+    "shortLen": 27,
+    "introLen": 683,
+    "longLen": 0,
+    "charCount": 1,
+    "charDescLen": 0,
+    "exampleConvs": 0,
+    "lorebooks": 1,
+    "tagCount": 10,
+    "introNarration": 94,
+    "introDialogue": 3,
+    "introEndsOpen": 1,
+    "userMention": 0,
+    "commentLen": 68,
+    "plugins": 0,
+    "ageDays": 127,
+    "perDay": 62774
+   },
+   "score": 62
+  },
+  {
+   "id": "9d9e9e81-2627-4dfe-a8c0-ab5f2c13a406",
+   "url": "https://zeta-ai.io/ko/plots/9d9e9e81-2627-4dfe-a8c0-ab5f2c13a406/profile",
+   "name": "백해율",
+   "creator": "수월",
+   "count": 5643813,
+   "rank": null,
+   "tags": [
+    "대학생",
+    "철벽",
+    "무뚝뚝",
+    "조직보스",
+    "집착",
+    "순애",
+    "소유욕",
+    "떡대",
+    "hl",
+    "bl"
+   ],
+   "genres": [
+    "로맨스",
+    "BL·GL",
+    "집착·광기",
+    "학원",
+    "조직·느와르"
+   ],
+   "short": "벌칙으로 조폭 선배와 키스해야 한다.",
+   "introExcerpt": "*아스란 대학교 후문, 자욱한 담배 연기 너머로 범접할 수 없는 위압감이 일렁였다.* *거구와 백발에 벽안을 가진 무역학과 4학년, 아스란대 최고의 무심철벽남 백해율.* *가만히 서 있는 것만으로도 맹수의 숨결이 느껴지는 그가 굳은 표정으로 서 있었다.* *그리고 그 앞에는, 친구들과의…",
+   "longExcerpt": "",
+   "charNames": [
+    "백해율"
+   ],
+   "mode": "STORY_CHAT",
+   "releasedAt": "2026-07-06T00:18:51.073344Z",
+   "f": {
+    "shortLen": 20,
+    "introLen": 687,
+    "longLen": 0,
+    "charCount": 1,
+    "charDescLen": 0,
+    "exampleConvs": 0,
+    "lorebooks": 2,
+    "tagCount": 10,
+    "introNarration": 90,
+    "introDialogue": 6,
+    "introEndsOpen": 1,
+    "userMention": 6,
+    "commentLen": 78,
+    "plugins": 9,
+    "ageDays": 120,
+    "perDay": 47145
+   },
+   "score": 84
+  },
+  {
+   "id": "98d78580-55f8-4b47-be6c-b097e8c2406e",
+   "url": "https://zeta-ai.io/ko/plots/98d78580-55f8-4b47-be6c-b097e8c2406e/profile",
+   "name": "유하진",
+   "creator": "우왓",
+   "count": 5320514,
+   "rank": null,
+   "tags": [
+    "소꿉친구",
+    "무자각",
+    "체대생",
+    "남사친",
+    "삼각관계",
+    "다정",
+    "질투",
+    "캠퍼스",
+    "순애",
+    "후회"
+   ],
+   "genres": [
+    "로맨스",
+    "혐관·후회"
+   ],
+   "short": "여친이랑…… 중에 내 이름 불렀다는 소꿉친구",
+   "introExcerpt": "*도어락이 열리는 날카로운 소리와 함께, 여행에서 막 돌아왔을 하진이 Guest의 자취방 안으로 걸어 들어온다. 늘 칼같이 반듯하던 국가대표 선수의 어깨는 잔뜩 내려앉아 있고, 얼굴은 며칠 밤은 지새운 듯 처참하게 퀭한 상태다.* *자취방 한가운데에 멍하니 서 있던 하진은, 이내 무너지…",
+   "longExcerpt": "",
+   "charNames": [
+    "유하진",
+    "김미래"
+   ],
+   "mode": "STORY_CHAT",
+   "releasedAt": "2026-07-20T16:16:55.154280Z",
+   "f": {
+    "shortLen": 24,
+    "introLen": 615,
+    "longLen": 0,
+    "charCount": 2,
+    "charDescLen": 0,
+    "exampleConvs": 0,
+    "lorebooks": 2,
+    "tagCount": 10,
+    "introNarration": 66,
+    "introDialogue": 31,
+    "introEndsOpen": 1,
+    "userMention": 3,
+    "commentLen": 0,
+    "plugins": 8,
+    "ageDays": 105,
+    "perDay": 50649
+   },
+   "score": 82
+  },
+  {
+   "id": "d740d61e-af5f-4a55-b4ed-c7b736ab8968",
+   "url": "https://zeta-ai.io/ko/plots/d740d61e-af5f-4a55-b4ed-c7b736ab8968/profile",
+   "name": "남학준",
+   "creator": "디노의 남편이 된𐙚𝕂𝕦앤끄",
+   "count": 5010976,
+   "rank": null,
+   "tags": [
+    "hl",
+    "소꿉친구",
+    "운동선수",
+    "장난꾸러기",
+    "순애",
+    "다정"
+   ],
+   "genres": [
+    "로맨스"
+   ],
+   "short": "야,Guest 나 수건 좀",
+   "introExcerpt": "*익숙함은 때로, 사랑보다 더 위험했다. 어릴 적부터 같은 동네에서 자란 우리. 유치원도, 초등학교도, 중학교도. 서로의 시간이 닿지 않은 곳이 없었다. 그래서인지 그는 우리 집 비밀번호까지 외우고 있었다. 삑─* 나 왔다. *운동을 막 끝낸 듯 젖은 머리카락과 땀에 흠뻑 젖은 운동복.…",
+   "longExcerpt": "Guest과 남학준은 같은 동네에서 자랐다. 초등학교 입학식 날, 운동장에서 길을 잃고 울고 있던 너에게 먼저 다가온 아이. “같이 교실 찾을래?” 그 한마디를 시작으로 둘은 언제나 함께였다. 등굣길도, 하굣길도. …",
+   "charNames": [
+    "남학준"
+   ],
+   "mode": "STORY_CHAT",
+   "releasedAt": "2026-07-26T02:06:07.118319Z",
+   "f": {
+    "shortLen": 14,
+    "introLen": 347,
+    "longLen": 639,
+    "charCount": 1,
+    "charDescLen": 758,
+    "exampleConvs": 0,
+    "lorebooks": 0,
+    "tagCount": 6,
+    "introNarration": 71,
+    "introDialogue": 28,
+    "introEndsOpen": 0,
+    "userMention": 1,
+    "commentLen": 48,
+    "plugins": 6,
+    "ageDays": 100,
+    "perDay": 50292
+   },
+   "score": 58
+  },
+  {
+   "id": "8bd1ec64-bcfb-4ad5-a8a8-55d787fc9bd4",
+   "url": "https://zeta-ai.io/ko/plots/8bd1ec64-bcfb-4ad5-a8a8-55d787fc9bd4/profile",
+   "name": "서태혁",
+   "creator": "LovingYak",
+   "count": 6320643,
+   "rank": null,
+   "tags": [
+    "짝사랑",
+    "연하",
+    "HL",
+    "BL",
+    "로맨스",
+    "순애",
+    "츤데레",
+    "누나친구"
+   ],
+   "genres": [
+    "로맨스",
+    "BL·GL"
+   ],
+   "short": "가족 여행 가기로 했는데 왜 누나 친구랑 단 둘이냐고, 씨발..",
+   "introExcerpt": "*제주도로 가는 공항, 태혁이 멍하니 체크인을 하고 있다.* 아니, 씨발.. 이게 맞아..?",
+   "longExcerpt": "",
+   "charNames": [
+    "서태혁"
+   ],
+   "mode": "STORY_CHAT",
+   "releasedAt": "2026-05-01T14:43:12.101167Z",
+   "f": {
+    "shortLen": 35,
+    "introLen": 51,
+    "longLen": 0,
+    "charCount": 1,
+    "charDescLen": 0,
+    "exampleConvs": 0,
+    "lorebooks": 0,
+    "tagCount": 8,
+    "introNarration": 63,
+    "introDialogue": 35,
+    "introEndsOpen": 1,
+    "userMention": 0,
+    "commentLen": 0,
+    "plugins": 0,
+    "ageDays": 185,
+    "perDay": 34145
+   },
+   "score": 51
+  },
+  {
+   "id": "82091604-7b85-43f7-bf92-09675894adb4",
+   "url": "https://zeta-ai.io/ko/plots/82091604-7b85-43f7-bf92-09675894adb4/profile",
+   "name": "-",
+   "creator": "하하",
+   "count": 4818078,
+   "rank": null,
+   "tags": [
+    "hl",
+    "blㄱㄴ"
+   ],
+   "genres": [
+    "로맨스",
+    "BL·GL"
+   ],
+   "short": "야, x됐다. 내 공주 또 심기 불편하시댄다.",
+   "introExcerpt": "``` 아저씨 나 오늘 기분 너무 안좋아 다 패고싶어 엽떡. 치즈우삼겹당면추가 오리지널 *누구 하나 족치러 가는 길, 핸드폰이 울린다. 확인 해보니 또 기분이 안좋단다. 이 새끼는 대체 기분 좋은 날이 언제고. 다패고싶다는 말에 미간이 찌푸려진다. 본인에게도 매우 위협적인 말이였다. 폰…",
+   "longExcerpt": "",
+   "charNames": [
+    "권사혁",
+    "이민수",
+    "민두식"
+   ],
+   "mode": "STORY_CHAT",
+   "releasedAt": "2026-07-09T05:20:24.092736Z",
+   "f": {
+    "shortLen": 25,
+    "introLen": 782,
+    "longLen": 0,
+    "charCount": 3,
+    "charDescLen": 0,
+    "exampleConvs": 4,
+    "lorebooks": 0,
+    "tagCount": 2,
+    "introNarration": 65,
+    "introDialogue": 32,
+    "introEndsOpen": 0,
+    "userMention": 0,
+    "commentLen": 12,
+    "plugins": 5,
+    "ageDays": 117,
+    "perDay": 41356
+   },
+   "score": 53
+  },
+  {
+   "id": "e8f3de63-643a-4497-b7a6-65406d2a1bc7",
+   "url": "https://zeta-ai.io/ko/plots/e8f3de63-643a-4497-b7a6-65406d2a1bc7/profile",
+   "name": "차이건",
+   "creator": "16000! 늘멍그맛",
+   "count": 9375415,
+   "rank": null,
+   "tags": [
+    "토끼수인",
+    "조직",
+    "경매",
+    "납치",
+    "사고뭉치",
+    "오지콤",
+    "로맨스",
+    "hl",
+    "조직보스",
+    "bl"
+   ],
+   "genres": [
+    "로맨스",
+    "BL·GL",
+    "조직·느와르",
+    "수인·이종족"
+   ],
+   "short": "\"야 두식아. 저거 하얀거 우리집 토끼 아니냐?\"",
+   "introExcerpt": "*따분한 표정으로 VIP석에 앉아 독주를 들이켜던 이건의 눈에, 오늘 경매의 하이라이트라 불리는 마지막 상품이 들어왔다.화려한 조명 아래, 철창 속에 갇혀 떨고 있는 것은 다름 아닌 제 집 거실을 난장판으로 만들고 사라졌던 그 사고뭉치 토끼였다.* *오늘 경매의 마지막을 장식할 마지막 …",
+   "longExcerpt": "",
+   "charNames": [
+    "차이건",
+    "곽두식"
+   ],
+   "mode": "STORY_CHAT",
+   "releasedAt": "2026-03-27T13:28:31.401773Z",
+   "f": {
+    "shortLen": 27,
+    "introLen": 370,
+    "longLen": 0,
+    "charCount": 2,
+    "charDescLen": 0,
+    "exampleConvs": 0,
+    "lorebooks": 1,
+    "tagCount": 10,
+    "introNarration": 91,
+    "introDialogue": 7,
+    "introEndsOpen": 1,
+    "userMention": 0,
+    "commentLen": 124,
+    "plugins": 8,
+    "ageDays": 220,
+    "perDay": 42584
+   },
+   "score": 69
+  },
+  {
+   "id": "011ce6c6-2979-482d-a937-4626a0aabbb1",
+   "url": "https://zeta-ai.io/ko/plots/011ce6c6-2979-482d-a937-4626a0aabbb1/profile",
+   "name": "문성현",
+   "creator": "Seiyan",
+   "count": 4662334,
+   "rank": null,
+   "tags": [
+    "위장결혼",
+    "혐관",
+    "특수부대",
+    "로코",
+    "rpg",
+    "hl",
+    "bl",
+    "능글",
+    "티격태격",
+    "유저바라기"
+   ],
+   "genres": [
+    "로맨스",
+    "BL·GL",
+    "혐관·후회"
+   ],
+   "short": "이번 작전명은, 연애결혼한 아내바보 남편입니다",
+   "introExcerpt": "*뜬금없는 호출이었다. 어쩐지 불길한 예감에 휩싸여서 브링핑룸에 도착했을 때 제일 먼저 본 얼굴은.* 아, 또 이러시네. 문만 열고 들어와야지, 제 마음의 문까지 열면 어떡합니까? *제일 꼴보기 싫어하는 놈이었다. 실실 웃는 얼굴, 무게감이라곤 전혀 없는 말을 쉴새없이 던져대는 한심한 …",
+   "longExcerpt": "",
+   "charNames": [
+    "문성현"
+   ],
+   "mode": "STORY_CHAT",
+   "releasedAt": "2026-07-27T15:00:32.768948Z",
+   "f": {
+    "shortLen": 25,
+    "introLen": 599,
+    "longLen": 0,
+    "charCount": 1,
+    "charDescLen": 0,
+    "exampleConvs": 0,
+    "lorebooks": 1,
+    "tagCount": 10,
+    "introNarration": 75,
+    "introDialogue": 23,
+    "introEndsOpen": 1,
+    "userMention": 4,
+    "commentLen": 12,
+    "plugins": 8,
+    "ageDays": 98,
+    "perDay": 47526
+   },
+   "score": 80
+  },
+  {
+   "id": "d063e6ef-920c-421c-bfb5-6bc5e8336bd9",
+   "url": "https://zeta-ai.io/ko/plots/d063e6ef-920c-421c-bfb5-6bc5e8336bd9/profile",
+   "name": "백청우",
+   "creator": "수월",
+   "count": 4141468,
+   "rank": null,
+   "tags": [
+    "조직보스",
+    "흑막",
+    "계략",
+    "순애",
+    "집착",
+    "유저바라기",
+    "이중인격",
+    "대형견",
+    "hl",
+    "bl"
+   ],
+   "genres": [
+    "로맨스",
+    "BL·GL",
+    "집착·광기",
+    "조직·느와르"
+   ],
+   "short": "나... 좀 재워주면 안 돼요? 나 착한데...",
+   "introExcerpt": "*눈발이 거세게 휘몰아치는 혹한의 겨울 밤.* *가로등마저 흐릿한 외딴 골목길 구석에, 눈밭에 한 남자가 쓰러져 있었다.* *적들의 비열한 기습으로 온몸이 만신창이가 된 채 몰아쉬는 숨결마다 짙은 흰 김이 터져 나왔다.* *인기척을 느낀 그가 젖은 흑발 사이로 시리도록 투명한 벽안을 흐…",
+   "longExcerpt": "",
+   "charNames": [
+    "백청우"
+   ],
+   "mode": "STORY_CHAT",
+   "releasedAt": "2026-07-13T19:55:55.736854Z",
+   "f": {
+    "shortLen": 26,
+    "introLen": 405,
+    "longLen": 0,
+    "charCount": 1,
+    "charDescLen": 0,
+    "exampleConvs": 4,
+    "lorebooks": 3,
+    "tagCount": 10,
+    "introNarration": 90,
+    "introDialogue": 6,
+    "introEndsOpen": 1,
+    "userMention": 2,
+    "commentLen": 79,
+    "plugins": 8,
+    "ageDays": 112,
+    "perDay": 37012
+   },
+   "score": 78
+  },
+  {
+   "id": "26805d6f-f2ca-4b5e-a9d4-adf67a57b0fe",
+   "url": "https://zeta-ai.io/ko/plots/26805d6f-f2ca-4b5e-a9d4-adf67a57b0fe/profile",
+   "name": "내 중지 손가락 진짜 네 거 같아",
+   "creator": "ʙʟᴜᴇʙᴇʀʀʏ",
+   "count": 3964414,
+   "rank": null,
+   "tags": [
+    "국가대표",
+    "로코",
+    "순애",
+    "태권도",
+    "파트너",
+    "소꿉친구",
+    "로맨스",
+    "대형견",
+    "hl",
+    "bl"
+   ],
+   "genres": [
+    "로맨스",
+    "BL·GL"
+   ],
+   "short": "다르게 쓰니까 조용해지던데",
+   "introExcerpt": "*금요일 오후, 선수촌에서 외박 허가가 떨어진 날. 우현재는 훈련을 마치자마자 샤워를 빨리 끝내고, 더플백 하나 덜렁 들고 주차장으로 향했다. 목적지는 당연히 하나. Guest의 집.* *모든 게 녹아내릴 한여름 더위에도 입꼬리가 올라가는 게 느껴져 손등으로 입가를 쓱 문질렀다.* >나…",
+   "longExcerpt": "",
+   "charNames": [
+    "우현재"
+   ],
+   "mode": "STORY_CHAT",
+   "releasedAt": "2026-08-08T05:05:32.071860Z",
+   "f": {
+    "shortLen": 14,
+    "introLen": 462,
+    "longLen": 0,
+    "charCount": 1,
+    "charDescLen": 0,
+    "exampleConvs": 0,
+    "lorebooks": 0,
+    "tagCount": 10,
+    "introNarration": 91,
+    "introDialogue": 7,
+    "introEndsOpen": 1,
+    "userMention": 2,
+    "commentLen": 12,
+    "plugins": 0,
+    "ageDays": 87,
+    "perDay": 45824
+   },
+   "score": 71
+  },
+  {
+   "id": "decd571b-27bf-4050-8178-50d3a85ead10",
+   "url": "https://zeta-ai.io/ko/plots/decd571b-27bf-4050-8178-50d3a85ead10/profile",
+   "name": "서재이",
+   "creator": "과부하",
+   "count": 3915152,
+   "rank": null,
+   "tags": [
+    "모델",
+    "매니저",
+    "까칠",
+    "연예계",
+    "Hl",
+    "Bl",
+    "현대"
+   ],
+   "genres": [
+    "로맨스",
+    "BL·GL",
+    "현대·일상"
+   ],
+   "short": "매니저가 못 버티기로 유명한 톱모델. 이번엔 내가 걸렸다.",
+   "introExcerpt": "*정상급 톱모델 서재이. 국내외 유명 브랜드와 패션쇼를 오가며 이름만 대면 누구나 아는 모델이지만, 업계에서는 까다로운 성격으로도 유명하다. 최근 1년 동안 교체된 전담 매니저만 네 명. 그리고 전임 매니저가 두 달 만에 사직서를 낸 뒤, 그 자리에 새롭게 배정된 사람이 바로 나였다. …",
+   "longExcerpt": "",
+   "charNames": [
+    "서재이"
+   ],
+   "mode": "STORY_CHAT",
+   "releasedAt": "2026-09-01T11:23:49.983616Z",
+   "f": {
+    "shortLen": 32,
+    "introLen": 613,
+    "longLen": 0,
+    "charCount": 1,
+    "charDescLen": 0,
+    "exampleConvs": 0,
+    "lorebooks": 4,
+    "tagCount": 7,
+    "introNarration": 81,
+    "introDialogue": 18,
+    "introEndsOpen": 1,
+    "userMention": 1,
+    "commentLen": 140,
+    "plugins": 7,
+    "ageDays": 62,
+    "perDay": 62893
+   },
+   "score": 67
+  },
+  {
+   "id": "593c52c1-083d-4d22-8712-5835db6d9b51",
+   "url": "https://zeta-ai.io/ko/plots/593c52c1-083d-4d22-8712-5835db6d9b51/profile",
+   "name": "[언리밋] 백 결",
+   "creator": "요해",
+   "count": 8369763,
+   "rank": null,
+   "tags": [
+    "bl",
+    "hl",
+    "호구",
+    "집착",
+    "능글",
+    "게임",
+    "유저바라기",
+    "순애",
+    "대학생",
+    "존잘"
+   ],
+   "genres": [
+    "로맨스",
+    "BL·GL",
+    "집착·광기",
+    "학원"
+   ],
+   "short": "게임에서 호구 하나 꼬셨는데 같은 대학교에 철벽 존잘남이었다.",
+   "introExcerpt": "*세상엔 참 쉬운 놈들이 많다. 적당히 귀여운 척 좀 해주고, 가지고 싶은 아이템 앞에서 시무룩한 이모티콘 몇 개 던져주면 알아서 지갑을 여는 호구들. '아스텔라이아'에서 만난 '결'도 그중 하나였다. 닉네임처럼 참 결 고운 호구라고 생각했다.* *그런데 이 자식, 갈수록 좀 이상하다.…",
+   "longExcerpt": "",
+   "charNames": [
+    "백 결"
+   ],
+   "mode": "STORY_CHAT",
+   "releasedAt": "2026-04-29T14:14:52.445551Z",
+   "f": {
+    "shortLen": 34,
+    "introLen": 626,
+    "longLen": 0,
+    "charCount": 1,
+    "charDescLen": 0,
+    "exampleConvs": 0,
+    "lorebooks": 1,
+    "tagCount": 10,
+    "introNarration": 93,
+    "introDialogue": 6,
+    "introEndsOpen": 1,
+    "userMention": 0,
+    "commentLen": 133,
+    "plugins": 3,
+    "ageDays": 187,
+    "perDay": 44726
+   },
+   "score": 62
+  },
+  {
+   "id": "63d2883b-8438-4d1c-9e78-68a440c5d2fb",
+   "url": "https://zeta-ai.io/ko/plots/63d2883b-8438-4d1c-9e78-68a440c5d2fb/profile",
+   "name": "루벤 에르하르트",
+   "creator": "피클",
+   "count": 6040177,
+   "rank": null,
+   "tags": [
+    "bl",
+    "hl",
+    "북부대공",
+    "로맨스판타지",
+    "힐링",
+    "로판",
+    "로맨스",
+    "순애"
+   ],
+   "genres": [
+    "로맨스",
+    "BL·GL",
+    "판타지",
+    "로판·회귀"
+   ],
+   "short": "분명히 복수하려고 데려왔는데, Guest이 너무 하찮고 귀엽다.",
+   "introExcerpt": "*Guest과 첫 만남이었다.* *눈 쌓인 북부 저택. 루벤은 전혀 긴장하지 않은 얼굴로, 차갑게 가라앉은 눈으로 Guest을 기다렸다.* *원수 가문의 마지막 후계자.* *분명 악독하고, 오만하고, 비굴하거나, 발악하겠지 생각했다.* *근데 문 열리자마자 하는 소리가.* 우와! 샹들리…",
+   "longExcerpt": "",
+   "charNames": [
+    "루벤"
+   ],
+   "mode": "STORY_CHAT",
+   "releasedAt": "2026-05-12T18:48:30.943660Z",
+   "f": {
+    "shortLen": 35,
+    "introLen": 972,
+    "longLen": 0,
+    "charCount": 1,
+    "charDescLen": 0,
+    "exampleConvs": 0,
+    "lorebooks": 0,
+    "tagCount": 8,
+    "introNarration": 29,
+    "introDialogue": 1,
+    "introEndsOpen": 1,
+    "userMention": 5,
+    "commentLen": 126,
+    "plugins": 3,
+    "ageDays": 174,
+    "perDay": 34725
+   },
+   "score": 84
+  },
+  {
+   "id": "e447cfc7-b204-4b61-9a5e-e312d47c0bc5",
+   "url": "https://zeta-ai.io/ko/plots/e447cfc7-b204-4b61-9a5e-e312d47c0bc5/profile",
+   "name": "커플 남녀무리+여우",
+   "creator": "슈크림",
+   "count": 3772578,
+   "rank": null,
+   "tags": [
+    "남녀무리",
+    "소꿉친구",
+    "존잘",
+    "존예",
+    "철벽",
+    "다정",
+    "능글",
+    "여우",
+    "커플무리",
+    "로맨스"
+   ],
+   "genres": [
+    "로맨스",
+    "다인캐"
+   ],
+   "short": "몸매도 개 별로인데 교복 존나 줄여입는 여우년",
+   "introExcerpt": "*쉬는시간,학교 옥상에는 도현,한준,태경,Guest,유림,소희가 모여서 수다를 떨고있다.* *배를 잡고 웃으며* ㅋㅋㅋㅋ미친것들.아,맞다. 니네 오늘 김지현 옷꼬라지 봤냨? 시밬ㅋㅋ. 존나 웃겨. 지가 뭐 되는줄 아나봐, 몸매도 별론데 오늘 교복 존나 줄여 입었든뎈ㅋㅋ. *착하게 웃지만…",
+   "longExcerpt": "모두 김지현은 싫어하는데 앞에서는 별로 티를 안내지만 진짜 엄청 개 극혐한다. 김지현은 애들이 싫어하고 극혐하는줄도 모르고 자기가 우월하다고 느껴서 남자애들 존나 꼬시려고 하고 귀척도 존나 한다. 커플 유저&도현 유…",
+   "charNames": [
+    "권도현",
+    "유저",
+    "서한준",
+    "정유림",
+    "강태경",
+    "배소희"
+   ],
+   "mode": "STORY_CHAT",
+   "releasedAt": "2026-01-28T08:29:07.441077Z",
+   "f": {
+    "shortLen": 25,
+    "introLen": 459,
+    "longLen": 130,
+    "charCount": 7,
+    "charDescLen": 134,
+    "exampleConvs": 0,
+    "lorebooks": 0,
+    "tagCount": 10,
+    "introNarration": 30,
+    "introDialogue": 67,
+    "introEndsOpen": 1,
+    "userMention": 3,
+    "commentLen": 0,
+    "plugins": 0,
+    "ageDays": 278,
+    "perDay": 13552
+   },
+   "score": 76
+  },
+  {
+   "id": "4e608eb3-cad2-409e-b1bf-f45480c3eb0f",
+   "url": "https://zeta-ai.io/ko/plots/4e608eb3-cad2-409e-b1bf-f45480c3eb0f/profile",
+   "name": "스포츠선수",
+   "creator": "ONOM3",
+   "count": 3983010,
+   "rank": null,
+   "tags": [
+    "커플",
+    "커플무리",
+    "국가대표",
+    "선수",
+    "스포츠",
+    "존잘",
+    "존예",
+    "남자친구",
+    "연인",
+    "동갑"
+   ],
+   "genres": [
+    "다인캐"
+   ],
+   "short": "커플 국가대표 선수",
+   "introExcerpt": "*체육관에는 각자의 종목이 다른 만큼, 움직임도 제각각이었다. 같은 공간에서 훈련하고 있지만, 서로에게 집중하는 사람은 거의 없었다. 땀과 숨소리만이 일정한 리듬처럼 바닥에 쌓였다. 이곳에서는 감정보다 기록과 동작이 먼저였다.*",
+   "longExcerpt": "하루에 한번씩 저녁마다 각자 한명씩 선수들 앞에서 대놓고 키와 몸무게 검사한다, (인바디로)",
+   "charNames": [
+    "김민호",
+    "이수빈",
+    "한효빈",
+    "허준서",
+    "유예나",
+    "기지후"
+   ],
+   "mode": "STORY_CHAT",
+   "releasedAt": "2026-01-20T09:36:26.753491Z",
+   "f": {
+    "shortLen": 10,
+    "introLen": 127,
+    "longLen": 51,
+    "charCount": 7,
+    "charDescLen": 94,
+    "exampleConvs": 0,
+    "lorebooks": 0,
+    "tagCount": 10,
+    "introNarration": 100,
+    "introDialogue": 0,
+    "introEndsOpen": 0,
+    "userMention": 0,
+    "commentLen": 0,
+    "plugins": 0,
+    "ageDays": 286,
+    "perDay": 13911
+   },
+   "score": 33
+  },
+  {
+   "id": "9371ef0a-8c80-45b9-9ada-6db7d6783908",
+   "url": "https://zeta-ai.io/ko/plots/9371ef0a-8c80-45b9-9ada-6db7d6783908/profile",
+   "name": "[언리밋] 이 백",
+   "creator": "요해",
+   "count": 3611721,
+   "rank": null,
+   "tags": [
+    "bl",
+    "hl",
+    "동양풍",
+    "빙의",
+    "집착",
+    "여우",
+    "순애",
+    "유저바라기",
+    "애교",
+    "수인"
+   ],
+   "genres": [
+    "로맨스",
+    "BL·GL",
+    "집착·광기",
+    "로판·회귀",
+    "수인·이종족"
+   ],
+   "short": "주워온 흰여우한테 남주 욕과 별걸 다했는데.. 흰여우가 원작 남주였다.",
+   "introExcerpt": "*눈을 떴을 땐 이미 모든 게 달라져 있었다.* *지독하게 고구마만 처먹이던 피폐 소설, <달을 삼킨 은우> 속으로 빙의했다는 사실을 깨닫는 데는 그리 오랜 시간이 걸리지 않았다. 하지만 주인공도, 악역도 아닌 소설 속에 등장하지도 않는 사람이라니.* *핸드폰도, 침대도 없는 이 지루한…",
+   "longExcerpt": "",
+   "charNames": [
+    "이 백"
+   ],
+   "mode": "STORY_CHAT",
+   "releasedAt": "2026-05-02T14:08:55.491215Z",
+   "f": {
+    "shortLen": 39,
+    "introLen": 598,
+    "longLen": 0,
+    "charCount": 1,
+    "charDescLen": 0,
+    "exampleConvs": 0,
+    "lorebooks": 3,
+    "tagCount": 10,
+    "introNarration": 88,
+    "introDialogue": 10,
+    "introEndsOpen": 1,
+    "userMention": 1,
+    "commentLen": 146,
+    "plugins": 0,
+    "ageDays": 184,
+    "perDay": 19614
+   },
+   "score": 67
+  },
+  {
+   "id": "f8ded26b-e441-43e7-9751-46f3bd7719d1",
+   "url": "https://zeta-ai.io/ko/plots/f8ded26b-e441-43e7-9751-46f3bd7719d1/profile",
+   "name": "수인들의 제국: 알레칸",
+   "creator": "먹고싶은거 만드는 김유벨",
+   "count": 4283759,
+   "rank": null,
+   "tags": [
+    "수인",
+    "오메가버스",
+    "로판",
+    "hl",
+    "bl가능",
+    "다공일수",
+    "여우",
+    "여우짓",
+    "다인캐",
+    "로맨스"
+   ],
+   "genres": [
+    "로맨스",
+    "BL·GL",
+    "로판·회귀",
+    "수인·이종족",
+    "다인캐"
+   ],
+   "short": "그저 취향 가득한 도파민 추구형 플롯",
+   "introExcerpt": "*황궁의 대연회장은 수백 개의 샹들리에가 쏟아내는 황금빛 아래 눈부시게 빛나고 있었다.* *각지의 귀족들과 수인 가문의 후계자들, 그리고 이름만으로도 연회장의 공기를 바꿔놓는 황족들이 하나둘 모습을 드러냈다. 화려한 드레스와 정복, 반짝이는 보석들 사이로 은은한 페로몬이 뒤섞여 흐른다.…",
+   "longExcerpt": "",
+   "charNames": [
+    "카시안 루벨리온",
+    "테오도르 아르젠",
+    "로드릭 라이젠",
+    "세실 드 벨로아",
+    "실베르 드 벨로아",
+    "발렌티아 크루웰"
+   ],
+   "mode": "STORY_CHAT",
+   "releasedAt": "2026-08-17T11:26:32.703850Z",
+   "f": {
+    "shortLen": 20,
+    "introLen": 362,
+    "longLen": 0,
+    "charCount": 7,
+    "charDescLen": 0,
+    "exampleConvs": 0,
+    "lorebooks": 2,
+    "tagCount": 10,
+    "introNarration": 81,
+    "introDialogue": 6,
+    "introEndsOpen": 1,
+    "userMention": 1,
+    "commentLen": 10,
+    "plugins": 3,
+    "ageDays": 77,
+    "perDay": 55454
+   },
+   "score": 67
+  },
+  {
+   "id": "836b320f-1c51-41e8-88d5-950e40f1aaa8",
+   "url": "https://zeta-ai.io/ko/plots/836b320f-1c51-41e8-88d5-950e40f1aaa8/profile",
+   "name": "하도진",
+   "creator": "Seiyan",
+   "count": 3532709,
+   "rank": null,
+   "tags": [
+    "소꿉친구",
+    "순애",
+    "로맨스",
+    "캠퍼스",
+    "유저바라기",
+    "집착",
+    "hl",
+    "bl",
+    "짝사랑",
+    "동갑"
+   ],
+   "genres": [
+    "로맨스",
+    "BL·GL",
+    "집착·광기"
+   ],
+   "short": "22년동안 나만 짝사랑하던 남사친에게 여친이 생겼다",
+   "introExcerpt": "*여자친구가 생기면 일상이 좀 달라질 줄 알았다. 수업이 없는 날에는 여친을 만나고, 주말에도 당연히 여친이랑 데이트하고, 하루에 가장 많이 연락하고 가장 자주 보는 것도 여친일 줄 알았는데... 오랜 관성 때문일까. 아니면 다른 이유 때문일까. 오늘도 하도진의 하루를 꽉 채우는 것은 …",
+   "longExcerpt": "",
+   "charNames": [
+    "하도진",
+    "주아림"
+   ],
+   "mode": "STORY_CHAT",
+   "releasedAt": "2026-05-28T18:04:13.806618Z",
+   "f": {
+    "shortLen": 28,
+    "introLen": 864,
+    "longLen": 0,
+    "charCount": 2,
+    "charDescLen": 0,
+    "exampleConvs": 0,
+    "lorebooks": 2,
+    "tagCount": 10,
+    "introNarration": 88,
+    "introDialogue": 9,
+    "introEndsOpen": 1,
+    "userMention": 7,
+    "commentLen": 147,
+    "plugins": 9,
+    "ageDays": 158,
+    "perDay": 22363
+   },
+   "score": 84
+  },
+  {
+   "id": "64df81dd-12b9-4b39-8801-3814bc6f2e82",
+   "url": "https://zeta-ai.io/ko/plots/64df81dd-12b9-4b39-8801-3814bc6f2e82/profile",
+   "name": "나다선",
+   "creator": "유하달",
+   "count": 12045861,
+   "rank": null,
+   "tags": [
+    "친구",
+    "친구같은연애",
+    "집착",
+    "스킨십",
+    "hl",
+    "bl",
+    "남사친",
+    "소꿉친구",
+    "대학교",
+    "무뚝뚝"
+   ],
+   "genres": [
+    "로맨스",
+    "BL·GL",
+    "집착·광기",
+    "학원"
+   ],
+   "short": "스킨십 많은 23년지기 소꿉친구에게 여자친구가 생겼다. 넌 나고 난 너야",
+   "introExcerpt": "*다음 날이면 학교를 가야 하는 소중한 일요일 저녁. 오늘도 어김없이 우리집 거실 소파에 앉아있었다.* *한참 예능 프로를 보고 있는 내 손가락을 만지작거리면서 나랑 똑같이 화면을 보고 있다.* 저녁 뭐 먹지. *여전히 화면을 보면서 내 손을 계속 만지작거리며, 무심하게 툭 내뱉었다.*…",
+   "longExcerpt": "나에게는 무려 23년지기 소꿉친구가 존재한다. 엄마끼리도 이미 어릴 적 절친으로 임신도 같은 해에 해서 우린 이미 각자 엄마 배 속에 있을 때부터 절친으로 자랄 정해진 운명이었다. 서로 모르는 게 없다. 있을 수가 …",
+   "charNames": [
+    "나다선",
+    "유리아"
+   ],
+   "mode": "STORY_CHAT",
+   "releasedAt": "2026-01-24T11:05:04.265209Z",
+   "f": {
+    "shortLen": 40,
+    "introLen": 395,
+    "longLen": 316,
+    "charCount": 2,
+    "charDescLen": 395,
+    "exampleConvs": 0,
+    "lorebooks": 0,
+    "tagCount": 10,
+    "introNarration": 90,
+    "introDialogue": 7,
+    "introEndsOpen": 0,
+    "userMention": 0,
+    "commentLen": 144,
+    "plugins": 0,
+    "ageDays": 282,
+    "perDay": 42676
+   },
+   "score": 53
+  },
+  {
+   "id": "483aad60-90bf-4c44-88a4-5fed2dab9f0c",
+   "url": "https://zeta-ai.io/ko/plots/483aad60-90bf-4c44-88a4-5fed2dab9f0c/profile",
+   "name": "차우민",
+   "creator": "Rang--",
+   "count": 10348620,
+   "rank": null,
+   "tags": [
+    "hl",
+    "스트리머",
+    "능글",
+    "집착",
+    "소꿉친구",
+    "동거",
+    "소유욕",
+    "음담패설",
+    "bl"
+   ],
+   "genres": [
+    "로맨스",
+    "BL·GL",
+    "집착·광기"
+   ],
+   "short": "벗어도 괜찮다고.",
+   "introExcerpt": "*오늘도 언제나처럼 아침 방송을 하며* *능글맞게 웃으며 회색 후드티를 입고 머리를 쓸어넘기며 의자에 기대 앉아 있다* 응? 나야 이성이든 동성이든 존나 쉽지. 시청자3:쉽다고? ㅋㅋㅋㅋ 몇 년 째 못 꼬시는 소꿉친구 있으면서ㅋㅋㅋㅋ 시청자5:그러게ㅋㅋㅋㅋ 존나 꼴리던데 시청자1:ㄹㅇㄹ…",
+   "longExcerpt": "어릴 때부터 친했고 커서도 계속 붙어 다닌다. 우민이 집에 혼자 있는거 싫다며 동거를 제안했고 당신 또한 혼자는 심심하니 그냥 수락하고 동거 중이다. 우민은 능글맞은 성격과 잘생긴 외모와 몸을 이용하여 스트리머로 일…",
+   "charNames": [
+    "차우민",
+    "시청자"
+   ],
+   "mode": "STORY_CHAT",
+   "releasedAt": "2026-05-05T04:04:39.101178Z",
+   "f": {
+    "shortLen": 9,
+    "introLen": 436,
+    "longLen": 241,
+    "charCount": 2,
+    "charDescLen": 305,
+    "exampleConvs": 0,
+    "lorebooks": 3,
+    "tagCount": 9,
+    "introNarration": 63,
+    "introDialogue": 38,
+    "introEndsOpen": 1,
+    "userMention": 2,
+    "commentLen": 0,
+    "plugins": 0,
+    "ageDays": 182,
+    "perDay": 57000
+   },
+   "score": 71
+  }
+ ],
+ "stats": {
+  "n": 36,
+  "feats": [
+   {
+    "k": "longLen",
+    "label": "상세 설명 길이",
+    "c": 0.35,
+    "topAvg": 293.7,
+    "botAvg": 84.1
+   },
+   {
+    "k": "introLen",
+    "label": "인트로(첫 메시지) 길이",
+    "c": -0.24,
+    "topAvg": 455.4,
+    "botAvg": 524.8
+   },
+   {
+    "k": "charCount",
+    "label": "캐릭터 수",
+    "c": -0.24,
+    "topAvg": 1.9,
+    "botAvg": 2.6
+   },
+   {
+    "k": "charDescLen",
+    "label": "캐릭터 설정 길이",
+    "c": 0.24,
+    "topAvg": 170.8,
+    "botAvg": 85.2
+   },
+   {
+    "k": "userMention",
+    "label": "유저 언급 수",
+    "c": -0.24,
+    "topAvg": 2.2,
+    "botAvg": 2.8
+   },
+   {
+    "k": "exampleConvs",
+    "label": "예시 대화 수",
+    "c": 0.14,
+    "topAvg": 0.4,
+    "botAvg": 0.4
+   },
+   {
+    "k": "shortLen",
+    "label": "한 줄 소개 길이",
+    "c": 0.13,
+    "topAvg": 27.1,
+    "botAvg": 24.6
+   },
+   {
+    "k": "lorebooks",
+    "label": "공개 로어북 수",
+    "c": -0.13,
+    "topAvg": 0.9,
+    "botAvg": 1.3
+   },
+   {
+    "k": "introEndsOpen",
+    "label": "인트로가 유저에게 넘기며 끝남",
+    "c": -0.13,
+    "topAvg": 0.6,
+    "botAvg": 0.7
+   },
+   {
+    "k": "plugins",
+    "label": "부가 기능 수",
+    "c": -0.12,
+    "topAvg": 2.8,
+    "botAvg": 4.3
+   },
+   {
+    "k": "introNarration",
+    "label": "인트로 묘사 비중(%)",
+    "c": 0.09,
+    "topAvg": 81.2,
+    "botAvg": 75.3
+   },
+   {
+    "k": "tagCount",
+    "label": "태그 수",
+    "c": -0.07,
+    "topAvg": 9.2,
+    "botAvg": 8.9
+   },
+   {
+    "k": "commentLen",
+    "label": "작가 코멘트 길이",
+    "c": -0.06,
+    "topAvg": 65.8,
+    "botAvg": 54.7
+   },
+   {
+    "k": "introDialogue",
+    "label": "인트로 대사 비중(%)",
+    "c": -0.01,
+    "topAvg": 16.6,
+    "botAvg": 17.9
+   }
+  ],
+  "tags": [
+   [
+    "hl",
+    27
+   ],
+   [
+    "bl",
+    20
+   ],
+   [
+    "로맨스",
+    15
+   ],
+   [
+    "순애",
+    14
+   ],
+   [
+    "집착",
+    13
+   ],
+   [
+    "능글",
+    11
+   ],
+   [
+    "유저바라기",
+    8
+   ],
+   [
+    "다정",
+    7
+   ],
+   [
+    "소꿉친구",
+    7
+   ],
+   [
+    "철벽",
+    6
+   ],
+   [
+    "오지콤",
+    5
+   ],
+   [
+    "조직보스",
+    5
+   ],
+   [
+    "존잘",
+    5
+   ],
+   [
+    "짝사랑",
+    5
+   ],
+   [
+    "무뚝뚝",
+    5
+   ],
+   [
+    "여우",
+    5
+   ],
+   [
+    "소유욕",
+    5
+   ],
+   [
+    "남녀무리",
+    4
+   ],
+   [
+    "존예",
+    4
+   ],
+   [
+    "아저씨",
+    3
+   ],
+   [
+    "츤데레",
+    3
+   ],
+   [
+    "혐관",
+    3
+   ],
+   [
+    "피폐",
+    3
+   ],
+   [
+    "떡대",
+    3
+   ],
+   [
+    "까칠",
+    3
+   ]
+  ],
+  "tagsTop": [
+   [
+    "hl",
+    13
+   ],
+   [
+    "bl",
+    11
+   ],
+   [
+    "로맨스",
+    9
+   ],
+   [
+    "집착",
+    9
+   ],
+   [
+    "능글",
+    8
+   ],
+   [
+    "소유욕",
+    4
+   ],
+   [
+    "오지콤",
+    4
+   ],
+   [
+    "순애",
+    4
+   ],
+   [
+    "조직보스",
+    3
+   ],
+   [
+    "피폐",
+    3
+   ],
+   [
+    "유저바라기",
+    3
+   ],
+   [
+    "다정",
+    3
+   ],
+   [
+    "무뚝뚝",
+    3
+   ],
+   [
+    "존잘",
+    3
+   ],
+   [
+    "혐관",
+    2
+   ]
+  ],
+  "genres": [
+   [
+    "로맨스",
+    34
+   ],
+   [
+    "BL·GL",
+    22
+   ],
+   [
+    "집착·광기",
+    13
+   ],
+   [
+    "조직·느와르",
+    6
+   ],
+   [
+    "다인캐",
+    6
+   ],
+   [
+    "혐관·후회",
+    6
+   ],
+   [
+    "학원",
+    5
+   ],
+   [
+    "수인·이종족",
+    3
+   ],
+   [
+    "로판·회귀",
+    3
+   ],
+   [
+    "현대·일상",
+    1
+   ],
+   [
+    "판타지",
+    1
+   ]
+  ],
+  "genresTop": [
+   [
+    "로맨스",
+    18
+   ],
+   [
+    "BL·GL",
+    11
+   ],
+   [
+    "집착·광기",
+    9
+   ],
+   [
+    "혐관·후회",
+    4
+   ],
+   [
+    "학원",
+    4
+   ],
+   [
+    "조직·느와르",
+    3
+   ],
+   [
+    "다인캐",
+    2
+   ],
+   [
+    "수인·이종족",
+    1
+   ]
+  ],
+  "rising": [],
+  "medianCount": 6320643
+ },
+ "log": [
+  {
+   "run": "41490750873",
+   "t": 0,
+   "type": "start",
+   "msg": "🛰 제타 탐사 시작 — 최대 36개 작품을 천천히 읽어요",
+   "max": 36
+  },
+  {
+   "run": "41490750873",
+   "t": 269,
+   "type": "visit",
+   "msg": "🚪 제타 홈 화면에 들어가는 중…",
+   "url": "https://zeta-ai.io/ko"
+  },
+  {
+   "run": "41490750873",
+   "t": 985,
+   "type": "list",
+   "msg": "📋 홈에서 작품 12개 발견 (언리밋 제외)",
+   "found": 12,
+   "total": 12
+  },
+  {
+   "run": "41490750873",
+   "t": 3549,
+   "type": "visit",
+   "msg": "🚪 제타 랭킹 화면에 들어가는 중…",
+   "url": "https://zeta-ai.io/ko?tab=ranking"
+  },
+  {
+   "run": "41490750873",
+   "t": 3878,
+   "type": "list",
+   "msg": "📋 랭킹에서 작품 10개 발견 (언리밋 제외)",
+   "found": 10,
+   "total": 22
+  },
+  {
+   "run": "41490750873",
+   "t": 6452,
+   "type": "visit",
+   "msg": "📖 [1/36] 「표건택」 읽는 중… (12,136,998)",
+   "url": "https://zeta-ai.io/ko/plots/9e3a8651-78d2-4dcb-af3d-a4e92a0cbc1e/profile",
+   "name": "표건택",
+   "i": 1
+  },
+  {
+   "run": "41490750873",
+   "t": 6784,
+   "type": "work",
+   "msg": "✅ 「표건택」 분석 — 점수 84 · 인트로 244자 · 태그 #오지콤 #조직보스 #재벌 #절륜 · 연관작 9개 추가",
+   "work": {
+    "id": "9e3a8651-78d2-4dcb-af3d-a4e92a0cbc1e",
+    "url": "https://zeta-ai.io/ko/plots/9e3a8651-78d2-4dcb-af3d-a4e92a0cbc1e/profile",
+    "name": "표건택",
+    "creator": "세물간 내만 내먹 유리",
+    "count": 12136998,
+    "rank": null,
+    "tags": [
+     "오지콤",
+     "조직보스",
+     "재벌",
+     "절륜",
+     "키잡",
+     "무심",
+     "다정",
+     "로맨스",
+     "hl",
+     "bl"
+    ],
+    "genres": [
+     "로맨스",
+     "BL·GL",
+     "조직·느와르"
+    ],
+    "short": "하.. 꼬맹아 아저씨말고 회장님이라 불러야지, 자꾸 말 안들으면 혼난다?",
+    "introExcerpt": "*어둠이 짙게 깔린 어느 늦은밤 표건택의 사무실* *통유리 너머 보이는 도시의 야경과 토독토독-.. 유리창에 부딪혀 맺히는 빗방울 소리. 이윽고 하루일과의 마지막을 알리는 타박타박, 신나는 발걸음 소리와 노크도 없이 벌컥- 문을 열고 들어서는 Guest의 모습에 그는 저도 모르게 입가에…",
+    "longExcerpt": "세상에 낮과 밤이 존재하듯 표건택이 이끄는 \"창설\" 또한 두가지로 나뉜다. 하나는 이름만 들어도 알 정도로 세계적으로 유명한 대기업 \"창설그룹\" 또 다른 하나는 청부,암살,마약,불법무기,인신매매,사채업 등 어느 것 …",
+    "charNames": [
+     "표건택"
+    ],
+    "mode": "STORY_CHAT",
+    "releasedAt": "2025-06-22T06:47:15.020245Z",
+    "f": {
+     "shortLen": 40,
+     "introLen": 244,
+     "longLen": 840,
+     "charCount": 1,
+     "charDescLen": 388,
+     "exampleConvs": 0,
+     "lorebooks": 0,
+     "tagCount": 10,
+     "introNarration": 90,
+     "introDialogue": 8,
+     "introEndsOpen": 1,
+     "userMention": 6,
+     "commentLen": 38,
+     "plugins": 4,
+     "ageDays": 498,
+     "perDay": 24350
+    },
+    "score": 84
+   }
+  },
+  {
+   "run": "41490750873",
+   "t": 9345,
+   "type": "visit",
+   "msg": "📖 [2/36] 「서 휘」 읽는 중… (16,671,110)",
+   "url": "https://zeta-ai.io/ko/plots/c796ed2a-e547-4c08-99c0-057c3c893eaf/profile",
+   "name": "서 휘",
+   "i": 2
+  },
+  {
+   "run": "41490750873",
+   "t": 9750,
+   "type": "work",
+   "msg": "✅ 「서 휘」 분석 — 점수 47 · 인트로 296자 · 태그 #로맨스 #아저씨 #오지콤 #존댓말 · 연관작 9개 추가",
+   "work": {
+    "id": "c796ed2a-e547-4c08-99c0-057c3c893eaf",
+    "url": "https://zeta-ai.io/ko/plots/c796ed2a-e547-4c08-99c0-057c3c893eaf/profile",
+    "name": "서 휘",
+    "creator": "w4t3r",
+    "count": 16671110,
+    "rank": null,
+    "tags": [
+     "로맨스",
+     "아저씨",
+     "오지콤",
+     "존댓말",
+     "다정함",
+     "깡패즈"
+    ],
+    "genres": [
+     "로맨스"
+    ],
+    "short": "보스의 딸인 당신을 어린 시절부터 맡아준 보스의 오른팔",
+    "introExcerpt": "*정말 자그마한 고양이 같았는데, 언제 이렇게 컸나 싶어 그녀의 뒤에서 가만히 지켜본다. 교복을 입고 보스에게 따박따박 말대답 하던 그녀는 어느새 구두를 신을 나이가 되었다는 게 새삼 새롭다.* *다 컸나 싶다가도 풀어진 구두 끈을 보면 아직 어린 아이 같다. 얼른 그녀의 앞에 한 쪽 …",
+    "longExcerpt": "최대 폭력 조직 '화천'의 보스에게 딸려있는 단 하나의 자식, 외동딸인 그녀를 처음 만난 날은... 서휘가 26살이던 어느 여름, 장맛비가 쏟아지던 날이었다. 자신의 아버지인 보스에게 따박따박 말대답하며 덤벼드는 1…",
+    "charNames": [
+     "서 휘"
+    ],
+    "mode": "STORY_CHAT",
+    "releasedAt": "2024-07-01T02:23:14.710550Z",
+    "f": {
+     "shortLen": 30,
+     "introLen": 296,
+     "longLen": 992,
+     "charCount": 1,
+     "charDescLen": 0,
+     "exampleConvs": 2,
+     "lorebooks": 0,
+     "tagCount": 6,
+     "introNarration": 88,
+     "introDialogue": 10,
+     "introEndsOpen": 0,
+     "userMention": 0,
+     "commentLen": 148,
+     "plugins": 0,
+     "ageDays": 855,
+     "perDay": 19507
+    },
+    "score": 47
+   }
+  },
+  {
+   "run": "41490750873",
+   "t": 12313,
+   "type": "visit",
+   "msg": "📖 [3/36] 「채 원혁」 읽는 중… (7,337,898)",
+   "url": "https://zeta-ai.io/ko/plots/b0fa89fb-3a5a-4948-9427-a6b3b08e4c13/profile",
+   "name": "채 원혁",
+   "i": 3
+  },
+  {
+   "run": "41490750873",
+   "t": 12760,
+   "type": "work",
+   "msg": "✅ 「채 원혁」 분석 — 점수 47 · 인트로 296자 · 태그 #아저씨 #오지콤 #깡패 #로맨스 · 연관작 10개 추가",
+   "work": {
+    "id": "b0fa89fb-3a5a-4948-9427-a6b3b08e4c13",
+    "url": "https://zeta-ai.io/ko/plots/b0fa89fb-3a5a-4948-9427-a6b3b08e4c13/profile",
+    "name": "채 원혁",
+    "creator": "w4t3r",
+    "count": 7337898,
+    "rank": null,
+    "tags": [
+     "아저씨",
+     "오지콤",
+     "깡패",
+     "로맨스",
+     "다정함",
+     "깡패즈"
+    ],
+    "genres": [
+     "로맨스"
+    ],
+    "short": "어린 당신을 거두어 키워준 아빠 같은 아저씨",
+    "introExcerpt": "*원혁이 바닥에 쓰러져 있는 남자를 발로 한 번 툭, 건드려 보고는 숨을 크게 고른 뒤에 뒤쪽에서 대기 중이던 부하들에게 이거 치우라는 듯 턱짓하고 안주머니에서 담배를 꺼내 피운다.* *손이며 얼굴에 묻은 피를 대충 씻어내고 있는데 핸드폰이 울리고, 발신자를 확인해보니 '내 새끼' 라고…",
+    "longExcerpt": "채 원혁, 40세. 원혁의 동료 조직원이었고 친구였던 녀석의 딸인 그녀를 거두게 된 이유는, 조직 간의 파벌 싸움이 극에 달했던 어느 날... 원혁을 구하려다 그만 목숨을 잃었기 때문이다. 12살이었던 그녀를 거둬들…",
+    "charNames": [
+     "채 원혁"
+    ],
+    "mode": "STORY_CHAT",
+    "releasedAt": "2024-07-03T20:01:40.785130Z",
+    "f": {
+     "shortLen": 24,
+     "introLen": 296,
+     "longLen": 994,
+     "charCount": 1,
+     "charDescLen": 0,
+     "exampleConvs": 0,
+     "lorebooks": 0,
+     "tagCount": 6,
+     "introNarration": 88,
+     "introDialogue": 10,
+     "introEndsOpen": 0,
+     "userMention": 0,
+     "commentLen": 148,
+     "plugins": 0,
+     "ageDays": 852,
+     "perDay": 8614
+    },
+    "score": 47
+   }
+  },
+  {
+   "run": "41490750873",
+   "t": 15322,
+   "type": "visit",
+   "msg": "📖 [4/36] 「다른 학교 남녀무리」 읽는 중… (6,495,349)",
+   "url": "https://zeta-ai.io/ko/plots/22957df9-0a8b-4245-aa8f-5ad7750a0031/profile",
+   "name": "다른 학교 남녀무리",
+   "i": 4
+  },
+  {
+   "run": "41490750873",
+   "t": 15688,
+   "type": "work",
+   "msg": "✅ 「다른 학교 남녀무리」 분석 — 점수 67 · 인트로 277자 · 태그 #존잘 #남녀무리 #존예 #hl · 연관작 12개 추가",
+   "work": {
+    "id": "22957df9-0a8b-4245-aa8f-5ad7750a0031",
+    "url": "https://zeta-ai.io/ko/plots/22957df9-0a8b-4245-aa8f-5ad7750a0031/profile",
+    "name": "다른 학교 남녀무리",
+    "creator": "「 MERRY 」",
+    "count": 6495349,
+    "rank": null,
+    "tags": [
+     "존잘",
+     "남녀무리",
+     "존예",
+     "hl",
+     "짝사랑",
+     "무리",
+     "로맨스",
+     "다른학교",
+     "학교",
+     "bl"
+    ],
+    "genres": [
+     "로맨스",
+     "BL·GL",
+     "학원",
+     "다인캐"
+    ],
+    "short": "옆학교에서 전학 온 남자애들이 다 너무 존잘이다..!",
+    "introExcerpt": "@선생님: 자, 오늘 전학생 3명이 왔다. 애들아, 들어오렴~ *문을 열고 3명이 들어와 자기소개를 하며* 안녕, 난 이유승이라고 해 잘 지내보자. *싸가지 없이 대충 자기소개하며* 난 박서호라고 해. *장난끼 가득한 표정으로* 난 한재현~ 잘 부탁해 애들아~! *애들이 존잘 전학생들을…",
+    "longExcerpt": "하... 옆학교 남자애들이 전학왔는데... 싹 다 존잘이면 어떡하라고!! 100만 🎉 200만 🎉 300만 🥳 500만🎉",
+    "charNames": [
+     "최설아",
+     "노하율",
+     "김시아",
+     "이유승",
+     "박서호",
+     "한재현"
+    ],
+    "mode": "STORY_CHAT",
+    "releasedAt": "2026-03-21T03:07:40.056327Z",
+    "f": {
+     "shortLen": 29,
+     "introLen": 277,
+     "longLen": 71,
+     "charCount": 6,
+     "charDescLen": 123,
+     "exampleConvs": 0,
+     "lorebooks": 2,
+     "tagCount": 10,
+     "introNarration": 46,
+     "introDialogue": 51,
+     "introEndsOpen": 1,
+     "userMention": 1,
+     "commentLen": 76,
+     "plugins": 0,
+     "ageDays": 227,
+     "perDay": 28665
+    },
+    "score": 67
+   }
+  },
+  {
+   "run": "41490750873",
+   "t": 18252,
+   "type": "visit",
+   "msg": "📖 [5/36] 「다른학교 남녀무리」 읽는 중… (11,042,259)",
+   "url": "https://zeta-ai.io/ko/plots/4b70ae79-1afa-4755-94ed-f31e8c686c7a/profile",
+   "name": "다른학교 남녀무리",
+   "i": 5
+  },
+  {
+   "run": "41490750873",
+   "t": 18667,
+   "type": "work",
+   "msg": "✅ 「다른학교 남녀무리」 분석 — 점수 82 · 인트로 306자 · 태그 #hl #남녀무리 #존잘 #존예 · 연관작 7개 추가",
+   "work": {
+    "id": "4b70ae79-1afa-4755-94ed-f31e8c686c7a",
+    "url": "https://zeta-ai.io/ko/plots/4b70ae79-1afa-4755-94ed-f31e8c686c7a/profile",
+    "name": "다른학교 남녀무리",
+    "creator": "슈슈팥떡",
+    "count": 11042259,
+    "rank": null,
+    "tags": [
+     "hl",
+     "남녀무리",
+     "존잘",
+     "존예",
+     "철벽",
+     "다정",
+     "능글",
+     "무뚝뚝",
+     "여우",
+     "짝사랑"
+    ],
+    "genres": [
+     "로맨스",
+     "다인캐"
+    ],
+    "short": "여우 때문에 유명한 제타남고의 남학생무리를 꼬시러 가야 한다..?",
+    "introExcerpt": "*어쩌다가 제타남자고등학교에서 잘생긴 남자애들을 보게 된 지희가 친구인 Guest,고은,체린,예빈에게 부탁해서 제타남자고등학교에 남학생들을 꼬시러가게 되어 준비를 하는 중이다.* *책상에 앉아서 다리를 꼬고 핸드폰을 보며*한지희,언제까지 준비할거야? *Guest에게 볼을 잡힌채로 젤리를…",
+    "longExcerpt": "여우 때문에 유명한 제타남고의 남학생무리를 꼬시러 가야 한다..? 남학생들 무리 - 제타남자고등학교 여학샐들 무리 - 제타여자고등학교",
+    "charNames": [
+     "유저",
+     "유고은",
+     "박체린",
+     "신예빈",
+     "한지희",
+     "김도훈"
+    ],
+    "mode": "STORY_CHAT",
+    "releasedAt": "2026-01-11T15:44:43.273413Z",
+    "f": {
+     "shortLen": 36,
+     "introLen": 306,
+     "longLen": 74,
+     "charCount": 9,
+     "charDescLen": 107,
+     "exampleConvs": 2,
+     "lorebooks": 0,
+     "tagCount": 10,
+     "introNarration": 73,
+     "introDialogue": 27,
+     "introEndsOpen": 1,
+     "userMention": 3,
+     "commentLen": 0,
+     "plugins": 0,
+     "ageDays": 295,
+     "perDay": 37423
+    },
+    "score": 82
+   }
+  },
+  {
+   "run": "41490750873",
+   "t": 21230,
+   "type": "visit",
+   "msg": "📖 [6/36] 「제타고등학교」 읽는 중… (4,833,276)",
+   "url": "https://zeta-ai.io/ko/plots/b4e10763-abf0-43bd-ac72-70e43c44ce0c/profile",
+   "name": "제타고등학교",
+   "i": 6
+  },
+  {
+   "run": "41490750873",
+   "t": 21756,
+   "type": "work",
+   "msg": "✅ 「제타고등학교」 분석 — 점수 62 · 인트로 254자 · 태그 #hl #남녀무리 #짝사랑 #철벽 · 연관작 7개 추가",
+   "work": {
+    "id": "b4e10763-abf0-43bd-ac72-70e43c44ce0c",
+    "url": "https://zeta-ai.io/ko/plots/b4e10763-abf0-43bd-ac72-70e43c44ce0c/profile",
+    "name": "제타고등학교",
+    "creator": "슈슈팥떡",
+    "count": 4833276,
+    "rank": null,
+    "tags": [
+     "hl",
+     "남녀무리",
+     "짝사랑",
+     "철벽",
+     "능글",
+     "다정",
+     "무뚝뚝",
+     "츤데레",
+     "여우",
+     "유저바라기"
+    ],
+    "genres": [
+     "로맨스",
+     "다인캐"
+    ],
+    "short": "건물이 달라서 마주칠일 없는 남자애들을 마주쳤다..?",
+    "introExcerpt": "*제타고등학교는 여자와 남자가 샐황하는 건물이 달라서 마주칠일이 거의 없다. 선생님의 심부름으로 태영,승호,승규,윤호는 여자애들이 생활하는 신관에 갔다가 Guest,하람,민정을 발견한다.* *핸드폰을 보고 걸으며*야,저기 그 여자애들 아니냐? *하람을 보며*야야,저기 저 여자애 존나 귀…",
+    "longExcerpt": "건물이 달라서 마주칠일 전혀 없는 남자애들을 마주쳤다..?! 제타고등학교 남자 반 : 1반 ~ 5반 (본관) 여자 반 : 6반 ~10반 (신관)",
+    "charNames": [
+     "유저",
+     "백하람",
+     "김민정",
+     "이예리",
+     "권태영",
+     "최승호"
+    ],
+    "mode": "STORY_CHAT",
+    "releasedAt": "2026-01-09T03:28:58.095954Z",
+    "f": {
+     "shortLen": 29,
+     "introLen": 254,
+     "longLen": 80,
+     "charCount": 8,
+     "charDescLen": 123,
+     "exampleConvs": 0,
+     "lorebooks": 0,
+     "tagCount": 10,
+     "introNarration": 65,
+     "introDialogue": 34,
+     "introEndsOpen": 0,
+     "userMention": 2,
+     "commentLen": 0,
+     "plugins": 0,
+     "ageDays": 298,
+     "perDay": 16242
+    },
+    "score": 62
+   }
+  },
+  {
+   "run": "41490750873",
+   "t": 24319,
+   "type": "visit",
+   "msg": "📖 [7/36] 「권이태」 읽는 중… (4,435,618)",
+   "url": "https://zeta-ai.io/ko/plots/e088fc1f-bc75-4962-a2f2-f8ee59d6a509/profile",
+   "name": "권이태",
+   "i": 7
+  },
+  {
+   "run": "41490750873",
+   "t": 24665,
+   "type": "work",
+   "msg": "✅ 「권이태」 분석 — 점수 69 · 인트로 232자 · 태그 #경호원 #연예인 #나이차이 #아저씨 · 연관작 8개 추가",
+   "work": {
+    "id": "e088fc1f-bc75-4962-a2f2-f8ee59d6a509",
+    "url": "https://zeta-ai.io/ko/plots/e088fc1f-bc75-4962-a2f2-f8ee59d6a509/profile",
+    "name": "권이태",
+    "creator": "단귤",
+    "count": 4435618,
+    "rank": null,
+    "tags": [
+     "경호원",
+     "연예인",
+     "나이차이",
+     "아저씨",
+     "오지콤",
+     "퇴폐미",
+     "나른",
+     "무심",
+     "철벽",
+     "블랙실드"
+    ],
+    "genres": [],
+    "short": "애새끼 키우는 취미, 딱히 없는데.",
+    "introExcerpt": "*밤샘 촬영이 끝난 뒤, 대기실은 난장판이다. 비명, 파편, 발광. 꼴이 참 가관이다. 노크는 생략하고 대신 문을 발로 깐다. 관심 구걸하는 놈 상대할 시간은 없다. 안에서 개지랄을 떨든 말든 내 알 바 아니다. 화내는 건 네 습관이고, 말려주길 바라는 눈빛은 가볍게 무시한다. 내 일은…",
+    "longExcerpt": "안하무인 성격으로 업계에서 악명 높은 톱스타 Guest. 계속되는 스토킹 등 협박, 위협에 소속사는 업계 최고의 ‘블랙 실드’ 소속 경호원 권이태를 고용한다. Guest은 새로 온 경호원이 나이차이도 많고 딱딱해 보…",
+    "charNames": [
+     "권이태"
+    ],
+    "mode": "STORY_CHAT",
+    "releasedAt": "2026-01-31T03:02:36.247780Z",
+    "f": {
+     "shortLen": 19,
+     "introLen": 232,
+     "longLen": 613,
+     "charCount": 1,
+     "charDescLen": 425,
+     "exampleConvs": 0,
+     "lorebooks": 0,
+     "tagCount": 10,
+     "introNarration": 92,
+     "introDialogue": 7,
+     "introEndsOpen": 0,
+     "userMention": 9,
+     "commentLen": 88,
+     "plugins": 6,
+     "ageDays": 276,
+     "perDay": 16094
+    },
+    "score": 69
+   }
+  },
+  {
+   "run": "41490750873",
+   "t": 27227,
+   "type": "visit",
+   "msg": "📖 [8/36] 「임윤찬」 읽는 중… (26,874,530)",
+   "url": "https://zeta-ai.io/ko/plots/5b6464b7-b4ca-4313-9700-b25bd4cba848/profile",
+   "name": "임윤찬",
+   "i": 8
+  },
+  {
+   "run": "41490750873",
+   "t": 27556,
+   "type": "work",
+   "msg": "✅ 「임윤찬」 분석 — 점수 56 · 인트로 278자 · 태그 #경호원 #갑을관계 #혐관 #로맨스 · 연관작 8개 추가",
+   "work": {
+    "id": "5b6464b7-b4ca-4313-9700-b25bd4cba848",
+    "url": "https://zeta-ai.io/ko/plots/5b6464b7-b4ca-4313-9700-b25bd4cba848/profile",
+    "name": "임윤찬",
+    "creator": "Linear",
+    "count": 26874530,
+    "rank": null,
+    "tags": [
+     "경호원",
+     "갑을관계",
+     "혐관",
+     "로맨스",
+     "능글",
+     "강압적",
+     "불안",
+     "혐오",
+     "꼬시기",
+     "Elib"
+    ],
+    "genres": [
+     "로맨스",
+     "혐관·후회"
+    ],
+    "short": "오늘도 지 멋대로 구십니다, 아주-.",
+    "introExcerpt": "*웬수같은 수장의 딸을 지키겠노라 서약한건, 그야말로 굴욕에 가까웠다. 당장 목숨이 아쉬워 선택한 것이긴 하다만, 이 쥐콩만한 여자한테 목줄이 쥐어졌다-, 생각하니 속에서 열불이 끓는 것 같았다.* *나름 도련님 대우받고 자란 내가, 이 한줌도 안되는 여자 옆에 서서 경호 해야하는것도 …",
+    "longExcerpt": "거대 청부업 조직 \"Elib (일립)\"은 매년 어마어마한 돈을 쓸어모으고 있다. 일립은 우두머리를 \"수장 (首長)\"이라 칭하는데, 그 수장이 워낙 딸을 애지중지하여 귀하게 키운단건 일립의 말단 조직원도 알정도다. 그…",
+    "charNames": [
+     "임윤찬"
+    ],
+    "mode": "STORY_CHAT",
+    "releasedAt": "2025-03-01T14:51:36.314423Z",
+    "f": {
+     "shortLen": 20,
+     "introLen": 278,
+     "longLen": 162,
+     "charCount": 1,
+     "charDescLen": 727,
+     "exampleConvs": 0,
+     "lorebooks": 2,
+     "tagCount": 10,
+     "introNarration": 88,
+     "introDialogue": 11,
+     "introEndsOpen": 1,
+     "userMention": 0,
+     "commentLen": 45,
+     "plugins": 3,
+     "ageDays": 611,
+     "perDay": 43977
+    },
+    "score": 56
+   }
+  },
+  {
+   "run": "41490750873",
+   "t": 30119,
+   "type": "visit",
+   "msg": "📖 [9/36] 「이혁일」 읽는 중… (18,905,448)",
+   "url": "https://zeta-ai.io/ko/plots/7210783e-58d7-40db-88f0-f91935d4477e/profile",
+   "name": "이혁일",
+   "i": 9
+  },
+  {
+   "run": "41490750873",
+   "t": 30557,
+   "type": "work",
+   "msg": "✅ 「이혁일」 분석 — 점수 60 · 인트로 202자 · 태그 #조직 #조직보스 #부보스 #능글 · 연관작 9개 추가",
+   "work": {
+    "id": "7210783e-58d7-40db-88f0-f91935d4477e",
+    "url": "https://zeta-ai.io/ko/plots/7210783e-58d7-40db-88f0-f91935d4477e/profile",
+    "name": "이혁일",
+    "creator": "백여우",
+    "count": 18905448,
+    "rank": null,
+    "tags": [
+     "조직",
+     "조직보스",
+     "부보스",
+     "능글",
+     "느와르",
+     "싸가지",
+     "hl",
+     "집착",
+     "피폐",
+     "소유욕"
+    ],
+    "genres": [
+     "로맨스",
+     "집착·광기",
+     "조직·느와르"
+    ],
+    "short": "대드는 부보스 × 유일하게 당신에게만 옆자릴 허락하는 보스",
+    "introExcerpt": "*어둠 진 회의실, 보고서를 쓱 넘기며 낮게 웃는다*. 하… 또 지들 멋대로 했네. 손만 잘라오랬더니 머리를 들고 오냐. *서류를 덮으며 Guest에게 다가가 책상에 걸터앉는다* 우와 보스가 말씀하시는데 다리 꼬고 듣지도 않아요 우리 부보스님~? *당신이 반응 없이 피식 웃고만 있자 그…",
+    "longExcerpt": "흑사파. 세계가 뒤흔들릴 때마다 그 중심엔 언제나 그들의 그림자가 있었다. 그리고 그 가운데 단 한 사람— 이혁일. 잔혹과 무자비를 일상처럼 씹어 삼키는 남자. 그의 심기를 건드리는 자? 없다. 아니, 있었지만… 다…",
+    "charNames": [
+     "이혁일"
+    ],
+    "mode": "STORY_CHAT",
+    "releasedAt": "2025-12-03T14:08:57.050575Z",
+    "f": {
+     "shortLen": 32,
+     "introLen": 202,
+     "longLen": 504,
+     "charCount": 1,
+     "charDescLen": 142,
+     "exampleConvs": 1,
+     "lorebooks": 0,
+     "tagCount": 10,
+     "introNarration": 43,
+     "introDialogue": 54,
+     "introEndsOpen": 1,
+     "userMention": 1,
+     "commentLen": 0,
+     "plugins": 0,
+     "ageDays": 334,
+     "perDay": 56580
+    },
+    "score": 60
+   }
+  },
+  {
+   "run": "41490750873",
+   "t": 33119,
+   "type": "visit",
+   "msg": "📖 [10/36] 「은시우」 읽는 중… (12,916,758)",
+   "url": "https://zeta-ai.io/ko/plots/b3585b10-9941-4bfc-bab1-6b1186b1544c/profile",
+   "name": "은시우",
+   "i": 10
+  },
+  {
+   "run": "41490750873",
+   "t": 33551,
+   "type": "work",
+   "msg": "✅ 「은시우」 분석 — 점수 62 · 인트로 598자 · 태그 #군인 #떡대 #능글 #유저바라기 · 연관작 7개 추가",
+   "work": {
+    "id": "b3585b10-9941-4bfc-bab1-6b1186b1544c",
+    "url": "https://zeta-ai.io/ko/plots/b3585b10-9941-4bfc-bab1-6b1186b1544c/profile",
+    "name": "은시우",
+    "creator": "익명",
+    "count": 12916758,
+    "rank": null,
+    "tags": [
+     "군인",
+     "떡대",
+     "능글",
+     "유저바라기",
+     "순애",
+     "또라이",
+     "hl",
+     "bl",
+     "로맨스"
+    ],
+    "genres": [
+     "로맨스",
+     "BL·GL"
+    ],
+    "short": "화내는 것도 섹시하시지 말입니다.",
+    "introExcerpt": "*현재 중대장실 내부는 차갑게 식어가고 있었다. 눈치 없이 생글 웃으며 제 눈앞에 엎드려뻗쳐를 하고 있는 저 놈이 문제였다.* *아침부터 연병장에 훈련을 시키며 관찰을 하고 있는 제 귀에 바람을 불지 않나, 식당에서 마시라고 준 초코우유를 내것까지 탐내 빤히 쳐다본다던가, 심지어는 별 …",
+    "longExcerpt": "",
+    "charNames": [
+     "은시우"
+    ],
+    "mode": "STORY_CHAT",
+    "releasedAt": "2026-04-24T14:48:56.079063Z",
+    "f": {
+     "shortLen": 18,
+     "introLen": 598,
+     "longLen": 0,
+     "charCount": 1,
+     "charDescLen": 0,
+     "exampleConvs": 0,
+     "lorebooks": 3,
+     "tagCount": 9,
+     "introNarration": 94,
+     "introDialogue": 4,
+     "introEndsOpen": 0,
+     "userMention": 2,
+     "commentLen": 0,
+     "plugins": 0,
+     "ageDays": 192,
+     "perDay": 67237
+    },
+    "score": 62
+   }
+  },
+  {
+   "run": "41490750873",
+   "t": 36113,
+   "type": "visit",
+   "msg": "📖 [11/36] 「문기태」 읽는 중… (11,570,400)",
+   "url": "https://zeta-ai.io/ko/plots/359af999-b52d-4994-b2c9-a81e6468fe34/profile",
+   "name": "문기태",
+   "i": 11
+  },
+  {
+   "run": "41490750873",
+   "t": 36477,
+   "type": "work",
+   "msg": "✅ 「문기태」 분석 — 점수 62 · 인트로 640자 · 태그 #경찰 #문란 #능글 #까칠 · 연관작 6개 추가",
+   "work": {
+    "id": "359af999-b52d-4994-b2c9-a81e6468fe34",
+    "url": "https://zeta-ai.io/ko/plots/359af999-b52d-4994-b2c9-a81e6468fe34/profile",
+    "name": "문기태",
+    "creator": "시가",
+    "count": 11570400,
+    "rank": null,
+    "tags": [
+     "경찰",
+     "문란",
+     "능글",
+     "까칠",
+     "시골",
+     "로맨스"
+    ],
+    "genres": [
+     "로맨스"
+    ],
+    "short": "당신이 사는 시골로 발령받은 문란한 경위.",
+    "introExcerpt": "*전날 밤, 문기태는 거의 잠들지 못했다.* *숨막히게 따분한 깡촌 마을. 의미 없는 순찰 속에서 우연히 마주친 얼굴 하나가, 생각보다 성가시게 머릿속에 남아 있었기 때문이었다.* *어디까지 다가가면 겁을 먹을지, 어느 선에서 흔들어야 모르는 척 넘어올지. 늘 해오던 계산이었다.* *여…",
+    "longExcerpt": "이런 곳이 아직도 존재할까 싶을 만큼, 드라마에서나 볼 법한 외곽의 시골 마을. 버스를 놓치면 하루가 통째로 날아가고, 병원 하나 가려면 차로 몇 시간을 달려야 했다. 볕에 그을린 밭과 계절마다 색만 바뀌는 논, 그…",
+    "charNames": [
+     "문기태"
+    ],
+    "mode": "STORY_CHAT",
+    "releasedAt": "2025-12-27T12:49:23.696189Z",
+    "f": {
+     "shortLen": 23,
+     "introLen": 640,
+     "longLen": 655,
+     "charCount": 1,
+     "charDescLen": 509,
+     "exampleConvs": 0,
+     "lorebooks": 0,
+     "tagCount": 6,
+     "introNarration": 94,
+     "introDialogue": 2,
+     "introEndsOpen": 1,
+     "userMention": 0,
+     "commentLen": 13,
+     "plugins": 3,
+     "ageDays": 310,
+     "perDay": 37301
+    },
+    "score": 62
+   }
+  },
+  {
+   "run": "41490750873",
+   "t": 39039,
+   "type": "visit",
+   "msg": "📖 [12/36] 「권이태」 읽는 중… (7,821,937)",
+   "url": "https://zeta-ai.io/ko/plots/d441a1b5-650f-4419-90a5-44414fd733d0/profile",
+   "name": "권이태",
+   "i": 12
+  },
+  {
+   "run": "41490750873",
+   "t": 39440,
+   "type": "work",
+   "msg": "✅ 「권이태」 분석 — 점수 91 · 인트로 866자 · 태그 #경찰 #특수부대 #떡대 #혐관 · 연관작 4개 추가",
+   "work": {
+    "id": "d441a1b5-650f-4419-90a5-44414fd733d0",
+    "url": "https://zeta-ai.io/ko/plots/d441a1b5-650f-4419-90a5-44414fd733d0/profile",
+    "name": "권이태",
+    "creator": "수월",
+    "count": 7821937,
+    "rank": null,
+    "tags": [
+     "경찰",
+     "특수부대",
+     "떡대",
+     "혐관",
+     "괴롭힘",
+     "집착",
+     "소유욕",
+     "hl",
+     "bl",
+     "테토"
+    ],
+    "genres": [
+     "로맨스",
+     "BL·GL",
+     "집착·광기",
+     "혐관·후회"
+    ],
+    "short": "표정이 왜 그래, 신입? 너만 갈구니까 억울해 죽겠어?",
+    "introExcerpt": "*특공대 사격 훈련장의 공기는 화약 냄새와 긴장감으로 무겁게 가라앉아 있었다.* *사선에 선 대원들 사이로, 압도적인 그림자가 드리워졌다.* *196cm의 거구, **권이태**였다.* *그는 검은 전술복 소매를 걷어붙인 채, 한 손에는 타이머를 들고 대원들의 뒤를 느릿하게 배회했다.* …",
+    "longExcerpt": "",
+    "charNames": [
+     "권이태"
+    ],
+    "mode": "STORY_CHAT",
+    "releasedAt": "2026-03-18T08:13:47.034465Z",
+    "f": {
+     "shortLen": 30,
+     "introLen": 866,
+     "longLen": 0,
+     "charCount": 1,
+     "charDescLen": 0,
+     "exampleConvs": 2,
+     "lorebooks": 0,
+     "tagCount": 10,
+     "introNarration": 62,
+     "introDialogue": 35,
+     "introEndsOpen": 1,
+     "userMention": 13,
+     "commentLen": 68,
+     "plugins": 9,
+     "ageDays": 229,
+     "perDay": 34100
+    },
+    "score": 91
+   }
+  },
+  {
+   "run": "41490750873",
+   "t": 42003,
+   "type": "visit",
+   "msg": "📖 [13/36] 「도이한」 읽는 중… (6,978,206)",
+   "url": "https://zeta-ai.io/ko/plots/b565345e-ea63-41d0-9f5d-1a3e07013649/profile",
+   "name": "도이한",
+   "i": 13
+  },
+  {
+   "run": "41490750873",
+   "t": 42627,
+   "type": "work",
+   "msg": "✅ 「도이한」 분석 — 점수 76 · 인트로 999자 · 태그 #전남친 #재회 #데이트폭력 #후회 · 연관작 7개 추가",
+   "work": {
+    "id": "b565345e-ea63-41d0-9f5d-1a3e07013649",
+    "url": "https://zeta-ai.io/ko/plots/b565345e-ea63-41d0-9f5d-1a3e07013649/profile",
+    "name": "도이한",
+    "creator": "한주",
+    "count": 6978206,
+    "rank": null,
+    "tags": [
+     "전남친",
+     "재회",
+     "데이트폭력",
+     "후회",
+     "무뚝뚝",
+     "피폐",
+     "집착",
+     "가스라이팅",
+     "hl",
+     "bl"
+    ],
+    "genres": [
+     "로맨스",
+     "BL·GL",
+     "집착·광기",
+     "혐관·후회"
+    ],
+    "short": "현애인에게 맞고 돌아가는 길, 전남친과 마주쳤다.",
+    "introExcerpt": "*자정을 넘긴 거리는 텅 비어있었다. 간간이 멀리서 고양이 울음소리가 들려왔고, Guest은 그저 후드티를 뒤집어쓴 채 정처 없이 걸었다. 공허한 눈빛은 흔들려 눈앞을 흐리게 만들었고, 목적지는 없었다. Guest의 그림자는 어느새 가로등 아래로 짧게 웅크려 있었다.* *그 순간. 한산…",
+    "longExcerpt": "3년 전, \"우린 서로에게 비효율적이야\"라는 이한의 차가운 말 한 마디에 둘은 끝났다. 그러나 이별을 고했던 그는 당신을 잊지 못한 채 후회심을 기반으로 성공에 집착했고, 현재는 잘나가는 IT 기업의 전무가 되었다.…",
+    "charNames": [
+     "도이한",
+     "현재민"
+    ],
+    "mode": "STORY_CHAT",
+    "releasedAt": "2026-03-28T15:25:47.396816Z",
+    "f": {
+     "shortLen": 27,
+     "introLen": 999,
+     "longLen": 437,
+     "charCount": 2,
+     "charDescLen": 378,
+     "exampleConvs": 0,
+     "lorebooks": 1,
+     "tagCount": 10,
+     "introNarration": 94,
+     "introDialogue": 4,
+     "introEndsOpen": 0,
+     "userMention": 8,
+     "commentLen": 60,
+     "plugins": 0,
+     "ageDays": 219,
+     "perDay": 31852
+    },
+    "score": 76
+   }
+  },
+  {
+   "run": "41490750873",
+   "t": 45194,
+   "type": "visit",
+   "msg": "📖 [14/36] 「이중원」 읽는 중… (5,080,850)",
+   "url": "https://zeta-ai.io/ko/plots/ef92bd0b-72ed-45fb-a613-18be67df136f/profile",
+   "name": "이중원",
+   "i": 14
+  },
+  {
+   "run": "41490750873",
+   "t": 45665,
+   "type": "work",
+   "msg": "✅ 「이중원」 분석 — 점수 60 · 인트로 1017자 · 태그 #상처 #시한부 #애증 #오해 · 연관작 9개 추가",
+   "work": {
+    "id": "ef92bd0b-72ed-45fb-a613-18be67df136f",
+    "url": "https://zeta-ai.io/ko/plots/ef92bd0b-72ed-45fb-a613-18be67df136f/profile",
+    "name": "이중원",
+    "creator": "삐뽀",
+    "count": 5080850,
+    "rank": null,
+    "tags": [
+     "상처",
+     "시한부",
+     "애증",
+     "오해",
+     "부부",
+     "조직물",
+     "순애",
+     "HL",
+     "HL권장"
+    ],
+    "genres": [
+     "로맨스",
+     "조직·느와르"
+    ],
+    "short": "당신이 떠난 날, 다정했던 남편은 죽었다.",
+    "introExcerpt": "*진료실에서 나온 Guest은 한참 동안 손에 쥔 진단서를 바라보다 천천히 접어 가방 안에 넣었다. 의사는 지금이라면 아직 수술이 가능하다고 했다. 하지만 그 가능성은 막대한 수술비를 마련했을 때의 이야기였다. 가진 것은 이미 대부분 처분했고, 받을 수 있는 대출도 모두 알아봤지만 남은…",
+    "longExcerpt": "",
+    "charNames": [
+     "이중원"
+    ],
+    "mode": "STORY_CHAT",
+    "releasedAt": "2026-07-23T20:15:04.877514Z",
+    "f": {
+     "shortLen": 23,
+     "introLen": 1017,
+     "longLen": 0,
+     "charCount": 1,
+     "charDescLen": 0,
+     "exampleConvs": 0,
+     "lorebooks": 4,
+     "tagCount": 9,
+     "introNarration": 90,
+     "introDialogue": 2,
+     "introEndsOpen": 0,
+     "userMention": 3,
+     "commentLen": 86,
+     "plugins": 5,
+     "ageDays": 102,
+     "perDay": 49870
+    },
+    "score": 60
+   }
+  },
+  {
+   "run": "41490750873",
+   "t": 48226,
+   "type": "visit",
+   "msg": "📖 [15/36] 「이안 킹슬리」 읽는 중… (11,909,830)",
+   "url": "https://zeta-ai.io/ko/plots/fc588617-5317-4207-8bfc-ee391d4a0898/profile",
+   "name": "이안 킹슬리",
+   "i": 15
+  },
+  {
+   "run": "41490750873",
+   "t": 48619,
+   "type": "work",
+   "msg": "✅ 「이안 킹슬리」 분석 — 점수 62 · 인트로 425자 · 태그 #영국 #대학생 #철벽 #츤데레 · 연관작 7개 추가",
+   "work": {
+    "id": "fc588617-5317-4207-8bfc-ee391d4a0898",
+    "url": "https://zeta-ai.io/ko/plots/fc588617-5317-4207-8bfc-ee391d4a0898/profile",
+    "name": "이안 킹슬리",
+    "creator": "수월",
+    "count": 11909830,
+    "rank": null,
+    "tags": [
+     "영국",
+     "대학생",
+     "철벽",
+     "츤데레",
+     "집착",
+     "싸가지",
+     "까칠",
+     "순애",
+     "hl",
+     "bl"
+    ],
+    "genres": [
+     "로맨스",
+     "BL·GL",
+     "집착·광기",
+     "학원"
+    ],
+    "short": "소개팅에 대타로 왔는데 상대가 지독한 철벽남이다.",
+    "introExcerpt": "*최고급 호텔 라운지의 클래식한 재즈 음악조차 숨죽이게 만드는 위압감이었다.* *잔뜩 흐트러진 금발 아래로 비치는 흑안은 며칠 밤을 설친 듯 나른하면서도, 상대를 짓누를 것처럼 날카로웠다.* *196cm의 거대한 체구로 소파에 깊숙이 기대앉은 이안 킹슬리는 연신 귀에 걸린 피어싱을 만지…",
+    "longExcerpt": "",
+    "charNames": [
+     "이안 킹슬리"
+    ],
+    "mode": "STORY_CHAT",
+    "releasedAt": "2026-07-17T15:50:54.295487Z",
+    "f": {
+     "shortLen": 27,
+     "introLen": 425,
+     "longLen": 0,
+     "charCount": 1,
+     "charDescLen": 0,
+     "exampleConvs": 0,
+     "lorebooks": 1,
+     "tagCount": 10,
+     "introNarration": 91,
+     "introDialogue": 4,
+     "introEndsOpen": 0,
+     "userMention": 2,
+     "commentLen": 0,
+     "plugins": 9,
+     "ageDays": 108,
+     "perDay": 110210
+    },
+    "score": 62
+   }
+  },
+  {
+   "run": "41490750873",
+   "t": 51181,
+   "type": "visit",
+   "msg": "📖 [16/36] 「차윤조」 읽는 중… (15,659,984)",
+   "url": "https://zeta-ai.io/ko/plots/0acd577c-5acc-46f5-9c91-c8a89da007d2/profile",
+   "name": "차윤조",
+   "i": 16
+  },
+  {
+   "run": "41490750873",
+   "t": 51885,
+   "type": "work",
+   "msg": "✅ 「차윤조」 분석 — 점수 56 · 인트로 260자 · 태그 #권태기 #남편 #쓰레기 #후회 · 연관작 8개 추가",
+   "work": {
+    "id": "0acd577c-5acc-46f5-9c91-c8a89da007d2",
+    "url": "https://zeta-ai.io/ko/plots/0acd577c-5acc-46f5-9c91-c8a89da007d2/profile",
+    "name": "차윤조",
+    "creator": "우왓",
+    "count": 15659984,
+    "rank": null,
+    "tags": [
+     "권태기",
+     "남편",
+     "쓰레기",
+     "후회",
+     "피폐",
+     "나쁜남자",
+     "집착",
+     "애증",
+     "소유욕",
+     "로맨스"
+    ],
+    "genres": [
+     "로맨스",
+     "집착·광기",
+     "혐관·후회"
+    ],
+    "short": "영상이라도 틀어보라는 남편",
+    "introExcerpt": "*침대 헤드에 비스듬히 기댄 윤조가 영혼 없는 눈으로 핸드폰 화면만 스크롤한다.* *어떻게든 관계를 회복해보려 용기 내 다가간 Guest의 손길에도, 그의 탄탄한 몸은 아무것도 느끼지 못하는 듯 차갑게 식어있을 뿐이다.* *어색하고 냉랭한 침묵 속, 한숨을 푹 쉰 윤조가 한심하다는 눈빛…",
+    "longExcerpt": "",
+    "charNames": [
+     "차윤조"
+    ],
+    "mode": "STORY_CHAT",
+    "releasedAt": "2026-07-23T12:41:39.823547Z",
+    "f": {
+     "shortLen": 14,
+     "introLen": 260,
+     "longLen": 0,
+     "charCount": 1,
+     "charDescLen": 0,
+     "exampleConvs": 0,
+     "lorebooks": 2,
+     "tagCount": 10,
+     "introNarration": 80,
+     "introDialogue": 17,
+     "introEndsOpen": 0,
+     "userMention": 2,
+     "commentLen": 119,
+     "plugins": 11,
+     "ageDays": 102,
+     "perDay": 153234
+    },
+    "score": 56
+   }
+  },
+  {
+   "run": "41490750873",
+   "t": 54446,
+   "type": "visit",
+   "msg": "📖 [17/36] 「류자헌」 읽는 중… (7,974,689)",
+   "url": "https://zeta-ai.io/ko/plots/9e90db1f-57e2-4614-84c3-4bc0c8f99079/profile",
+   "name": "류자헌",
+   "i": 17
+  },
+  {
+   "run": "41490750873",
+   "t": 54884,
+   "type": "work",
+   "msg": "✅ 「류자헌」 분석 — 점수 62 · 인트로 683자 · 태그 #능글 #로코 #다정 #능청 · 연관작 7개 추가",
+   "work": {
+    "id": "9e90db1f-57e2-4614-84c3-4bc0c8f99079",
+    "url": "https://zeta-ai.io/ko/plots/9e90db1f-57e2-4614-84c3-4bc0c8f99079/profile",
+    "name": "류자헌",
+    "creator": "Seiyan",
+    "count": 7974689,
+    "rank": null,
+    "tags": [
+     "능글",
+     "로코",
+     "다정",
+     "능청",
+     "사극",
+     "집착",
+     "유저바라기",
+     "순애",
+     "hl",
+     "bl"
+    ],
+    "genres": [
+     "로맨스",
+     "BL·GL",
+     "집착·광기"
+    ],
+    "short": "5년만에 돌아온 꼬마 서방님이 너무 남자가 되었다",
+    "introExcerpt": "*1776년 3월 12일.* *실로 5년 만이었다, 고향에 돌아가는 것은.* *마을에서는 이미 경사라며 잔치를 준비 중이었다. 이제 막 약관을 넘긴 나이에 장원급제를 이루고, 현감이 되어 돌아오고 있었으니까.* *그러나 정작 고향에 돌아온 류자헌이 제일 먼저 찾은 곳은 잔치가 열리는 관…",
+    "longExcerpt": "",
+    "charNames": [
+     "류자헌"
+    ],
+    "mode": "STORY_CHAT",
+    "releasedAt": "2026-06-28T16:29:44.490252Z",
+    "f": {
+     "shortLen": 27,
+     "introLen": 683,
+     "longLen": 0,
+     "charCount": 1,
+     "charDescLen": 0,
+     "exampleConvs": 0,
+     "lorebooks": 1,
+     "tagCount": 10,
+     "introNarration": 94,
+     "introDialogue": 3,
+     "introEndsOpen": 1,
+     "userMention": 0,
+     "commentLen": 68,
+     "plugins": 0,
+     "ageDays": 127,
+     "perDay": 62774
+    },
+    "score": 62
+   }
+  },
+  {
+   "run": "41490750873",
+   "t": 57445,
+   "type": "visit",
+   "msg": "📖 [18/36] 「백해율」 읽는 중… (5,643,813)",
+   "url": "https://zeta-ai.io/ko/plots/9d9e9e81-2627-4dfe-a8c0-ab5f2c13a406/profile",
+   "name": "백해율",
+   "i": 18
+  },
+  {
+   "run": "41490750873",
+   "t": 57816,
+   "type": "work",
+   "msg": "✅ 「백해율」 분석 — 점수 84 · 인트로 687자 · 태그 #대학생 #철벽 #무뚝뚝 #조직보스 · 연관작 6개 추가",
+   "work": {
+    "id": "9d9e9e81-2627-4dfe-a8c0-ab5f2c13a406",
+    "url": "https://zeta-ai.io/ko/plots/9d9e9e81-2627-4dfe-a8c0-ab5f2c13a406/profile",
+    "name": "백해율",
+    "creator": "수월",
+    "count": 5643813,
+    "rank": null,
+    "tags": [
+     "대학생",
+     "철벽",
+     "무뚝뚝",
+     "조직보스",
+     "집착",
+     "순애",
+     "소유욕",
+     "떡대",
+     "hl",
+     "bl"
+    ],
+    "genres": [
+     "로맨스",
+     "BL·GL",
+     "집착·광기",
+     "학원",
+     "조직·느와르"
+    ],
+    "short": "벌칙으로 조폭 선배와 키스해야 한다.",
+    "introExcerpt": "*아스란 대학교 후문, 자욱한 담배 연기 너머로 범접할 수 없는 위압감이 일렁였다.* *거구와 백발에 벽안을 가진 무역학과 4학년, 아스란대 최고의 무심철벽남 백해율.* *가만히 서 있는 것만으로도 맹수의 숨결이 느껴지는 그가 굳은 표정으로 서 있었다.* *그리고 그 앞에는, 친구들과의…",
+    "longExcerpt": "",
+    "charNames": [
+     "백해율"
+    ],
+    "mode": "STORY_CHAT",
+    "releasedAt": "2026-07-06T00:18:51.073344Z",
+    "f": {
+     "shortLen": 20,
+     "introLen": 687,
+     "longLen": 0,
+     "charCount": 1,
+     "charDescLen": 0,
+     "exampleConvs": 0,
+     "lorebooks": 2,
+     "tagCount": 10,
+     "introNarration": 90,
+     "introDialogue": 6,
+     "introEndsOpen": 1,
+     "userMention": 6,
+     "commentLen": 78,
+     "plugins": 9,
+     "ageDays": 120,
+     "perDay": 47145
+    },
+    "score": 84
+   }
+  },
+  {
+   "run": "41490750873",
+   "t": 60376,
+   "type": "visit",
+   "msg": "📖 [19/36] 「유하진」 읽는 중… (5,320,514)",
+   "url": "https://zeta-ai.io/ko/plots/98d78580-55f8-4b47-be6c-b097e8c2406e/profile",
+   "name": "유하진",
+   "i": 19
+  },
+  {
+   "run": "41490750873",
+   "t": 60775,
+   "type": "work",
+   "msg": "✅ 「유하진」 분석 — 점수 82 · 인트로 615자 · 태그 #소꿉친구 #무자각 #체대생 #남사친 · 연관작 9개 추가",
+   "work": {
+    "id": "98d78580-55f8-4b47-be6c-b097e8c2406e",
+    "url": "https://zeta-ai.io/ko/plots/98d78580-55f8-4b47-be6c-b097e8c2406e/profile",
+    "name": "유하진",
+    "creator": "우왓",
+    "count": 5320514,
+    "rank": null,
+    "tags": [
+     "소꿉친구",
+     "무자각",
+     "체대생",
+     "남사친",
+     "삼각관계",
+     "다정",
+     "질투",
+     "캠퍼스",
+     "순애",
+     "후회"
+    ],
+    "genres": [
+     "로맨스",
+     "혐관·후회"
+    ],
+    "short": "여친이랑…… 중에 내 이름 불렀다는 소꿉친구",
+    "introExcerpt": "*도어락이 열리는 날카로운 소리와 함께, 여행에서 막 돌아왔을 하진이 Guest의 자취방 안으로 걸어 들어온다. 늘 칼같이 반듯하던 국가대표 선수의 어깨는 잔뜩 내려앉아 있고, 얼굴은 며칠 밤은 지새운 듯 처참하게 퀭한 상태다.* *자취방 한가운데에 멍하니 서 있던 하진은, 이내 무너지…",
+    "longExcerpt": "",
+    "charNames": [
+     "유하진",
+     "김미래"
+    ],
+    "mode": "STORY_CHAT",
+    "releasedAt": "2026-07-20T16:16:55.154280Z",
+    "f": {
+     "shortLen": 24,
+     "introLen": 615,
+     "longLen": 0,
+     "charCount": 2,
+     "charDescLen": 0,
+     "exampleConvs": 0,
+     "lorebooks": 2,
+     "tagCount": 10,
+     "introNarration": 66,
+     "introDialogue": 31,
+     "introEndsOpen": 1,
+     "userMention": 3,
+     "commentLen": 0,
+     "plugins": 8,
+     "ageDays": 105,
+     "perDay": 50649
+    },
+    "score": 82
+   }
+  },
+  {
+   "run": "41490750873",
+   "t": 63336,
+   "type": "visit",
+   "msg": "📖 [20/36] 「남학준」 읽는 중… (5,010,976)",
+   "url": "https://zeta-ai.io/ko/plots/d740d61e-af5f-4a55-b4ed-c7b736ab8968/profile",
+   "name": "남학준",
+   "i": 20
+  },
+  {
+   "run": "41490750873",
+   "t": 63704,
+   "type": "work",
+   "msg": "✅ 「남학준」 분석 — 점수 58 · 인트로 347자 · 태그 #hl #소꿉친구 #운동선수 #장난꾸러기 · 연관작 6개 추가",
+   "work": {
+    "id": "d740d61e-af5f-4a55-b4ed-c7b736ab8968",
+    "url": "https://zeta-ai.io/ko/plots/d740d61e-af5f-4a55-b4ed-c7b736ab8968/profile",
+    "name": "남학준",
+    "creator": "디노의 남편이 된𐙚𝕂𝕦앤끄",
+    "count": 5010976,
+    "rank": null,
+    "tags": [
+     "hl",
+     "소꿉친구",
+     "운동선수",
+     "장난꾸러기",
+     "순애",
+     "다정"
+    ],
+    "genres": [
+     "로맨스"
+    ],
+    "short": "야,Guest 나 수건 좀",
+    "introExcerpt": "*익숙함은 때로, 사랑보다 더 위험했다. 어릴 적부터 같은 동네에서 자란 우리. 유치원도, 초등학교도, 중학교도. 서로의 시간이 닿지 않은 곳이 없었다. 그래서인지 그는 우리 집 비밀번호까지 외우고 있었다. 삑─* 나 왔다. *운동을 막 끝낸 듯 젖은 머리카락과 땀에 흠뻑 젖은 운동복.…",
+    "longExcerpt": "Guest과 남학준은 같은 동네에서 자랐다. 초등학교 입학식 날, 운동장에서 길을 잃고 울고 있던 너에게 먼저 다가온 아이. “같이 교실 찾을래?” 그 한마디를 시작으로 둘은 언제나 함께였다. 등굣길도, 하굣길도. …",
+    "charNames": [
+     "남학준"
+    ],
+    "mode": "STORY_CHAT",
+    "releasedAt": "2026-07-26T02:06:07.118319Z",
+    "f": {
+     "shortLen": 14,
+     "introLen": 347,
+     "longLen": 639,
+     "charCount": 1,
+     "charDescLen": 758,
+     "exampleConvs": 0,
+     "lorebooks": 0,
+     "tagCount": 6,
+     "introNarration": 71,
+     "introDialogue": 28,
+     "introEndsOpen": 0,
+     "userMention": 1,
+     "commentLen": 48,
+     "plugins": 6,
+     "ageDays": 100,
+     "perDay": 50292
+    },
+    "score": 58
+   }
+  },
+  {
+   "run": "41490750873",
+   "t": 66265,
+   "type": "visit",
+   "msg": "📖 [21/36] 「서태혁」 읽는 중… (6,320,643)",
+   "url": "https://zeta-ai.io/ko/plots/8bd1ec64-bcfb-4ad5-a8a8-55d787fc9bd4/profile",
+   "name": "서태혁",
+   "i": 21
+  },
+  {
+   "run": "41490750873",
+   "t": 66663,
+   "type": "work",
+   "msg": "✅ 「서태혁」 분석 — 점수 51 · 인트로 51자 · 태그 #짝사랑 #연하 #HL #BL · 연관작 6개 추가",
+   "work": {
+    "id": "8bd1ec64-bcfb-4ad5-a8a8-55d787fc9bd4",
+    "url": "https://zeta-ai.io/ko/plots/8bd1ec64-bcfb-4ad5-a8a8-55d787fc9bd4/profile",
+    "name": "서태혁",
+    "creator": "LovingYak",
+    "count": 6320643,
+    "rank": null,
+    "tags": [
+     "짝사랑",
+     "연하",
+     "HL",
+     "BL",
+     "로맨스",
+     "순애",
+     "츤데레",
+     "누나친구"
+    ],
+    "genres": [
+     "로맨스",
+     "BL·GL"
+    ],
+    "short": "가족 여행 가기로 했는데 왜 누나 친구랑 단 둘이냐고, 씨발..",
+    "introExcerpt": "*제주도로 가는 공항, 태혁이 멍하니 체크인을 하고 있다.* 아니, 씨발.. 이게 맞아..?",
+    "longExcerpt": "",
+    "charNames": [
+     "서태혁"
+    ],
+    "mode": "STORY_CHAT",
+    "releasedAt": "2026-05-01T14:43:12.101167Z",
+    "f": {
+     "shortLen": 35,
+     "introLen": 51,
+     "longLen": 0,
+     "charCount": 1,
+     "charDescLen": 0,
+     "exampleConvs": 0,
+     "lorebooks": 0,
+     "tagCount": 8,
+     "introNarration": 63,
+     "introDialogue": 35,
+     "introEndsOpen": 1,
+     "userMention": 0,
+     "commentLen": 0,
+     "plugins": 0,
+     "ageDays": 185,
+     "perDay": 34145
+    },
+    "score": 51
+   }
+  },
+  {
+   "run": "41490750873",
+   "t": 69226,
+   "type": "visit",
+   "msg": "📖 [22/36] 「-」 읽는 중… (4,817,744)",
+   "url": "https://zeta-ai.io/ko/plots/82091604-7b85-43f7-bf92-09675894adb4/profile",
+   "name": "-",
+   "i": 22
+  },
+  {
+   "run": "41490750873",
+   "t": 70289,
+   "type": "work",
+   "msg": "✅ 「-」 분석 — 점수 53 · 인트로 782자 · 태그 #hl #blㄱㄴ · 연관작 6개 추가",
+   "work": {
+    "id": "82091604-7b85-43f7-bf92-09675894adb4",
+    "url": "https://zeta-ai.io/ko/plots/82091604-7b85-43f7-bf92-09675894adb4/profile",
+    "name": "-",
+    "creator": "하하",
+    "count": 4818078,
+    "rank": null,
+    "tags": [
+     "hl",
+     "blㄱㄴ"
+    ],
+    "genres": [
+     "로맨스",
+     "BL·GL"
+    ],
+    "short": "야, x됐다. 내 공주 또 심기 불편하시댄다.",
+    "introExcerpt": "``` 아저씨 나 오늘 기분 너무 안좋아 다 패고싶어 엽떡. 치즈우삼겹당면추가 오리지널 *누구 하나 족치러 가는 길, 핸드폰이 울린다. 확인 해보니 또 기분이 안좋단다. 이 새끼는 대체 기분 좋은 날이 언제고. 다패고싶다는 말에 미간이 찌푸려진다. 본인에게도 매우 위협적인 말이였다. 폰…",
+    "longExcerpt": "",
+    "charNames": [
+     "권사혁",
+     "이민수",
+     "민두식"
+    ],
+    "mode": "STORY_CHAT",
+    "releasedAt": "2026-07-09T05:20:24.092736Z",
+    "f": {
+     "shortLen": 25,
+     "introLen": 782,
+     "longLen": 0,
+     "charCount": 3,
+     "charDescLen": 0,
+     "exampleConvs": 4,
+     "lorebooks": 0,
+     "tagCount": 2,
+     "introNarration": 65,
+     "introDialogue": 32,
+     "introEndsOpen": 0,
+     "userMention": 0,
+     "commentLen": 12,
+     "plugins": 5,
+     "ageDays": 117,
+     "perDay": 41356
+    },
+    "score": 53
+   }
+  },
+  {
+   "run": "41490750873",
+   "t": 72850,
+   "type": "visit",
+   "msg": "📖 [23/36] 「차이건」 읽는 중… (9,375,415)",
+   "url": "https://zeta-ai.io/ko/plots/e8f3de63-643a-4497-b7a6-65406d2a1bc7/profile",
+   "name": "차이건",
+   "i": 23
+  },
+  {
+   "run": "41490750873",
+   "t": 73255,
+   "type": "work",
+   "msg": "✅ 「차이건」 분석 — 점수 69 · 인트로 370자 · 태그 #토끼수인 #조직 #경매 #납치 · 연관작 6개 추가",
+   "work": {
+    "id": "e8f3de63-643a-4497-b7a6-65406d2a1bc7",
+    "url": "https://zeta-ai.io/ko/plots/e8f3de63-643a-4497-b7a6-65406d2a1bc7/profile",
+    "name": "차이건",
+    "creator": "16000! 늘멍그맛",
+    "count": 9375415,
+    "rank": null,
+    "tags": [
+     "토끼수인",
+     "조직",
+     "경매",
+     "납치",
+     "사고뭉치",
+     "오지콤",
+     "로맨스",
+     "hl",
+     "조직보스",
+     "bl"
+    ],
+    "genres": [
+     "로맨스",
+     "BL·GL",
+     "조직·느와르",
+     "수인·이종족"
+    ],
+    "short": "\"야 두식아. 저거 하얀거 우리집 토끼 아니냐?\"",
+    "introExcerpt": "*따분한 표정으로 VIP석에 앉아 독주를 들이켜던 이건의 눈에, 오늘 경매의 하이라이트라 불리는 마지막 상품이 들어왔다.화려한 조명 아래, 철창 속에 갇혀 떨고 있는 것은 다름 아닌 제 집 거실을 난장판으로 만들고 사라졌던 그 사고뭉치 토끼였다.* *오늘 경매의 마지막을 장식할 마지막 …",
+    "longExcerpt": "",
+    "charNames": [
+     "차이건",
+     "곽두식"
+    ],
+    "mode": "STORY_CHAT",
+    "releasedAt": "2026-03-27T13:28:31.401773Z",
+    "f": {
+     "shortLen": 27,
+     "introLen": 370,
+     "longLen": 0,
+     "charCount": 2,
+     "charDescLen": 0,
+     "exampleConvs": 0,
+     "lorebooks": 1,
+     "tagCount": 10,
+     "introNarration": 91,
+     "introDialogue": 7,
+     "introEndsOpen": 1,
+     "userMention": 0,
+     "commentLen": 124,
+     "plugins": 8,
+     "ageDays": 220,
+     "perDay": 42584
+    },
+    "score": 69
+   }
+  },
+  {
+   "run": "41490750873",
+   "t": 75817,
+   "type": "visit",
+   "msg": "📖 [24/36] 「문성현」 읽는 중… (4,662,334)",
+   "url": "https://zeta-ai.io/ko/plots/011ce6c6-2979-482d-a937-4626a0aabbb1/profile",
+   "name": "문성현",
+   "i": 24
+  },
+  {
+   "run": "41490750873",
+   "t": 76222,
+   "type": "work",
+   "msg": "✅ 「문성현」 분석 — 점수 80 · 인트로 599자 · 태그 #위장결혼 #혐관 #특수부대 #로코 · 연관작 7개 추가",
+   "work": {
+    "id": "011ce6c6-2979-482d-a937-4626a0aabbb1",
+    "url": "https://zeta-ai.io/ko/plots/011ce6c6-2979-482d-a937-4626a0aabbb1/profile",
+    "name": "문성현",
+    "creator": "Seiyan",
+    "count": 4662334,
+    "rank": null,
+    "tags": [
+     "위장결혼",
+     "혐관",
+     "특수부대",
+     "로코",
+     "rpg",
+     "hl",
+     "bl",
+     "능글",
+     "티격태격",
+     "유저바라기"
+    ],
+    "genres": [
+     "로맨스",
+     "BL·GL",
+     "혐관·후회"
+    ],
+    "short": "이번 작전명은, 연애결혼한 아내바보 남편입니다",
+    "introExcerpt": "*뜬금없는 호출이었다. 어쩐지 불길한 예감에 휩싸여서 브링핑룸에 도착했을 때 제일 먼저 본 얼굴은.* 아, 또 이러시네. 문만 열고 들어와야지, 제 마음의 문까지 열면 어떡합니까? *제일 꼴보기 싫어하는 놈이었다. 실실 웃는 얼굴, 무게감이라곤 전혀 없는 말을 쉴새없이 던져대는 한심한 …",
+    "longExcerpt": "",
+    "charNames": [
+     "문성현"
+    ],
+    "mode": "STORY_CHAT",
+    "releasedAt": "2026-07-27T15:00:32.768948Z",
+    "f": {
+     "shortLen": 25,
+     "introLen": 599,
+     "longLen": 0,
+     "charCount": 1,
+     "charDescLen": 0,
+     "exampleConvs": 0,
+     "lorebooks": 1,
+     "tagCount": 10,
+     "introNarration": 75,
+     "introDialogue": 23,
+     "introEndsOpen": 1,
+     "userMention": 4,
+     "commentLen": 12,
+     "plugins": 8,
+     "ageDays": 98,
+     "perDay": 47526
+    },
+    "score": 80
+   }
+  },
+  {
+   "run": "41490750873",
+   "t": 78784,
+   "type": "visit",
+   "msg": "📖 [25/36] 「백청우」 읽는 중… (4,141,468)",
+   "url": "https://zeta-ai.io/ko/plots/d063e6ef-920c-421c-bfb5-6bc5e8336bd9/profile",
+   "name": "백청우",
+   "i": 25
+  },
+  {
+   "run": "41490750873",
+   "t": 79252,
+   "type": "work",
+   "msg": "✅ 「백청우」 분석 — 점수 78 · 인트로 405자 · 태그 #조직보스 #흑막 #계략 #순애 · 연관작 5개 추가",
+   "work": {
+    "id": "d063e6ef-920c-421c-bfb5-6bc5e8336bd9",
+    "url": "https://zeta-ai.io/ko/plots/d063e6ef-920c-421c-bfb5-6bc5e8336bd9/profile",
+    "name": "백청우",
+    "creator": "수월",
+    "count": 4141468,
+    "rank": null,
+    "tags": [
+     "조직보스",
+     "흑막",
+     "계략",
+     "순애",
+     "집착",
+     "유저바라기",
+     "이중인격",
+     "대형견",
+     "hl",
+     "bl"
+    ],
+    "genres": [
+     "로맨스",
+     "BL·GL",
+     "집착·광기",
+     "조직·느와르"
+    ],
+    "short": "나... 좀 재워주면 안 돼요? 나 착한데...",
+    "introExcerpt": "*눈발이 거세게 휘몰아치는 혹한의 겨울 밤.* *가로등마저 흐릿한 외딴 골목길 구석에, 눈밭에 한 남자가 쓰러져 있었다.* *적들의 비열한 기습으로 온몸이 만신창이가 된 채 몰아쉬는 숨결마다 짙은 흰 김이 터져 나왔다.* *인기척을 느낀 그가 젖은 흑발 사이로 시리도록 투명한 벽안을 흐…",
+    "longExcerpt": "",
+    "charNames": [
+     "백청우"
+    ],
+    "mode": "STORY_CHAT",
+    "releasedAt": "2026-07-13T19:55:55.736854Z",
+    "f": {
+     "shortLen": 26,
+     "introLen": 405,
+     "longLen": 0,
+     "charCount": 1,
+     "charDescLen": 0,
+     "exampleConvs": 4,
+     "lorebooks": 3,
+     "tagCount": 10,
+     "introNarration": 90,
+     "introDialogue": 6,
+     "introEndsOpen": 1,
+     "userMention": 2,
+     "commentLen": 79,
+     "plugins": 8,
+     "ageDays": 112,
+     "perDay": 37012
+    },
+    "score": 78
+   }
+  },
+  {
+   "run": "41490750873",
+   "t": 81814,
+   "type": "visit",
+   "msg": "📖 [26/36] 「내 중지 손가락 진짜 네 거 같아」 읽는 중… (3,964,414)",
+   "url": "https://zeta-ai.io/ko/plots/26805d6f-f2ca-4b5e-a9d4-adf67a57b0fe/profile",
+   "name": "내 중지 손가락 진짜 네 거 같아",
+   "i": 26
+  },
+  {
+   "run": "41490750873",
+   "t": 82155,
+   "type": "work",
+   "msg": "✅ 「내 중지 손가락 진짜 네 거 같아」 분석 — 점수 71 · 인트로 462자 · 태그 #국가대표 #로코 #순애 #태권도 · 연관작 4개 추가",
+   "work": {
+    "id": "26805d6f-f2ca-4b5e-a9d4-adf67a57b0fe",
+    "url": "https://zeta-ai.io/ko/plots/26805d6f-f2ca-4b5e-a9d4-adf67a57b0fe/profile",
+    "name": "내 중지 손가락 진짜 네 거 같아",
+    "creator": "ʙʟᴜᴇʙᴇʀʀʏ",
+    "count": 3964414,
+    "rank": null,
+    "tags": [
+     "국가대표",
+     "로코",
+     "순애",
+     "태권도",
+     "파트너",
+     "소꿉친구",
+     "로맨스",
+     "대형견",
+     "hl",
+     "bl"
+    ],
+    "genres": [
+     "로맨스",
+     "BL·GL"
+    ],
+    "short": "다르게 쓰니까 조용해지던데",
+    "introExcerpt": "*금요일 오후, 선수촌에서 외박 허가가 떨어진 날. 우현재는 훈련을 마치자마자 샤워를 빨리 끝내고, 더플백 하나 덜렁 들고 주차장으로 향했다. 목적지는 당연히 하나. Guest의 집.* *모든 게 녹아내릴 한여름 더위에도 입꼬리가 올라가는 게 느껴져 손등으로 입가를 쓱 문질렀다.* >나…",
+    "longExcerpt": "",
+    "charNames": [
+     "우현재"
+    ],
+    "mode": "STORY_CHAT",
+    "releasedAt": "2026-08-08T05:05:32.071860Z",
+    "f": {
+     "shortLen": 14,
+     "introLen": 462,
+     "longLen": 0,
+     "charCount": 1,
+     "charDescLen": 0,
+     "exampleConvs": 0,
+     "lorebooks": 0,
+     "tagCount": 10,
+     "introNarration": 91,
+     "introDialogue": 7,
+     "introEndsOpen": 1,
+     "userMention": 2,
+     "commentLen": 12,
+     "plugins": 0,
+     "ageDays": 87,
+     "perDay": 45824
+    },
+    "score": 71
+   }
+  },
+  {
+   "run": "41490750873",
+   "t": 84723,
+   "type": "visit",
+   "msg": "📖 [27/36] 「서재이」 읽는 중… (3,914,350)",
+   "url": "https://zeta-ai.io/ko/plots/decd571b-27bf-4050-8178-50d3a85ead10/profile",
+   "name": "서재이",
+   "i": 27
+  },
+  {
+   "run": "41490750873",
+   "t": 85228,
+   "type": "work",
+   "msg": "✅ 「서재이」 분석 — 점수 67 · 인트로 613자 · 태그 #모델 #매니저 #까칠 #연예계 · 연관작 8개 추가",
+   "work": {
+    "id": "decd571b-27bf-4050-8178-50d3a85ead10",
+    "url": "https://zeta-ai.io/ko/plots/decd571b-27bf-4050-8178-50d3a85ead10/profile",
+    "name": "서재이",
+    "creator": "과부하",
+    "count": 3915152,
+    "rank": null,
+    "tags": [
+     "모델",
+     "매니저",
+     "까칠",
+     "연예계",
+     "Hl",
+     "Bl",
+     "현대"
+    ],
+    "genres": [
+     "로맨스",
+     "BL·GL",
+     "현대·일상"
+    ],
+    "short": "매니저가 못 버티기로 유명한 톱모델. 이번엔 내가 걸렸다.",
+    "introExcerpt": "*정상급 톱모델 서재이. 국내외 유명 브랜드와 패션쇼를 오가며 이름만 대면 누구나 아는 모델이지만, 업계에서는 까다로운 성격으로도 유명하다. 최근 1년 동안 교체된 전담 매니저만 네 명. 그리고 전임 매니저가 두 달 만에 사직서를 낸 뒤, 그 자리에 새롭게 배정된 사람이 바로 나였다. …",
+    "longExcerpt": "",
+    "charNames": [
+     "서재이"
+    ],
+    "mode": "STORY_CHAT",
+    "releasedAt": "2026-09-01T11:23:49.983616Z",
+    "f": {
+     "shortLen": 32,
+     "introLen": 613,
+     "longLen": 0,
+     "charCount": 1,
+     "charDescLen": 0,
+     "exampleConvs": 0,
+     "lorebooks": 4,
+     "tagCount": 7,
+     "introNarration": 81,
+     "introDialogue": 18,
+     "introEndsOpen": 1,
+     "userMention": 1,
+     "commentLen": 140,
+     "plugins": 7,
+     "ageDays": 62,
+     "perDay": 62893
+    },
+    "score": 67
+   }
+  },
+  {
+   "run": "41490750873",
+   "t": 87790,
+   "type": "visit",
+   "msg": "📖 [28/36] 「[언리밋] 백 결」 읽는 중… (8,369,763)",
+   "url": "https://zeta-ai.io/ko/plots/593c52c1-083d-4d22-8712-5835db6d9b51/profile",
+   "name": "[언리밋] 백 결",
+   "i": 28
+  },
+  {
+   "run": "41490750873",
+   "t": 88396,
+   "type": "work",
+   "msg": "✅ 「[언리밋] 백 결」 분석 — 점수 62 · 인트로 626자 · 태그 #bl #hl #호구 #집착 · 연관작 3개 추가",
+   "work": {
+    "id": "593c52c1-083d-4d22-8712-5835db6d9b51",
+    "url": "https://zeta-ai.io/ko/plots/593c52c1-083d-4d22-8712-5835db6d9b51/profile",
+    "name": "[언리밋] 백 결",
+    "creator": "요해",
+    "count": 8369763,
+    "rank": null,
+    "tags": [
+     "bl",
+     "hl",
+     "호구",
+     "집착",
+     "능글",
+     "게임",
+     "유저바라기",
+     "순애",
+     "대학생",
+     "존잘"
+    ],
+    "genres": [
+     "로맨스",
+     "BL·GL",
+     "집착·광기",
+     "학원"
+    ],
+    "short": "게임에서 호구 하나 꼬셨는데 같은 대학교에 철벽 존잘남이었다.",
+    "introExcerpt": "*세상엔 참 쉬운 놈들이 많다. 적당히 귀여운 척 좀 해주고, 가지고 싶은 아이템 앞에서 시무룩한 이모티콘 몇 개 던져주면 알아서 지갑을 여는 호구들. '아스텔라이아'에서 만난 '결'도 그중 하나였다. 닉네임처럼 참 결 고운 호구라고 생각했다.* *그런데 이 자식, 갈수록 좀 이상하다.…",
+    "longExcerpt": "",
+    "charNames": [
+     "백 결"
+    ],
+    "mode": "STORY_CHAT",
+    "releasedAt": "2026-04-29T14:14:52.445551Z",
+    "f": {
+     "shortLen": 34,
+     "introLen": 626,
+     "longLen": 0,
+     "charCount": 1,
+     "charDescLen": 0,
+     "exampleConvs": 0,
+     "lorebooks": 1,
+     "tagCount": 10,
+     "introNarration": 93,
+     "introDialogue": 6,
+     "introEndsOpen": 1,
+     "userMention": 0,
+     "commentLen": 133,
+     "plugins": 3,
+     "ageDays": 187,
+     "perDay": 44726
+    },
+    "score": 62
+   }
+  },
+  {
+   "run": "41490750873",
+   "t": 90957,
+   "type": "visit",
+   "msg": "📖 [29/36] 「루벤 에르하르트」 읽는 중… (6,040,177)",
+   "url": "https://zeta-ai.io/ko/plots/63d2883b-8438-4d1c-9e78-68a440c5d2fb/profile",
+   "name": "루벤 에르하르트",
+   "i": 29
+  },
+  {
+   "run": "41490750873",
+   "t": 91301,
+   "type": "work",
+   "msg": "✅ 「루벤 에르하르트」 분석 — 점수 84 · 인트로 972자 · 태그 #bl #hl #북부대공 #로맨스판타지 · 연관작 7개 추가",
+   "work": {
+    "id": "63d2883b-8438-4d1c-9e78-68a440c5d2fb",
+    "url": "https://zeta-ai.io/ko/plots/63d2883b-8438-4d1c-9e78-68a440c5d2fb/profile",
+    "name": "루벤 에르하르트",
+    "creator": "피클",
+    "count": 6040177,
+    "rank": null,
+    "tags": [
+     "bl",
+     "hl",
+     "북부대공",
+     "로맨스판타지",
+     "힐링",
+     "로판",
+     "로맨스",
+     "순애"
+    ],
+    "genres": [
+     "로맨스",
+     "BL·GL",
+     "판타지",
+     "로판·회귀"
+    ],
+    "short": "분명히 복수하려고 데려왔는데, Guest이 너무 하찮고 귀엽다.",
+    "introExcerpt": "*Guest과 첫 만남이었다.* *눈 쌓인 북부 저택. 루벤은 전혀 긴장하지 않은 얼굴로, 차갑게 가라앉은 눈으로 Guest을 기다렸다.* *원수 가문의 마지막 후계자.* *분명 악독하고, 오만하고, 비굴하거나, 발악하겠지 생각했다.* *근데 문 열리자마자 하는 소리가.* 우와! 샹들리…",
+    "longExcerpt": "",
+    "charNames": [
+     "루벤"
+    ],
+    "mode": "STORY_CHAT",
+    "releasedAt": "2026-05-12T18:48:30.943660Z",
+    "f": {
+     "shortLen": 35,
+     "introLen": 972,
+     "longLen": 0,
+     "charCount": 1,
+     "charDescLen": 0,
+     "exampleConvs": 0,
+     "lorebooks": 0,
+     "tagCount": 8,
+     "introNarration": 29,
+     "introDialogue": 1,
+     "introEndsOpen": 1,
+     "userMention": 5,
+     "commentLen": 126,
+     "plugins": 3,
+     "ageDays": 174,
+     "perDay": 34725
+    },
+    "score": 84
+   }
+  },
+  {
+   "run": "41490750873",
+   "t": 93864,
+   "type": "visit",
+   "msg": "📖 [30/36] 「커플 남녀무리+여우」 읽는 중… (3,772,502)",
+   "url": "https://zeta-ai.io/ko/plots/e447cfc7-b204-4b61-9a5e-e312d47c0bc5/profile",
+   "name": "커플 남녀무리+여우",
+   "i": 30
+  },
+  {
+   "run": "41490750873",
+   "t": 94238,
+   "type": "work",
+   "msg": "✅ 「커플 남녀무리+여우」 분석 — 점수 76 · 인트로 459자 · 태그 #남녀무리 #소꿉친구 #존잘 #존예 · 연관작 9개 추가",
+   "work": {
+    "id": "e447cfc7-b204-4b61-9a5e-e312d47c0bc5",
+    "url": "https://zeta-ai.io/ko/plots/e447cfc7-b204-4b61-9a5e-e312d47c0bc5/profile",
+    "name": "커플 남녀무리+여우",
+    "creator": "슈크림",
+    "count": 3772578,
+    "rank": null,
+    "tags": [
+     "남녀무리",
+     "소꿉친구",
+     "존잘",
+     "존예",
+     "철벽",
+     "다정",
+     "능글",
+     "여우",
+     "커플무리",
+     "로맨스"
+    ],
+    "genres": [
+     "로맨스",
+     "다인캐"
+    ],
+    "short": "몸매도 개 별로인데 교복 존나 줄여입는 여우년",
+    "introExcerpt": "*쉬는시간,학교 옥상에는 도현,한준,태경,Guest,유림,소희가 모여서 수다를 떨고있다.* *배를 잡고 웃으며* ㅋㅋㅋㅋ미친것들.아,맞다. 니네 오늘 김지현 옷꼬라지 봤냨? 시밬ㅋㅋ. 존나 웃겨. 지가 뭐 되는줄 아나봐, 몸매도 별론데 오늘 교복 존나 줄여 입었든뎈ㅋㅋ. *착하게 웃지만…",
+    "longExcerpt": "모두 김지현은 싫어하는데 앞에서는 별로 티를 안내지만 진짜 엄청 개 극혐한다. 김지현은 애들이 싫어하고 극혐하는줄도 모르고 자기가 우월하다고 느껴서 남자애들 존나 꼬시려고 하고 귀척도 존나 한다. 커플 유저&도현 유…",
+    "charNames": [
+     "권도현",
+     "유저",
+     "서한준",
+     "정유림",
+     "강태경",
+     "배소희"
+    ],
+    "mode": "STORY_CHAT",
+    "releasedAt": "2026-01-28T08:29:07.441077Z",
+    "f": {
+     "shortLen": 25,
+     "introLen": 459,
+     "longLen": 130,
+     "charCount": 7,
+     "charDescLen": 134,
+     "exampleConvs": 0,
+     "lorebooks": 0,
+     "tagCount": 10,
+     "introNarration": 30,
+     "introDialogue": 67,
+     "introEndsOpen": 1,
+     "userMention": 3,
+     "commentLen": 0,
+     "plugins": 0,
+     "ageDays": 278,
+     "perDay": 13552
+    },
+    "score": 76
+   }
+  },
+  {
+   "run": "41490750873",
+   "t": 96800,
+   "type": "visit",
+   "msg": "📖 [31/36] 「스포츠선수」 읽는 중… (3,983,010)",
+   "url": "https://zeta-ai.io/ko/plots/4e608eb3-cad2-409e-b1bf-f45480c3eb0f/profile",
+   "name": "스포츠선수",
+   "i": 31
+  },
+  {
+   "run": "41490750873",
+   "t": 97350,
+   "type": "work",
+   "msg": "✅ 「스포츠선수」 분석 — 점수 33 · 인트로 127자 · 태그 #커플 #커플무리 #국가대표 #선수 · 연관작 8개 추가",
+   "work": {
+    "id": "4e608eb3-cad2-409e-b1bf-f45480c3eb0f",
+    "url": "https://zeta-ai.io/ko/plots/4e608eb3-cad2-409e-b1bf-f45480c3eb0f/profile",
+    "name": "스포츠선수",
+    "creator": "ONOM3",
+    "count": 3983010,
+    "rank": null,
+    "tags": [
+     "커플",
+     "커플무리",
+     "국가대표",
+     "선수",
+     "스포츠",
+     "존잘",
+     "존예",
+     "남자친구",
+     "연인",
+     "동갑"
+    ],
+    "genres": [
+     "다인캐"
+    ],
+    "short": "커플 국가대표 선수",
+    "introExcerpt": "*체육관에는 각자의 종목이 다른 만큼, 움직임도 제각각이었다. 같은 공간에서 훈련하고 있지만, 서로에게 집중하는 사람은 거의 없었다. 땀과 숨소리만이 일정한 리듬처럼 바닥에 쌓였다. 이곳에서는 감정보다 기록과 동작이 먼저였다.*",
+    "longExcerpt": "하루에 한번씩 저녁마다 각자 한명씩 선수들 앞에서 대놓고 키와 몸무게 검사한다, (인바디로)",
+    "charNames": [
+     "김민호",
+     "이수빈",
+     "한효빈",
+     "허준서",
+     "유예나",
+     "기지후"
+    ],
+    "mode": "STORY_CHAT",
+    "releasedAt": "2026-01-20T09:36:26.753491Z",
+    "f": {
+     "shortLen": 10,
+     "introLen": 127,
+     "longLen": 51,
+     "charCount": 7,
+     "charDescLen": 94,
+     "exampleConvs": 0,
+     "lorebooks": 0,
+     "tagCount": 10,
+     "introNarration": 100,
+     "introDialogue": 0,
+     "introEndsOpen": 0,
+     "userMention": 0,
+     "commentLen": 0,
+     "plugins": 0,
+     "ageDays": 286,
+     "perDay": 13911
+    },
+    "score": 33
+   }
+  },
+  {
+   "run": "41490750873",
+   "t": 99911,
+   "type": "visit",
+   "msg": "📖 [32/36] 「[언리밋] 이 백」 읽는 중… (3,611,721)",
+   "url": "https://zeta-ai.io/ko/plots/9371ef0a-8c80-45b9-9ada-6db7d6783908/profile",
+   "name": "[언리밋] 이 백",
+   "i": 32
+  },
+  {
+   "run": "41490750873",
+   "t": 100323,
+   "type": "work",
+   "msg": "✅ 「[언리밋] 이 백」 분석 — 점수 67 · 인트로 598자 · 태그 #bl #hl #동양풍 #빙의 · 연관작 3개 추가",
+   "work": {
+    "id": "9371ef0a-8c80-45b9-9ada-6db7d6783908",
+    "url": "https://zeta-ai.io/ko/plots/9371ef0a-8c80-45b9-9ada-6db7d6783908/profile",
+    "name": "[언리밋] 이 백",
+    "creator": "요해",
+    "count": 3611721,
+    "rank": null,
+    "tags": [
+     "bl",
+     "hl",
+     "동양풍",
+     "빙의",
+     "집착",
+     "여우",
+     "순애",
+     "유저바라기",
+     "애교",
+     "수인"
+    ],
+    "genres": [
+     "로맨스",
+     "BL·GL",
+     "집착·광기",
+     "로판·회귀",
+     "수인·이종족"
+    ],
+    "short": "주워온 흰여우한테 남주 욕과 별걸 다했는데.. 흰여우가 원작 남주였다.",
+    "introExcerpt": "*눈을 떴을 땐 이미 모든 게 달라져 있었다.* *지독하게 고구마만 처먹이던 피폐 소설, <달을 삼킨 은우> 속으로 빙의했다는 사실을 깨닫는 데는 그리 오랜 시간이 걸리지 않았다. 하지만 주인공도, 악역도 아닌 소설 속에 등장하지도 않는 사람이라니.* *핸드폰도, 침대도 없는 이 지루한…",
+    "longExcerpt": "",
+    "charNames": [
+     "이 백"
+    ],
+    "mode": "STORY_CHAT",
+    "releasedAt": "2026-05-02T14:08:55.491215Z",
+    "f": {
+     "shortLen": 39,
+     "introLen": 598,
+     "longLen": 0,
+     "charCount": 1,
+     "charDescLen": 0,
+     "exampleConvs": 0,
+     "lorebooks": 3,
+     "tagCount": 10,
+     "introNarration": 88,
+     "introDialogue": 10,
+     "introEndsOpen": 1,
+     "userMention": 1,
+     "commentLen": 146,
+     "plugins": 0,
+     "ageDays": 184,
+     "perDay": 19614
+    },
+    "score": 67
+   }
+  },
+  {
+   "run": "41490750873",
+   "t": 102887,
+   "type": "visit",
+   "msg": "📖 [33/36] 「수인들의 제국: 알레칸」 읽는 중… (4,283,759)",
+   "url": "https://zeta-ai.io/ko/plots/f8ded26b-e441-43e7-9751-46f3bd7719d1/profile",
+   "name": "수인들의 제국: 알레칸",
+   "i": 33
+  },
+  {
+   "run": "41490750873",
+   "t": 103304,
+   "type": "work",
+   "msg": "✅ 「수인들의 제국: 알레칸」 분석 — 점수 67 · 인트로 362자 · 태그 #수인 #오메가버스 #로판 #hl · 연관작 9개 추가",
+   "work": {
+    "id": "f8ded26b-e441-43e7-9751-46f3bd7719d1",
+    "url": "https://zeta-ai.io/ko/plots/f8ded26b-e441-43e7-9751-46f3bd7719d1/profile",
+    "name": "수인들의 제국: 알레칸",
+    "creator": "먹고싶은거 만드는 김유벨",
+    "count": 4283759,
+    "rank": null,
+    "tags": [
+     "수인",
+     "오메가버스",
+     "로판",
+     "hl",
+     "bl가능",
+     "다공일수",
+     "여우",
+     "여우짓",
+     "다인캐",
+     "로맨스"
+    ],
+    "genres": [
+     "로맨스",
+     "BL·GL",
+     "로판·회귀",
+     "수인·이종족",
+     "다인캐"
+    ],
+    "short": "그저 취향 가득한 도파민 추구형 플롯",
+    "introExcerpt": "*황궁의 대연회장은 수백 개의 샹들리에가 쏟아내는 황금빛 아래 눈부시게 빛나고 있었다.* *각지의 귀족들과 수인 가문의 후계자들, 그리고 이름만으로도 연회장의 공기를 바꿔놓는 황족들이 하나둘 모습을 드러냈다. 화려한 드레스와 정복, 반짝이는 보석들 사이로 은은한 페로몬이 뒤섞여 흐른다.…",
+    "longExcerpt": "",
+    "charNames": [
+     "카시안 루벨리온",
+     "테오도르 아르젠",
+     "로드릭 라이젠",
+     "세실 드 벨로아",
+     "실베르 드 벨로아",
+     "발렌티아 크루웰"
+    ],
+    "mode": "STORY_CHAT",
+    "releasedAt": "2026-08-17T11:26:32.703850Z",
+    "f": {
+     "shortLen": 20,
+     "introLen": 362,
+     "longLen": 0,
+     "charCount": 7,
+     "charDescLen": 0,
+     "exampleConvs": 0,
+     "lorebooks": 2,
+     "tagCount": 10,
+     "introNarration": 81,
+     "introDialogue": 6,
+     "introEndsOpen": 1,
+     "userMention": 1,
+     "commentLen": 10,
+     "plugins": 3,
+     "ageDays": 77,
+     "perDay": 55454
+    },
+    "score": 67
+   }
+  },
+  {
+   "run": "41490750873",
+   "t": 105865,
+   "type": "visit",
+   "msg": "📖 [34/36] 「하도진」 읽는 중… (3,532,709)",
+   "url": "https://zeta-ai.io/ko/plots/836b320f-1c51-41e8-88d5-950e40f1aaa8/profile",
+   "name": "하도진",
+   "i": 34
+  },
+  {
+   "run": "41490750873",
+   "t": 106198,
+   "type": "work",
+   "msg": "✅ 「하도진」 분석 — 점수 84 · 인트로 864자 · 태그 #소꿉친구 #순애 #로맨스 #캠퍼스 · 연관작 6개 추가",
+   "work": {
+    "id": "836b320f-1c51-41e8-88d5-950e40f1aaa8",
+    "url": "https://zeta-ai.io/ko/plots/836b320f-1c51-41e8-88d5-950e40f1aaa8/profile",
+    "name": "하도진",
+    "creator": "Seiyan",
+    "count": 3532709,
+    "rank": null,
+    "tags": [
+     "소꿉친구",
+     "순애",
+     "로맨스",
+     "캠퍼스",
+     "유저바라기",
+     "집착",
+     "hl",
+     "bl",
+     "짝사랑",
+     "동갑"
+    ],
+    "genres": [
+     "로맨스",
+     "BL·GL",
+     "집착·광기"
+    ],
+    "short": "22년동안 나만 짝사랑하던 남사친에게 여친이 생겼다",
+    "introExcerpt": "*여자친구가 생기면 일상이 좀 달라질 줄 알았다. 수업이 없는 날에는 여친을 만나고, 주말에도 당연히 여친이랑 데이트하고, 하루에 가장 많이 연락하고 가장 자주 보는 것도 여친일 줄 알았는데... 오랜 관성 때문일까. 아니면 다른 이유 때문일까. 오늘도 하도진의 하루를 꽉 채우는 것은 …",
+    "longExcerpt": "",
+    "charNames": [
+     "하도진",
+     "주아림"
+    ],
+    "mode": "STORY_CHAT",
+    "releasedAt": "2026-05-28T18:04:13.806618Z",
+    "f": {
+     "shortLen": 28,
+     "introLen": 864,
+     "longLen": 0,
+     "charCount": 2,
+     "charDescLen": 0,
+     "exampleConvs": 0,
+     "lorebooks": 2,
+     "tagCount": 10,
+     "introNarration": 88,
+     "introDialogue": 9,
+     "introEndsOpen": 1,
+     "userMention": 7,
+     "commentLen": 147,
+     "plugins": 9,
+     "ageDays": 158,
+     "perDay": 22363
+    },
+    "score": 84
+   }
+  },
+  {
+   "run": "41490750873",
+   "t": 108759,
+   "type": "visit",
+   "msg": "📖 [35/36] 「나다선」 읽는 중… (12,045,861)",
+   "url": "https://zeta-ai.io/ko/plots/64df81dd-12b9-4b39-8801-3814bc6f2e82/profile",
+   "name": "나다선",
+   "i": 35
+  },
+  {
+   "run": "41490750873",
+   "t": 109093,
+   "type": "work",
+   "msg": "✅ 「나다선」 분석 — 점수 53 · 인트로 395자 · 태그 #친구 #친구같은연애 #집착 #스킨십 · 연관작 1개 추가",
+   "work": {
+    "id": "64df81dd-12b9-4b39-8801-3814bc6f2e82",
+    "url": "https://zeta-ai.io/ko/plots/64df81dd-12b9-4b39-8801-3814bc6f2e82/profile",
+    "name": "나다선",
+    "creator": "유하달",
+    "count": 12045861,
+    "rank": null,
+    "tags": [
+     "친구",
+     "친구같은연애",
+     "집착",
+     "스킨십",
+     "hl",
+     "bl",
+     "남사친",
+     "소꿉친구",
+     "대학교",
+     "무뚝뚝"
+    ],
+    "genres": [
+     "로맨스",
+     "BL·GL",
+     "집착·광기",
+     "학원"
+    ],
+    "short": "스킨십 많은 23년지기 소꿉친구에게 여자친구가 생겼다. 넌 나고 난 너야",
+    "introExcerpt": "*다음 날이면 학교를 가야 하는 소중한 일요일 저녁. 오늘도 어김없이 우리집 거실 소파에 앉아있었다.* *한참 예능 프로를 보고 있는 내 손가락을 만지작거리면서 나랑 똑같이 화면을 보고 있다.* 저녁 뭐 먹지. *여전히 화면을 보면서 내 손을 계속 만지작거리며, 무심하게 툭 내뱉었다.*…",
+    "longExcerpt": "나에게는 무려 23년지기 소꿉친구가 존재한다. 엄마끼리도 이미 어릴 적 절친으로 임신도 같은 해에 해서 우린 이미 각자 엄마 배 속에 있을 때부터 절친으로 자랄 정해진 운명이었다. 서로 모르는 게 없다. 있을 수가 …",
+    "charNames": [
+     "나다선",
+     "유리아"
+    ],
+    "mode": "STORY_CHAT",
+    "releasedAt": "2026-01-24T11:05:04.265209Z",
+    "f": {
+     "shortLen": 40,
+     "introLen": 395,
+     "longLen": 316,
+     "charCount": 2,
+     "charDescLen": 395,
+     "exampleConvs": 0,
+     "lorebooks": 0,
+     "tagCount": 10,
+     "introNarration": 90,
+     "introDialogue": 7,
+     "introEndsOpen": 0,
+     "userMention": 0,
+     "commentLen": 144,
+     "plugins": 0,
+     "ageDays": 282,
+     "perDay": 42676
+    },
+    "score": 53
+   }
+  },
+  {
+   "run": "41490750873",
+   "t": 111654,
+   "type": "visit",
+   "msg": "📖 [36/36] 「차우민」 읽는 중… (10,348,620)",
+   "url": "https://zeta-ai.io/ko/plots/483aad60-90bf-4c44-88a4-5fed2dab9f0c/profile",
+   "name": "차우민",
+   "i": 36
+  },
+  {
+   "run": "41490750873",
+   "t": 112134,
+   "type": "work",
+   "msg": "✅ 「차우민」 분석 — 점수 71 · 인트로 436자 · 태그 #hl #스트리머 #능글 #집착 · 연관작 5개 추가",
+   "work": {
+    "id": "483aad60-90bf-4c44-88a4-5fed2dab9f0c",
+    "url": "https://zeta-ai.io/ko/plots/483aad60-90bf-4c44-88a4-5fed2dab9f0c/profile",
+    "name": "차우민",
+    "creator": "Rang--",
+    "count": 10348620,
+    "rank": null,
+    "tags": [
+     "hl",
+     "스트리머",
+     "능글",
+     "집착",
+     "소꿉친구",
+     "동거",
+     "소유욕",
+     "음담패설",
+     "bl"
+    ],
+    "genres": [
+     "로맨스",
+     "BL·GL",
+     "집착·광기"
+    ],
+    "short": "벗어도 괜찮다고.",
+    "introExcerpt": "*오늘도 언제나처럼 아침 방송을 하며* *능글맞게 웃으며 회색 후드티를 입고 머리를 쓸어넘기며 의자에 기대 앉아 있다* 응? 나야 이성이든 동성이든 존나 쉽지. 시청자3:쉽다고? ㅋㅋㅋㅋ 몇 년 째 못 꼬시는 소꿉친구 있으면서ㅋㅋㅋㅋ 시청자5:그러게ㅋㅋㅋㅋ 존나 꼴리던데 시청자1:ㄹㅇㄹ…",
+    "longExcerpt": "어릴 때부터 친했고 커서도 계속 붙어 다닌다. 우민이 집에 혼자 있는거 싫다며 동거를 제안했고 당신 또한 혼자는 심심하니 그냥 수락하고 동거 중이다. 우민은 능글맞은 성격과 잘생긴 외모와 몸을 이용하여 스트리머로 일…",
+    "charNames": [
+     "차우민",
+     "시청자"
+    ],
+    "mode": "STORY_CHAT",
+    "releasedAt": "2026-05-05T04:04:39.101178Z",
+    "f": {
+     "shortLen": 9,
+     "introLen": 436,
+     "longLen": 241,
+     "charCount": 2,
+     "charDescLen": 305,
+     "exampleConvs": 0,
+     "lorebooks": 3,
+     "tagCount": 9,
+     "introNarration": 63,
+     "introDialogue": 38,
+     "introEndsOpen": 1,
+     "userMention": 2,
+     "commentLen": 0,
+     "plugins": 0,
+     "ageDays": 182,
+     "perDay": 57000
+    },
+    "score": 71
+   }
+  },
+  {
+   "run": "41490750873",
+   "t": 114697,
+   "type": "done",
+   "msg": "🏁 탐사 끝 — 36개 분석 (언리밋 0개 제외) · 인기와 관련 큰 요소: 상세 설명 길이 ↑",
+   "n": 36
+  }
+ ],
+ "history": [
+  {
+   "at": "2026-11-02T17:25:46.388Z",
+   "n": 36,
+   "top": [
+    [
+     "9e3a8651-78d2-4dcb-af3d-a4e92a0cbc1e",
+     12136998
+    ],
+    [
+     "c796ed2a-e547-4c08-99c0-057c3c893eaf",
+     16671110
+    ],
+    [
+     "b0fa89fb-3a5a-4948-9427-a6b3b08e4c13",
+     7337898
+    ],
+    [
+     "22957df9-0a8b-4245-aa8f-5ad7750a0031",
+     6495349
+    ],
+    [
+     "4b70ae79-1afa-4755-94ed-f31e8c686c7a",
+     11042259
+    ]
+   ]
+  }
+ ]
+}
