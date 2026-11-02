@@ -1,0 +1,22 @@
+{
+ "status": 200,
+ "headers": {
+  "age": "0",
+  "cache-control": "private, no-cache, no-store, max-age=0, must-revalidate",
+  "content-encoding": "br",
+  "content-type": "text/html; charset=utf-8",
+  "date": "Mon, 02 Nov 2026 17:14:20 GMT",
+  "document-policy": "js-profiling",
+  "link": "<https://zeta-ai.io/ko/plots/295e16df-dc36-43f3-b1c1-1ed3fb8b92c5/profile>; rel=\"alternate\"; hreflang=\"ko\", <https://zeta-ai.io/ja/plots/295e16df-dc36-43f3-b1c1-1ed3fb8b92c5/profile>; rel=\"alternate\"; hreflang=\"ja\", <https://zeta-ai.io/en/plots/295e16df-dc36-43f3-b1c1-1ed3fb8b92c5/profile>; rel=\"alternate\"; hreflang=\"en\", <https://zeta-ai.io/plots/295e16df-dc36-43f3-b1c1-1ed3fb8b92c5/profile>; rel=\"alternate\"; hreflang=\"x-default\", <https://web-cdn.zeta-ai.io/_next/static/media/bf56aec03b6c512f-s.p.2-6hkzwn24m5-.woff2>; rel=preload; as=\"font\"; crossorigin=\"\"; type=\"font/woff2\", <https://web-cdn.zeta-ai.io/_next/static/chunks/3_x_yeuqsticc.css>; rel=preload; as=\"style\", <https://web-cdn.zeta-ai.io/_next/static/chunks/0mub-606dg15g.css>; rel=preload; as=\"style\", <https://web-cdn.zeta-ai.io/_next/static/chunks/2j20gwm249u04.css>; rel=preload; as=\"style\"",
+  "server": "Vercel",
+  "set-cookie": "DEVICE_ID=3d0852f9-5471-49ed-9069-1b6d221e7a52; Path=/; Expires=Tue, 02 Nov 2027 17:14:20 GMT; Max-Age=31536000; Secure; HttpOnly",
+  "strict-transport-security": "max-age=63072000",
+  "transfer-encoding": "chunked",
+  "vary": "rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch",
+  "x-matched-path": "/[locale]/plots/[plotId]/profile",
+  "x-powered-by": "Next.js",
+  "x-vercel-cache": "MISS",
+  "x-vercel-id": "sfo1::sfo1::dmstp-1793639660619-50d23e540e14"
+ },
+ "len": 322042
+}
