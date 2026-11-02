@@ -1,4 +1,4 @@
-// 🛰 제타 탐사봇 v3 — 제타(zeta-ai.io) 공개 작품 페이지를 천천히 돌며 인기 공식을 분석해요.
+// 🛰 제타 탐사봇 v4 — 제타(zeta-ai.io) 공개 작품 페이지를 천천히 돌며 인기 공식을 분석해요.
 // · robots.txt 허용 범위(공개 페이지)만, 요청 사이 2.5초 쉬기, 한 번에 최대 MAX개
 // · 태그·소개에 노골적인 성적 표현이 있는 작품은 건너뜀 (언리밋 표시만으로는 제외 안 함)
 // · 다른 작가의 글은 짧은 발췌만 저장 (전문은 저장하지 않음)
@@ -19,7 +19,11 @@ async function say(type, msg, extra = {}){
   const e = { run: RUN, t: Date.now() - t0, type, msg, ...extra };
   log.push(e);
   console.log(`[${(e.t / 1000).toFixed(1)}s] ${msg}`);
-  try { await fetch(`https://ntfy.sh/${TOPIC}`, { method: "POST", body: JSON.stringify(e) }); } catch {}
+  // 중계 서버가 바쁘면(429) 한 번 쉬었다가 다시 보냄
+  for (let tryN = 0; tryN < 2; tryN++){
+    try { const r = await fetch(`https://ntfy.sh/${TOPIC}`, { method: "POST", body: JSON.stringify(e) }); if (r.status !== 429) break; } catch { break; }
+    await sleep(5500);
+  }
 }
 
 /* ---------- Next.js(RSC) 페이지에서 데이터 꺼내기 ---------- */
@@ -172,7 +176,7 @@ while (works.length < MAX){
   if (!next) break;
   const [id, card] = next; done.add(id);
   const url = `${BASE}/${LANG}/plots/${id}/profile`;
-  await say("visit", `📖 [${works.length + 1}/${MAX}] 「${card.name}」 읽는 중… (${card.count.toLocaleString("ko-KR")})`, { url, name: card.name, i: works.length + 1 });
+  console.log(`📖 [${works.length + 1}/${MAX}] 「${card.name}」 읽는 중…`);
   try {
     const s = rsc(await get(url));
     const p = objsWith(s, "intros").find(o => o.id === id) || objsWith(s, "interactionCountWithRegen").find(o => o.id === id);
@@ -182,7 +186,7 @@ while (works.length < MAX){
     const w = analyze(p, card.rank);
     works.push(w);
     const added = addCards(s, false);
-    await say("work", `✅ 「${w.name}」 분석 — 점수 ${w.score} · 인트로 ${w.f.introLen}자 · 태그 ${w.tags.slice(0, 4).map(t => "#" + t).join(" ")}${added ? ` · 연관작 ${added}개 추가` : ""}`, { work: w });
+    await say("work", `📖 [${works.length}/${MAX}] 「${w.name}」 (💬 ${w.count.toLocaleString("ko-KR")}) — 점수 ${w.score} · 인트로 ${w.f.introLen}자 · ${w.tags.slice(0, 4).map(t => "#" + t).join(" ")}${w.unlimited ? " · ★언리밋" : ""}${added ? ` · 연관작 +${added}` : ""}`, { work: w, i: works.length, max: MAX });
   } catch(e){ await say("error", `⚠ 「${card.name}」 읽기 실패: ${e.message}`); }
   await sleep(DELAY);
 }

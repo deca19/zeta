@@ -39,7 +39,8 @@ function expHandle(ev, view){
   if (EXP.feed.length && EXP.feed[EXP.feed.length - 1].msg === e.msg && EXP.feed[EXP.feed.length - 1].t === e.t) return;
   if (e.type === "start"){ EXP.feed = []; EXP.live = { run: e.run, max: e.max || 0, i: 0, cur: null, done: false }; }
   EXP.live = EXP.live || { run: e.run, max: 0, i: 0, cur: null, done: false };
-  if (e.type === "visit" && e.i) EXP.live.i = e.i;
+  if (e.i) EXP.live.i = e.i;
+  if (e.max) EXP.live.max = e.max;
   if (e.work && !expSafe(e.work)) delete e.work;
   if (e.type === "work" && e.work) EXP.live.cur = e.work;
   if (e.type === "done"){ EXP.live.done = true; setTimeout(() => expLoad(true).then(() => view && view.refresh && view.refresh()), 8000); }
@@ -154,7 +155,7 @@ function expLive(box){
     push: e => {
       term.append(line(e)); term.scrollTop = term.scrollHeight;
       const L = EXP.live || {};
-      if (L.max) prog.firstChild.style.width = Math.min(100, Math.round((L.done ? L.max : Math.max(0, (L.i || 1) - 1)) / L.max * 100)) + "%";
+      if (L.max) prog.firstChild.style.width = Math.min(100, Math.round((L.done ? L.max : (L.i || 0)) / L.max * 100)) + "%";
       if (e.type === "work") showCur(e.work);
     },
     status: t => { statusEl.textContent = t; },
@@ -190,7 +191,7 @@ async function expReplay(term, view){
   const step = () => {
     if (!term.isConnected || k >= d.log.length) return;
     const e = d.log[k++];
-    if (e.type === "visit" && e.i) EXP.live.i = e.i;
+    if (e.i) EXP.live.i = e.i;
     if (e.type === "done") EXP.live.done = true;
     view.push(e);
     const nx = d.log[k]; EXP.replayT = setTimeout(step, nx ? Math.max(60, Math.min(1500, (nx.t - e.t) / 5)) : 0);
