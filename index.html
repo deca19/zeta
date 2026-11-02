@@ -1,0 +1,855 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>제타 스튜디오</title>
+<link rel="manifest" href="studio.webmanifest">
+<link rel="apple-touch-icon" href="studio-192.png">
+<link rel="icon" href="studio-192.png">
+<meta name="theme-color" content="#0e0d12">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=Black+Han+Sans&family=Jua&family=Do+Hyeon&family=Gaegu:wght@700&family=Nanum+Pen+Script&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0e0d12; --bg2:#17151d; --card:#1e1b26; --card2:#262230; --line:#332e3e;
+  --tx:#f1edf7; --tx2:#a9a1b8; --tx3:#6f6880;
+  --ac:#ff5d8f; --ac2:#8b7bff; --ok:#3ddc97; --warn:#ffb547; --bad:#ff5c5c;
+  --r:16px; --safe-t:env(safe-area-inset-top,0px); --safe-b:env(safe-area-inset-bottom,0px);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--tx);font-family:"IBM Plex Sans KR",system-ui,sans-serif;font-size:15px;line-height:1.5}
+button,input,textarea,select{font:inherit;color:inherit}
+button{cursor:pointer}
+.hidden{display:none!important}
+
+/* ===== HOME ===== */
+#home{min-height:100vh;padding:calc(var(--safe-t) + 22px) 18px calc(var(--safe-b) + 30px);
+  background:radial-gradient(120% 60% at 0% 0%,#3a1530 0%,transparent 60%),radial-gradient(100% 60% at 100% 10%,#1d1a4a 0%,transparent 55%),var(--bg)}
+.brand{font-family:"Black Han Sans",sans-serif;font-size:34px;letter-spacing:.5px;line-height:1.1}
+.brand span{color:var(--ac)}
+.sub{color:var(--tx2);font-size:13px;margin-top:4px}
+.curwork{margin:18px 0 22px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);border-radius:20px;padding:14px 16px;display:flex;align-items:center;gap:12px;backdrop-filter:blur(8px)}
+.curwork .lbl{font-size:12px;color:var(--tx2)}
+.curwork .nm{font-weight:700;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.curwork .grow{flex:1;min-width:0}
+.sect{font-size:12px;font-weight:600;color:var(--tx3);letter-spacing:1px;margin:18px 4px 10px}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:18px 10px}
+@media(min-width:560px){.grid{grid-template-columns:repeat(6,1fr)}}
+.app{background:none;border:0;padding:0;display:flex;flex-direction:column;align-items:center;gap:7px}
+.ico{width:62px;height:62px;border-radius:17px;display:grid;place-items:center;font-size:30px;box-shadow:0 6px 18px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.25);transition:transform .12s}
+.ico img{width:100%;height:100%;border-radius:17px;object-fit:cover}
+.app:active .ico{transform:scale(.9)}
+.app .an{font-size:12px;color:var(--tx);text-align:center;line-height:1.25}
+
+/* ===== APP VIEW ===== */
+#view{min-height:100vh;background:var(--bg)}
+.bar{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:8px;padding:calc(var(--safe-t) + 8px) 10px 8px;background:rgba(14,13,18,.88);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+.bar .back{background:none;border:0;font-size:22px;padding:4px 10px;color:var(--ac)}
+.bar .ttl{font-weight:700;font-size:17px;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chip{background:var(--card2);border:1px solid var(--line);border-radius:99px;padding:5px 11px;font-size:12px;max-width:44vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.body{padding:14px 14px calc(var(--safe-b) + 90px);max-width:820px;margin:0 auto}
+.frame{position:fixed;left:0;right:0;bottom:0;border:0;width:100%;background:#fff}
+
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px;margin-bottom:12px}
+.card h3{margin:0 0 8px;font-size:15px;display:flex;align-items:center;gap:6px}
+.muted{color:var(--tx2);font-size:13px}
+.tiny{color:var(--tx3);font-size:12px}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.row>.grow{flex:1;min-width:120px}
+label.f{display:block;font-size:12px;color:var(--tx2);margin:10px 0 4px}
+input[type=text],input[type=number],input[type=password],textarea,select{width:100%;background:var(--bg2);border:1px solid var(--line);border-radius:11px;padding:10px 12px;outline:none}
+input:focus,textarea:focus,select:focus{border-color:var(--ac2)}
+textarea{resize:vertical;min-height:84px}
+.btn{background:var(--card2);border:1px solid var(--line);border-radius:11px;padding:8px 12px;font-size:13px;white-space:nowrap}
+.btn.p{background:var(--ac);border-color:var(--ac);color:#fff;font-weight:600}
+.btn.v{background:var(--ac2);border-color:var(--ac2);color:#fff;font-weight:600}
+.btn.d{color:var(--bad)}
+.btn.sm{padding:5px 9px;font-size:12px;border-radius:9px}
+.btn:active{opacity:.7}
+.btns{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.cnt{font-size:12px;color:var(--tx3);text-align:right;margin-top:3px}
+.cnt.over{color:var(--bad);font-weight:600}
+.pill{display:inline-block;background:var(--card2);border:1px solid var(--line);border-radius:99px;padding:5px 10px;font-size:12px;margin:3px 3px 0 0}
+.pill.on{background:var(--ac2);border-color:var(--ac2);color:#fff}
+.out{white-space:pre-wrap;background:#0a090d;border:1px dashed var(--line);border-radius:11px;padding:12px;font-size:13.5px;min-height:40px;word-break:break-word}
+.tabs{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:10px;scrollbar-width:none}
+.tabs button{flex:none}
+.item{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:10px;margin-top:8px}
+.ix{display:flex;gap:6px;align-items:center}
+.ix .n{font-size:12px;color:var(--tx3);min-width:22px}
+.warnbox{background:rgba(255,181,71,.1);border:1px solid rgba(255,181,71,.35);color:var(--warn);border-radius:10px;padding:8px 10px;font-size:12.5px;margin-top:8px}
+.okc{color:var(--ok)}
+.check{display:flex;align-items:center;gap:10px;padding:9px 2px;border-bottom:1px solid var(--line)}
+.check input{width:20px;height:20px;accent-color:var(--ac)}
+.prog{height:6px;background:var(--bg2);border-radius:9px;overflow:hidden;margin-top:6px}
+.prog>i{display:block;height:100%;background:linear-gradient(90deg,var(--ac2),var(--ac))}
+.big{font-family:"Black Han Sans";font-size:28px}
+.stat{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.stat div{background:var(--bg2);border-radius:11px;padding:10px;text-align:center}
+.stat b{display:block;font-size:22px}
+.stat span{font-size:12px;color:var(--tx2)}
+
+/* sheet + toast */
+#sheetBg{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:50}
+#sheet{position:fixed;left:0;right:0;bottom:0;z-index:51;background:var(--bg2);border-radius:22px 22px 0 0;padding:16px 16px calc(var(--safe-b) + 18px);max-height:82vh;overflow:auto;border-top:1px solid var(--line);max-width:820px;margin:0 auto}
+#sheet h3{margin:4px 0 12px}
+#toast{position:fixed;left:50%;bottom:calc(var(--safe-b) + 26px);transform:translateX(-50%);background:#fff;color:#111;padding:9px 16px;border-radius:99px;font-size:13.5px;font-weight:600;z-index:60;opacity:0;transition:opacity .2s;pointer-events:none;white-space:nowrap}
+#toast.on{opacity:1}
+.wk{display:flex;align-items:center;gap:10px;padding:12px;border-radius:12px;background:var(--card);border:1px solid var(--line);margin-bottom:8px}
+.wk.sel{border-color:var(--ac)}
+.wk .grow{flex:1;min-width:0}
+.wk .t{font-weight:600}
+.dot{width:10px;height:10px;border-radius:50%;background:var(--ac);flex:none}
+</style>
+</head>
+<body>
+
+<div id="home"></div>
+<div id="view" class="hidden"></div>
+<div id="sheetBg" class="hidden"></div>
+<div id="sheet" class="hidden"></div>
+<div id="toast"></div>
+
+<script>
+"use strict";
+/* ================= 공용 ================= */
+const $ = s => document.querySelector(s);
+function h(tag, attrs, ...kids){
+  const el = document.createElement(tag);
+  if (attrs) for (const k in attrs){
+    const v = attrs[k];
+    if (v == null || v === false) continue;
+    if (k === "class") el.className = v;
+    else if (k === "style") el.style.cssText = v;
+    else if (k.startsWith("on")) el.addEventListener(k.slice(2), v);
+    else if (k === "value") el.value = v;
+    else if (k === "checked") el.checked = v;
+    else if (k === "html") el.innerHTML = v;
+    else el.setAttribute(k, v === true ? "" : v);
+  }
+  for (const c of kids.flat(Infinity)){
+    if (c == null || c === false) continue;
+    el.appendChild(c instanceof Node ? c : document.createTextNode(String(c)));
+  }
+  return el;
+}
+const uid = () => Math.random().toString(36).slice(2, 9);
+let toastT;
+function toast(m){ const t = $("#toast"); t.textContent = m; t.classList.add("on"); clearTimeout(toastT); toastT = setTimeout(()=>t.classList.remove("on"), 1600); }
+function copy(text, msg){
+  const fallback = () => openSheet("복사하기", [h("p",{class:"muted"},"자동 복사가 막혀 있어요. 아래를 길게 눌러 복사하세요."), (()=>{const ta=h("textarea",{style:"min-height:240px",value:text}); setTimeout(()=>{ta.focus();ta.select();},50); return ta;})()]);
+  try { navigator.clipboard.writeText(text).then(()=>toast(msg || "복사했어요"), fallback); } catch(e){ fallback(); }
+}
+const len = s => [...(s||"")].length;
+/* 파일 저장 (artifact downloads 기능) */
+let _dl = null;
+function getDL(){
+  if (_dl) return _dl;
+  if (!(window.claude && window.claude.use)) return Promise.resolve(null);
+  _dl = (async () => { try { return await window.claude.use("downloads"); } catch(e){ return null; } })();
+  return _dl;
+}
+async function saveFile(name, data, fallbackMsg){
+  const dl = await getDL();
+  if (!dl){ toast(fallbackMsg || "이 화면에서는 파일 저장이 안 돼요"); return false; }
+  try { await dl.save({ filename: name, data }); toast("저장했어요"); return true; }
+  catch(e){
+    const c = e && e.code;
+    toast(c === "declined" ? "저장을 취소했어요" : c === "rate_limited" ? "잠시 후 다시 눌러 주세요" : c === "too_large" ? "파일이 너무 커요. 크기를 줄여 주세요" : "저장 실패 (" + (c || e) + ")");
+    return false;
+  }
+}
+const lenNoSp = s => [...(s||"").replace(/\s/g,"")].length;
+
+/* ================= 저장 ================= */
+const KEY = "zeta-studio-v1";
+function blankWork(name, extra){
+  return Object.assign({
+    id: uid(), name, created: Date.now(),
+    fields: {}, limits: {},
+    lore: [], status: { title: "상태창", style: "box", items: [] },
+    eps: [{ id: uid(), title: "1화", cuts: [] }],
+    tipsy: {}, memo: "", charTags: ""
+  }, extra || {});
+}
+function seed(){
+  const a = blankWork("최전선 기사단장, 성녀로 전직하다", {
+    fields: {
+      name: "최전선 기사단장",
+      intro: "제국 최전선의 흑철기사단장. 치명상을 입고 죽어가던 순간, 하늘에서 빛이 내려와… 성녀가 되어버렸다?!",
+      situation: "기사단장이 전장에서 죽어가다가 빛이 내려와 TS되어 성녀가 된다. 분위기는 코믹하게."
+    },
+    charTags: "1girl, blonde hair, long hair, white nun habit, holy aura"
+  });
+  const b = blankWork("사냥감이 된 용병", { tipsyNote: "Tipsy에는 이미지 없이 설명만 옮기기" });
+  const c = blankWork("신님, 전산 오류입니다", {
+    fields: {
+      name: "신님, 전산 오류입니다",
+      intro: "여신의 전산 실수로 남자가 여자가 되어버렸다. 일상·판타지·TS 코미디.",
+      situation: "여신이 손가락을 튕기는 대신 반죽을 가져와 빚어서 성별을 '고치는' 장면부터 시작."
+    },
+    charTags: "1girl, blonde hair, flustered, sweat drop"
+  });
+  const d = blankWork("ts앱");
+  return { cur: a.id, works: { [a.id]: a, [b.id]: b, [c.id]: c, [d.id]: d }, order: [a.id, b.id, c.id, d.id],
+    pixai: {
+      model: "Tsubaki.3 Flash", ratio: "3:5", batch: 4, xl: true,
+      loras: [
+        { name: "Juwon style 2nd", w: 0.7, on: true },
+        { name: "Y3LLOW style", w: 0.7, on: true },
+        { name: "Sugar Style", w: 0.7, on: true },
+        { name: "My_style", w: 0.7, on: false },
+        { name: "hakusin v1", w: 0.7, on: false }
+      ],
+      quality: "masterpiece, best quality, webtoon style",
+      negative: "lowres, bad anatomy, bad hands, extra fingers, text, watermark, signature, blurry"
+    },
+    memo: "", recent: []
+  };
+}
+let S;
+try { S = JSON.parse(localStorage.getItem(KEY)); } catch(e){ S = null; }
+if (!S || !S.works) S = seed();
+let saveT;
+function save(){ clearTimeout(saveT); saveT = setTimeout(()=>{ try { localStorage.setItem(KEY, JSON.stringify(S)); } catch(e){} }, 300); }
+const W = () => S.works[S.cur] || S.works[S.order[0]];
+
+/* ================= 시트 ================= */
+function openSheet(title, kids){
+  const sh = $("#sheet"); sh.innerHTML = "";
+  sh.append(h("h3", null, title), ...kids, h("div",{class:"btns",style:"margin-top:14px"}, h("button",{class:"btn",style:"width:100%",onclick:closeSheet},"닫기")));
+  sh.classList.remove("hidden"); $("#sheetBg").classList.remove("hidden");
+}
+function closeSheet(){ $("#sheet").classList.add("hidden"); $("#sheetBg").classList.add("hidden"); }
+$("#sheetBg").onclick = closeSheet;
+function confirmSheet(msg, okLabel, fn){
+  openSheet(msg, [h("button",{class:"btn p",style:"width:100%",onclick:()=>{closeSheet();fn();}}, okLabel)]);
+}
+function askText(title, init, fn){
+  const inp = h("input",{type:"text",value:init||""});
+  openSheet(title, [inp, h("div",{class:"btns"}, h("button",{class:"btn p",style:"width:100%",onclick:()=>{const v=inp.value.trim(); if(!v) return; closeSheet(); fn(v);}}, "확인"))]);
+  setTimeout(()=>inp.focus(),80);
+}
+function pickWork(after){
+  openSheet("작품 선택", S.order.map(id => {
+    const w = S.works[id];
+    return h("div",{class:"wk"+(id===S.cur?" sel":""),onclick:()=>{S.cur=id;save();closeSheet();after&&after();}},
+      h("div",{class:"dot",style:id===S.cur?"":"background:var(--line)"}), h("div",{class:"grow"}, h("div",{class:"t"},w.name)));
+  }).concat([h("button",{class:"btn",style:"width:100%;margin-top:6px",onclick:()=>{closeSheet();go("works");}},"＋ 작품 관리")]));
+}
+
+/* ================= 앱 목록 ================= */
+const APPS = [
+  { id:"works",   name:"작품함",      icon:"📁", bg:"linear-gradient(135deg,#ffb347,#ff7b54)", sec:"기본" },
+  { id:"plot",    name:"플롯 작성기",  icon:"📝", bg:"linear-gradient(135deg,#ff5d8f,#c43ad6)", sec:"캐릭터 제작" },
+  { id:"lore",    name:"키워드북",    icon:"🔑", bg:"linear-gradient(135deg,#f7d046,#e59a10)", sec:"캐릭터 제작" },
+  { id:"status",  name:"상태창",      icon:"📊", bg:"linear-gradient(135deg,#3ddc97,#109a8b)", sec:"캐릭터 제작" },
+  { id:"dialog",  name:"대사 포맷터",  icon:"💬", bg:"linear-gradient(135deg,#5ec8ff,#3a6bff)", sec:"캐릭터 제작" },
+  { id:"dna",     name:"작품 분석실",  icon:"🧬", bg:"linear-gradient(135deg,#f093fb,#f5576c)", sec:"캐릭터 제작" },
+  { id:"chat",    name:"테스트 채팅",  icon:"🗨️", bg:"linear-gradient(135deg,#a18cd1,#fbc2eb)", sec:"캐릭터 제작" },
+  { id:"count",   name:"글자수",      icon:"🔢", bg:"linear-gradient(135deg,#9aa5b8,#5a6478)", sec:"캐릭터 제작" },
+  { id:"cuts",    name:"웹툰 콘티",    icon:"🎬", bg:"linear-gradient(135deg,#ff8a5b,#e0435b)", sec:"만화 만들기" },
+  { id:"pixai",   name:"PixAI 프롬프트",icon:"🎨", bg:"linear-gradient(135deg,#b28bff,#6c4bff)", sec:"만화 만들기" },
+  { id:"gif",     name:"GIF 공방",    icon:"🎞️", bg:"linear-gradient(135deg,#00d2ff,#3a47d5)", sec:"만화 만들기" },
+  { id:"sedotoon",name:"세로툰",      icon:"img", bg:"#fff", sec:"만화 만들기" },
+  { id:"idea",    name:"아이디어 뽑기",icon:"🎲", bg:"linear-gradient(135deg,#ff6fd8,#3813c2)", sec:"기획" },
+  { id:"tipsy",   name:"Tipsy 이전",   icon:"🚚", bg:"linear-gradient(135deg,#43e97b,#38a9f9)", sec:"기획" },
+  { id:"memo",    name:"메모",        icon:"📒", bg:"linear-gradient(135deg,#fde68a,#f59e0b)", sec:"기획" },
+  { id:"ai",      name:"AI 엔진",     icon:"🧠", bg:"linear-gradient(135deg,#0f2027,#2c5364)", sec:"설정" },
+  { id:"backup",  name:"백업",        icon:"💾", bg:"linear-gradient(135deg,#475569,#1e293b)", sec:"설정" },
+];
+const APP = Object.fromEntries(APPS.map(a=>[a.id,a]));
+function icon(a, size){
+  const s = size ? `width:${size}px;height:${size}px;font-size:${size*.48}px;border-radius:${size*.27}px;` : "";
+  return h("div",{class:"ico",style:s+"background:"+a.bg}, a.icon==="img" ? h("img",{src:"sedotoon/icon-192.png",alt:""}) : a.icon);
+}
+
+/* ================= 라우팅 ================= */
+function go(id){ if (location.hash === "#"+id) route(); else location.hash = id; }
+window.addEventListener("hashchange", route);
+function route(){
+  const id = location.hash.slice(1);
+  closeSheet();
+  if (!APP[id]){ renderHome(); $("#home").classList.remove("hidden"); $("#view").classList.add("hidden"); window.scrollTo(0,0); return; }
+  S.recent = [id, ...(S.recent||[]).filter(x=>x!==id)].slice(0,4); save();
+  $("#home").classList.add("hidden"); $("#view").classList.remove("hidden");
+  renderApp(id); window.scrollTo(0,0);
+}
+function renderHome(){
+  const home = $("#home"); home.innerHTML = "";
+  const w = W();
+  home.append(
+    h("div",{class:"brand"},"제타 ",h("span",null,"스튜디오")),
+    h("div",{class:"sub"},"정헌의 작품 제작 도구 모음"),
+    typeof aiLabel==="function" ? h("button",{class:"chip",style:"margin-top:10px;max-width:100%",onclick:()=>go("ai")},"🧠 제타 엔진 · "+aiLabel()) : null,
+    typeof setupCard==="function" ? h("div",{style:"margin-top:14px"}, setupCard()) : null,
+    h("div",{class:"curwork",onclick:()=>pickWork(renderHome)},
+      h("div",{style:"font-size:26px"},"✦"),
+      h("div",{class:"grow"}, h("div",{class:"lbl"},"지금 작업 중인 작품"), h("div",{class:"nm"}, w.name)),
+      h("div",{class:"chip"},"바꾸기"))
+  );
+  const rec = (S.recent||[]).filter(id=>APP[id]);
+  if (rec.length){
+    home.append(h("div",{class:"sect"},"최근"), h("div",{class:"grid"}, rec.map(appBtn)));
+  }
+  const secs = [...new Set(APPS.map(a=>a.sec))];
+  for (const sec of secs){
+    home.append(h("div",{class:"sect"},sec), h("div",{class:"grid"}, APPS.filter(a=>a.sec===sec).map(a=>appBtn(a.id))));
+  }
+}
+function appBtn(id){ const a = APP[id]; return h("button",{class:"app",onclick:()=>go(id)}, icon(a), h("div",{class:"an"},a.name)); }
+
+function renderApp(id){
+  const v = $("#view"); v.innerHTML = "";
+  const a = APP[id];
+  const chip = h("button",{class:"chip",onclick:()=>pickWork(()=>renderApp(id))}, "✦ "+W().name);
+  const bar = h("div",{class:"bar"},
+    h("button",{class:"back",onclick:()=>{ location.hash = ""; }},"‹"),
+    icon(a, 28), h("div",{class:"ttl"}, a.name),
+    ["sedotoon","backup","idea","ai"].includes(id) ? null : chip);
+  v.append(bar);
+  const body = h("div",{class:"body"});
+  v.append(body);
+  (VIEWS[id]||(()=>{}))(body, v, bar);
+}
+
+/* ===== 작은 위젯 ===== */
+function counted(get, set, opts){
+  opts = opts || {};
+  const ta = h(opts.input ? "input" : "textarea", { type: opts.input ? "text" : null, value: get() || "", placeholder: opts.ph || "", style: opts.style || "" });
+  const c = h("div",{class:"cnt"});
+  const upd = () => {
+    const n = len(ta.value), lim = opts.limit ? opts.limit() : 0;
+    c.textContent = lim ? `${n} / ${lim}자` : `${n}자 (공백 제외 ${lenNoSp(ta.value)})`;
+    c.classList.toggle("over", !!lim && n > lim);
+  };
+  ta.addEventListener("input", () => { set(ta.value); save(); upd(); });
+  upd(); ta._upd = upd;
+  return [ta, c];
+}
+
+/* ================= 각 앱 ================= */
+const VIEWS = {};
+
+/* ---------- 작품함 ---------- */
+VIEWS.works = (body) => {
+  const draw = () => {
+    body.innerHTML = "";
+    body.append(h("div",{class:"btns",style:"margin:0 0 12px"},
+      h("button",{class:"btn p",onclick:()=>askText("새 작품 이름","",n=>{const w=blankWork(n); S.works[w.id]=w; S.order.unshift(w.id); S.cur=w.id; save(); draw();})},"＋ 새 작품")));
+    S.order.forEach((id, i) => {
+      const w = S.works[id];
+      const filled = PLOT_FIELDS.filter(f => (w.fields[f.k]||"").trim()).length;
+      body.append(h("div",{class:"wk"+(id===S.cur?" sel":"")},
+        h("div",{class:"dot",style:id===S.cur?"":"background:var(--line)"}),
+        h("div",{class:"grow",onclick:()=>{S.cur=id;save();draw();toast("'"+w.name+"' 선택")}},
+          h("div",{class:"t"}, w.name),
+          h("div",{class:"tiny"}, `플롯 ${filled}/${PLOT_FIELDS.length} · 키워드 ${w.lore.length} · 컷 ${w.eps.reduce((s,e)=>s+e.cuts.length,0)}`),
+          h("div",{class:"prog"},h("i",{style:`width:${filled/PLOT_FIELDS.length*100}%`}))),
+        h("button",{class:"btn sm",onclick:()=>openSheet(w.name,[
+          h("button",{class:"btn",style:"width:100%;margin-bottom:6px",onclick:()=>{closeSheet();askText("이름 바꾸기",w.name,n=>{w.name=n;save();draw();});}},"✏️ 이름 바꾸기"),
+          h("button",{class:"btn",style:"width:100%;margin-bottom:6px",onclick:()=>{const c=JSON.parse(JSON.stringify(w));c.id=uid();c.name=w.name+" (복사)";S.works[c.id]=c;S.order.splice(i+1,0,c.id);save();closeSheet();draw();}},"📄 복제"),
+          i>0?h("button",{class:"btn",style:"width:100%;margin-bottom:6px",onclick:()=>{S.order.splice(i,1);S.order.splice(i-1,0,id);save();closeSheet();draw();}},"⬆ 위로"):null,
+          h("button",{class:"btn d",style:"width:100%",onclick:()=>{closeSheet(); if(S.order.length<2){toast("작품이 하나는 있어야 해요");return;} confirmSheet("'"+w.name+"' 삭제할까요? 되돌릴 수 없어요.","삭제",()=>{delete S.works[id];S.order=S.order.filter(x=>x!==id);if(S.cur===id)S.cur=S.order[0];save();draw();});}},"🗑 삭제")
+        ])},"⋯")));
+    });
+  };
+  draw();
+};
+
+/* ---------- 플롯 작성기 ---------- */
+const PLOT_FIELDS = [
+  { k:"name", t:"캐릭터 이름", input:true, ph:"예) 최전선 기사단장",
+    tpl:"" },
+  { k:"intro", t:"한 줄 소개", ph:"목록에 보이는 짧은 소개",
+    tpl:"[누가] [어떤 상황에서] [무슨 일]을 겪는다. ([장르] / [분위기])" },
+  { k:"world", t:"세계관", ph:"시대, 장소, 규칙, 세력…",
+    tpl:"■ 시대/배경: \n■ 장소: \n■ 세계의 규칙: \n■ 주요 세력: \n■ 현재 정세: " },
+  { k:"look", t:"외모", ph:"키, 머리, 눈, 복장, 특징",
+    tpl:"■ 나이/키: \n■ 머리: \n■ 눈: \n■ 체형: \n■ 복장: \n■ 특징: " },
+  { k:"personality", t:"성격", ph:"겉과 속, 좋아하는 것, 싫어하는 것",
+    tpl:"■ 겉으로 보이는 성격: \n■ 속마음: \n■ 좋아하는 것: \n■ 싫어하는 것: \n■ 버릇: \n■ 약점: " },
+  { k:"speech", t:"말투", ph:"어미, 호칭, 자주 쓰는 말",
+    tpl:"■ 기본 말투: (반말/존댓말/하오체…)\n■ {{user}}를 부르는 호칭: \n■ 자주 하는 말: \"\"\n■ 당황했을 때: \"\"\n■ 화났을 때: \"\"" },
+  { k:"relation", t:"{{user}}와의 관계", ph:"처음 관계, 감정, 앞으로의 방향",
+    tpl:"■ 관계: \n■ {{char}}가 {{user}}에게 느끼는 감정: \n■ 둘 사이의 비밀/갈등: " },
+  { k:"situation", t:"시작 상황", ph:"대화가 시작되는 장면",
+    tpl:"■ 시간/장소: \n■ 무슨 일이 막 일어났나: \n■ {{user}}의 위치/역할: " },
+  { k:"first", t:"시작 메시지 (인트로)", ph:"*나레이션* \"대사\"",
+    tpl:"*[장면 묘사 2~3문장]*\n\n\"[{{char}}의 첫 대사]\"\n\n*[{{user}}에게 행동을 유도하는 묘사]*" },
+  { k:"example", t:"예시 대화", ph:"{{user}}: …\n{{char}}: …",
+    tpl:"{{user}}: \n{{char}}: *행동* \"대사\"\n\n{{user}}: \n{{char}}: *행동* \"대사\"" },
+];
+function cleanText(s){
+  return s.replace(/[ \t]+$/gm,"").replace(/\n{3,}/g,"\n\n").replace(/[“”]/g,"\"").replace(/[‘’]/g,"'").replace(/ {2,}/g," ").trim();
+}
+function toVars(s, w){
+  const nm = (w.fields.name||"").trim();
+  let r = s.replace(/(유저|당신|너)(?=[은는이가을를의에께도와과])/g,"{{user}}");
+  if (nm) r = r.split(nm).join("{{char}}");
+  return r;
+}
+function plotAll(w){
+  return PLOT_FIELDS.filter(f=>(w.fields[f.k]||"").trim()).map(f=>`【${f.t}】\n${w.fields[f.k].trim()}`).join("\n\n");
+}
+VIEWS.plot = (body) => {
+  const w = W();
+  body.append(h("div",{class:"card"},
+    h("div",{class:"muted"},"10개 항목을 채우면 제타 캐릭터 설정이 완성돼요. 각 칸의 도구로 템플릿 넣기, 정리, {{user}}/{{char}} 변환, AI 다듬기 요청문 복사를 할 수 있어요."),
+    h("div",{class:"btns"},
+      h("button",{class:"btn p",onclick:()=>copy(plotAll(w),"전체 플롯 복사")},"📋 전체 복사"),
+      h("button",{class:"btn v",onclick:()=>aiWhole(w,()=>renderApp("plot"))},"🪄 AI로 통째로 만들기"),
+      h("button",{class:"btn",onclick:()=>aiReview(w)},"🤖 AI 전체 검토"),
+      h("button",{class:"btn",onclick:()=>openSheet("미리보기",[h("div",{class:"out"},plotAll(w)||"(비어 있음)")])},"👁 미리보기"),
+      h("button",{class:"btn",onclick:()=>{S.dnaTab="check";save();go("dna");}},"🩺 진단 점수"),
+      h("button",{class:"btn",onclick:()=>{S.dnaTab="import";save();go("dna");}},"📥 제타에서 가져오기"))));
+  PLOT_FIELDS.forEach((f, i) => {
+    const [ta, c] = counted(()=>w.fields[f.k], v=>w.fields[f.k]=v, { input:f.input, ph:f.ph, limit:()=>+w.limits[f.k]||0, style:f.k==="first"||f.k==="example"||f.k==="world"?"min-height:150px":"" });
+    const setv = v => { ta.value = v; w.fields[f.k] = v; save(); ta._upd(); };
+    const tools = h("div",{class:"btns"},
+      f.tpl ? h("button",{class:"btn sm",onclick:()=>{ if(ta.value.trim()) setv(ta.value.trim()+"\n\n"+f.tpl); else setv(f.tpl); }},"🧩 템플릿") : null,
+      h("button",{class:"btn sm",onclick:()=>{setv(cleanText(ta.value));toast("정리했어요");}},"✨ 정리"),
+      f.k!=="name" ? h("button",{class:"btn sm",onclick:()=>{setv(toVars(ta.value,w));toast("{{user}}/{{char}}로 바꿨어요");}},"🔁 변수화") : null,
+      h("button",{class:"btn sm",onclick:()=>copy(ta.value)},"📋"),
+      f.k!=="name" ? h("button",{class:"btn sm",onclick:()=>aiField(w,f,setv)},"🤖 AI 다듬기") : null,
+      h("button",{class:"btn sm",onclick:()=>askText(f.t+" 글자수 제한 (0 = 없음)", String(w.limits[f.k]||0), v=>{w.limits[f.k]=Math.max(0,parseInt(v)||0);save();ta._upd();})}, "📏 "+(w.limits[f.k]?w.limits[f.k]+"자":"제한")),
+    );
+    body.append(h("div",{class:"card"}, h("h3",null, h("span",{class:"tiny"},String(i+1).padStart(2,"0")), f.t), ta, c, tools));
+  });
+};
+function ctxOf(w){
+  return ["name","intro","world","personality"].filter(k=>(w.fields[k]||"").trim()).map(k=>`- ${PLOT_FIELDS.find(f=>f.k===k).t}: ${w.fields[k].trim().slice(0,300)}`).join("\n");
+}
+function aiFieldPrompt(w, f){
+  const lim = +w.limits[f.k] || 0;
+  return `제타(zeta) AI 캐릭터 채팅용 캐릭터를 만들고 있어. 아래 '${f.t}' 항목을 더 생생하고 몰입감 있게 다듬어줘.
+${lim?`- ${lim}자 이내로\n`:""}- 설정은 바꾸지 말고 표현만 다듬기
+- {{user}}, {{char}} 표기는 그대로 유지
+- 결과만 출력
+
+[작품 정보]
+${ctxOf(w)||"(아직 없음)"}
+
+[${f.t}]
+${(w.fields[f.k]||"").trim()||"(비어 있음 — 작품 정보에 맞게 새로 써줘)"}`;
+}
+function aiReviewPrompt(w){
+  return `제타(zeta) AI 캐릭터 채팅용 캐릭터 설정이야. 항목별로 (1) 설정끼리 모순되는 곳 (2) AI가 헷갈릴 만한 애매한 표현 (3) 더 재미있게 만들 아이디어를 짧게 짚어줘.
+
+${plotAll(w)||"(비어 있음)"}`;
+}
+
+/* ---------- 키워드북 ---------- */
+VIEWS.lore = (body) => {
+  const w = W(); let q = "";
+  const list = h("div");
+  const head = h("div",{class:"card"},
+    h("div",{class:"muted"},"대화에 키워드가 나오면 AI가 참고하는 설정 노트예요. 키워드는 쉼표(,)로 여러 개 적을 수 있어요."),
+    h("input",{type:"text",placeholder:"🔍 키워드/내용 검색",style:"margin-top:10px",oninput:e=>{q=e.target.value.trim();draw();}}),
+    h("div",{class:"btns"},
+      h("button",{class:"btn p",onclick:()=>{w.lore.push({id:uid(),k:"",v:"",on:true});save();draw();setTimeout(()=>{const l=list.querySelectorAll("input[type=text]");l[l.length-1]&&l[l.length-1].focus();},30);}},"＋ 키워드 추가"),
+      h("button",{class:"btn",onclick:()=>copy(w.lore.filter(x=>x.on).map(x=>`[${x.k}]\n${x.v}`).join("\n\n"),"키워드북 전체 복사")},"📋 전체 복사"),
+      h("button",{class:"btn",onclick:bulk},"📥 일괄 입력"),
+      h("button",{class:"btn v",onclick:()=>aiLore(w,draw)},"🤖 설정에서 뽑기")));
+  function bulk(){
+    const ta = h("textarea",{style:"min-height:200px",placeholder:"[키워드1, 별명]\n내용…\n\n[키워드2]\n내용…"});
+    openSheet("일괄 입력", [h("p",{class:"muted"},"[키워드] 다음 줄에 내용. 빈 줄로 구분."), ta,
+      h("button",{class:"btn p",style:"width:100%;margin-top:8px",onclick:()=>{
+        let n=0; ta.value.split(/\n(?=\[)/).forEach(b=>{const m=b.match(/^\s*\[([^\]]+)\]\s*\n?([\s\S]*)$/); if(m){w.lore.push({id:uid(),k:m[1].trim(),v:m[2].trim(),on:true});n++;}});
+        save(); closeSheet(); draw(); toast(n+"개 추가");
+      }},"추가")]);
+  }
+  function draw(){
+    list.innerHTML = "";
+    const keys = {};
+    w.lore.forEach(x=>x.k.split(",").map(s=>s.trim()).filter(Boolean).forEach(k=>keys[k]=(keys[k]||0)+1));
+    const dup = Object.keys(keys).filter(k=>keys[k]>1);
+    if (dup.length) list.append(h("div",{class:"warnbox"},"⚠ 겹치는 키워드: "+dup.join(", ")));
+    const shown = w.lore.filter(x=>!q || x.k.includes(q) || x.v.includes(q));
+    if (!w.lore.length) list.append(h("p",{class:"muted",style:"text-align:center;padding:20px"},"아직 키워드가 없어요."));
+    shown.forEach(x => {
+      const idx = w.lore.indexOf(x);
+      const [vt, vc] = counted(()=>x.v, v=>x.v=v, { ph:"이 키워드가 나오면 AI가 알아야 할 내용" });
+      list.append(h("div",{class:"card",style:x.on?"":"opacity:.5"},
+        h("div",{class:"ix"},
+          h("input",{type:"checkbox",checked:x.on,style:"width:20px;height:20px;accent-color:var(--ac)",onchange:e=>{x.on=e.target.checked;save();draw();}}),
+          h("input",{type:"text",value:x.k,placeholder:"키워드 (예: 흑철기사단, 기사단)",oninput:e=>{x.k=e.target.value;save();}}),
+        ),
+        vt, vc,
+        h("div",{class:"btns"},
+          idx>0?h("button",{class:"btn sm",onclick:()=>{w.lore.splice(idx,1);w.lore.splice(idx-1,0,x);save();draw();}},"⬆"):null,
+          h("button",{class:"btn sm",onclick:()=>copy(`[${x.k}]\n${x.v}`)},"📋"),
+          h("button",{class:"btn sm d",onclick:()=>confirmSheet("'"+(x.k||"빈 키워드")+"' 삭제?","삭제",()=>{w.lore.splice(w.lore.indexOf(x),1);save();draw();})},"삭제"))));
+    });
+  }
+  body.append(head, list); draw();
+};
+
+/* ---------- 상태창 ---------- */
+const STATUS_PRESETS = {
+  "기본": [["📅 날짜/시간","제국력 1023년 봄, 새벽"],["📍 장소","최전선 야전 막사"],["❤️ 호감도","30/100"],["💭 속마음","(…이 몸은 대체 뭐지)"]],
+  "판타지 RPG": [["이름","{{char}}"],["레벨","Lv.12"],["HP","80/100"],["MP","45/60"],["상태이상","없음"],["소지품","성검, 회복약 x2"]],
+  "연애": [["호감도","40%"],["관계","어색한 동료"],["복장","교복"],["속마음","(오늘은 말 걸어볼까…)"]],
+  "TS 코미디": [["몸 적응도","12%"],["정체 들킬 확률","35%"],["멘탈","흔들림"],["오늘의 실수","치마 입고 다리 벌리고 앉음"]],
+};
+function statusText(st){
+  const it = st.items.filter(x=>x.l.trim());
+  const T = st.title || "상태창";
+  if (st.style === "box"){
+    return [`┌─ ${T} ─────────`, ...it.map(x=>`│ ${x.l}: ${x.e}`), "└──────────────"].join("\n");
+  }
+  if (st.style === "line") return `[ ${it.map(x=>`${x.l}: ${x.e}`).join(" | ")} ]`;
+  if (st.style === "code") return "```\n"+`[${T}]\n`+it.map(x=>`${x.l}: ${x.e}`).join("\n")+"\n```";
+  return `〔${T}〕\n`+it.map(x=>`• ${x.l} — ${x.e}`).join("\n");
+}
+VIEWS.status = (body) => {
+  const w = W(); const st = w.status;
+  const out = h("div",{class:"out"});
+  const instr = h("div",{class:"out"});
+  const items = h("div");
+  const upd = () => {
+    out.textContent = statusText(st);
+    instr.textContent = `[상태창 규칙]\n매 응답의 맨 마지막에 아래 형식의 상태창을 반드시 출력한다. 항목 이름과 형식은 바꾸지 않고, 값만 현재 상황에 맞게 갱신한다.\n\n${statusText(st)}`;
+  };
+  const drawItems = () => {
+    items.innerHTML = "";
+    st.items.forEach((x,i)=>{
+      items.append(h("div",{class:"item"}, h("div",{class:"ix"},
+        h("span",{class:"n"},i+1),
+        h("input",{type:"text",value:x.l,placeholder:"항목",style:"flex:1",oninput:e=>{x.l=e.target.value;save();upd();}}),
+        h("input",{type:"text",value:x.e,placeholder:"예시 값",style:"flex:1.4",oninput:e=>{x.e=e.target.value;save();upd();}}),
+        h("button",{class:"btn sm",onclick:()=>{if(i>0){st.items.splice(i,1);st.items.splice(i-1,0,x);save();drawItems();upd();}}},"⬆"),
+        h("button",{class:"btn sm d",onclick:()=>{st.items.splice(i,1);save();drawItems();upd();}},"✕"))));
+    });
+  };
+  const styles = [["box","박스"],["list","목록"],["line","한 줄"],["code","코드블록"]];
+  const styleRow = h("div");
+  const drawStyles = () => { styleRow.innerHTML=""; styles.forEach(([k,n])=>styleRow.append(h("button",{class:"pill"+(st.style===k?" on":""),onclick:()=>{st.style=k;save();drawStyles();upd();}},n))); };
+  body.append(
+    h("div",{class:"card"}, h("h3",null,"프리셋"), h("button",{class:"btn v sm",style:"margin-bottom:6px",onclick:()=>aiStatusSuggest(w,items=>{st.items=items;save();drawItems();upd();})},"🤖 작품에 맞게 AI 추천"), h("div",null, Object.keys(STATUS_PRESETS).map(p=>h("button",{class:"pill",onclick:()=>{const go2=()=>{st.items=STATUS_PRESETS[p].map(([l,e])=>({l,e}));save();drawItems();upd();}; st.items.length?confirmSheet("지금 항목을 '"+p+"' 프리셋으로 바꿀까요?","바꾸기",go2):go2();}},p)))),
+    h("div",{class:"card"}, h("h3",null,"항목"),
+      h("label",{class:"f"},"상태창 제목"), h("input",{type:"text",value:st.title,oninput:e=>{st.title=e.target.value;save();upd();}}),
+      h("label",{class:"f"},"모양"), styleRow, items,
+      h("div",{class:"btns"}, h("button",{class:"btn p",onclick:()=>{st.items.push({l:"",e:""});save();drawItems();upd();}},"＋ 항목"))),
+    h("div",{class:"card"}, h("h3",null,"미리보기"), out, h("div",{class:"btns"},h("button",{class:"btn",onclick:()=>copy(out.textContent)},"📋 상태창만 복사"))),
+    h("div",{class:"card"}, h("h3",null,"프롬프트에 넣을 규칙"), h("div",{class:"tiny",style:"margin-bottom:6px"},"캐릭터 설정 맨 끝에 붙여 넣으세요."), instr,
+      h("div",{class:"btns"},h("button",{class:"btn v",onclick:()=>copy(instr.textContent,"규칙 복사")},"📋 규칙 복사")))
+  );
+  drawStyles(); drawItems(); upd();
+};
+
+/* ---------- 대사 포맷터 ---------- */
+VIEWS.dialog = (body) => {
+  const w = W();
+  const P = S.dialogPrefs = S.dialogPrefs || { mode:"zeta", useVar:true, raw:"" };
+  const out = h("div",{class:"out"});
+  const ta = h("textarea",{style:"min-height:180px",value:P.raw,placeholder:"그냥 막 써도 돼요.\n\n기사단장은 눈을 떴다.\n- 여긴… 어디지?\n(목소리가 왜 이렇게 높아?)\n\n규칙: 따옴표나 - 로 시작 = 대사 / ( ) = 속마음 / 나머지 = 나레이션"});
+  const conv = () => {
+    const nm = P.useVar ? "{{char}}" : ((w.fields.name||"").trim() || "{{char}}");
+    const lines = ta.value.split("\n");
+    const res = lines.map(raw => {
+      let s = raw.trim(); if (!s) return "";
+      let kind = "n";
+      if (/^[-–—]\s*/.test(s)){ s = s.replace(/^[-–—]\s*/,""); kind = "d"; }
+      else if (/^["“「『]/.test(s)){ s = s.replace(/^["“「『]|["”」』]$/g,""); kind = "d"; }
+      else if (/^\(.*\)$/.test(s)){ s = s.slice(1,-1); kind = "t"; }
+      else s = s.replace(/^\*|\*$/g,"");
+      if (P.mode === "zeta"){
+        if (kind==="d") return `"${s}"`;
+        if (kind==="t") return `*(${s})*`;
+        return `*${s}*`;
+      }
+      if (P.mode === "script"){
+        if (kind==="d") return `${nm}: "${s}"`;
+        if (kind==="t") return `${nm}: (${s})`;
+        return `(${s})`;
+      }
+      if (kind==="d") return `"${s}"`; if (kind==="t") return `'${s}'`; return s;   // novel
+    });
+    out.textContent = res.join("\n").replace(/\n{3,}/g,"\n\n");
+    P.raw = ta.value; save();
+  };
+  ta.addEventListener("input", conv);
+  const modes = h("div");
+  const drawModes = () => { modes.innerHTML=""; [["zeta","제타식 *나레이션* \"대사\""],["script","대본식 이름: \"대사\""],["novel","소설식"]].forEach(([k,n])=>modes.append(h("button",{class:"pill"+(P.mode===k?" on":""),onclick:()=>{P.mode=k;drawModes();conv();}},n))); };
+  body.append(
+    h("div",{class:"card"}, h("h3",null,"원문"), ta, h("label",{class:"f"},"변환 방식"), modes,
+      h("label",{class:"check",style:"border:0"}, h("input",{type:"checkbox",checked:P.useVar,onchange:e=>{P.useVar=e.target.checked;conv();}}), "대본식 이름을 {{char}}로")),
+    h("div",{class:"card"}, h("h3",null,"결과"), out, h("div",{class:"btns"},
+      h("button",{class:"btn p",onclick:()=>copy(out.textContent)},"📋 복사"),
+      h("button",{class:"btn",onclick:()=>{w.fields.first=out.textContent;save();toast("시작 메시지에 넣었어요");}},"➡ 시작 메시지로"),
+      h("button",{class:"btn",onclick:()=>{w.fields.example=((w.fields.example||"").trim()+"\n\n"+out.textContent).trim();save();toast("예시 대화에 추가했어요");}},"➕ 예시 대화에 추가")))
+  );
+  drawModes(); conv();
+};
+
+/* ---------- 글자수 ---------- */
+VIEWS.count = (body) => {
+  const P = S.countPrefs = S.countPrefs || { text:"", limit:0 };
+  const st = h("div",{class:"stat"});
+  const pr = h("div",{class:"prog"},h("i"));
+  const ta = h("textarea",{style:"min-height:260px",value:P.text,placeholder:"여기에 붙여 넣으면 바로 세요."});
+  const lim = h("input",{type:"number",value:P.limit||"",placeholder:"제한 글자수 (선택)"});
+  const upd = () => {
+    const t = ta.value; P.text = t; P.limit = +lim.value||0; save();
+    const bytes = new TextEncoder().encode(t).length;
+    const words = (t.trim().match(/\S+/g)||[]).length;
+    st.innerHTML = "";
+    [[len(t),"공백 포함"],[lenNoSp(t),"공백 제외"],[t?t.split("\n").length:0,"줄"],[words,"어절"],[bytes,"바이트(UTF-8)"],[P.limit?(P.limit-len(t)):"–","남은 글자"]]
+      .forEach(([n,l])=>st.append(h("div",null,h("b",{style:typeof n==="number"&&n<0?"color:var(--bad)":""},n),h("span",null,l))));
+    pr.firstChild.style.width = P.limit ? Math.min(100,len(t)/P.limit*100)+"%" : "0";
+    pr.firstChild.style.background = P.limit && len(t)>P.limit ? "var(--bad)" : "";
+  };
+  ta.oninput = upd; lim.oninput = upd;
+  body.append(h("div",{class:"card"}, ta, h("label",{class:"f"},"제한"), lim, pr), h("div",{class:"card"}, st),
+    h("div",{class:"btns"}, h("button",{class:"btn",onclick:()=>{ta.value=cleanText(ta.value);upd();}},"✨ 공백 정리"), h("button",{class:"btn d",onclick:()=>{ta.value="";upd();}},"지우기")));
+  upd();
+};
+
+/* ---------- PixAI 프롬프트 ---------- */
+const TAGS = {
+  "구도": { "클로즈업":"close-up, face focus", "바스트샷":"upper body", "카우보이샷":"cowboy shot", "전신":"full body", "원경":"wide shot, scenery", "하이앵글":"from above", "로우앵글":"from below", "뒷모습":"from behind" },
+  "표정": { "당황":"flustered, blush, sweat drop, open mouth", "웃음":"smile", "미소":"light smile, closed mouth", "화남":"angry, frown", "울음":"crying, tears", "놀람":"surprised, wide-eyed", "무표정":"expressionless", "의기양양":"smug", "부끄러움":"embarrassed, blush, looking away", "멍함":"dazed, blank stare" },
+  "시선": { "카메라 안 봄":"looking away", "카메라 봄":"looking at viewer", "옆 보기":"looking to the side", "아래 보기":"looking down" },
+  "배경": { "전장":"battlefield, ruins, smoke", "성당":"cathedral, stained glass, light rays", "천계":"heaven, clouds, divine light", "방":"bedroom, indoors", "거리":"city street", "숲":"forest", "흰 배경":"simple background, white background" },
+  "효과": { "빛 내림":"light rays, glowing", "반짝이":"sparkle", "역광":"backlighting", "밤":"night, moonlight", "비":"rain" },
+};
+function pixPrompt(extra){
+  const p = S.pixai;
+  const parts = [p.quality, W().charTags, ...(extra||[])].map(s=>(s||"").trim()).filter(Boolean);
+  return [...new Set(parts.join(", ").split(/\s*,\s*/).filter(Boolean))].join(", ");
+}
+function pixSettings(){
+  const p = S.pixai;
+  return `모델: ${p.model}${p.xl?" (XL)":""}\n비율: ${p.ratio} · Batch x${p.batch}\nLoRA: ${p.loras.filter(l=>l.on).map(l=>`${l.name} ${l.w}`).join(", ")||"없음"}`;
+}
+VIEWS.pixai = (body) => {
+  const p = S.pixai; const w = W();
+  const sel = new Set();
+  const free = h("textarea",{placeholder:"추가 태그 (영어, 쉼표 구분) 예) holding sword, kneeling",style:"min-height:60px"});
+  const out = h("div",{class:"out"}); const neg = h("div",{class:"out"});
+  const upd = () => { out.textContent = pixPrompt([...sel, free.value]); neg.textContent = p.negative; };
+  free.oninput = upd;
+  const loraBox = h("div");
+  const drawLora = () => {
+    loraBox.innerHTML = "";
+    p.loras.forEach((l,i)=>loraBox.append(h("div",{class:"item"},h("div",{class:"ix"},
+      h("input",{type:"checkbox",checked:l.on,style:"width:20px;height:20px;accent-color:var(--ac)",onchange:e=>{l.on=e.target.checked;save();}}),
+      h("input",{type:"text",value:l.name,style:"flex:1",oninput:e=>{l.name=e.target.value;save();}}),
+      h("input",{type:"number",step:"0.05",min:"0",max:"1.5",value:l.w,style:"width:76px",oninput:e=>{l.w=+e.target.value;save();}}),
+      h("button",{class:"btn sm d",onclick:()=>{p.loras.splice(i,1);save();drawLora();}},"✕")))));
+  };
+  const [ct, cc] = counted(()=>w.charTags, v=>{w.charTags=v;upd();}, { ph:"이 작품 주인공 고정 태그 (예: 1girl, blonde hair, long hair)", style:"min-height:60px" });
+  ct.addEventListener("input", upd);
+  body.append(
+    h("div",{class:"card"}, h("h3",null,"⚙️ 생성 설정"),
+      h("div",{class:"row"},
+        h("div",{class:"grow"},h("label",{class:"f"},"모델"),h("input",{type:"text",value:p.model,oninput:e=>{p.model=e.target.value;save();}})),
+        h("div",{style:"width:90px"},h("label",{class:"f"},"비율"),h("select",{onchange:e=>{p.ratio=e.target.value;save();}}, ["3:5","2:3","9:16","1:1","4:3","16:9"].map(r=>h("option",{value:r,selected:p.ratio===r||null},r)))),
+        h("div",{style:"width:76px"},h("label",{class:"f"},"Batch"),h("select",{onchange:e=>{p.batch=+e.target.value;save();}}, [1,2,4].map(b=>h("option",{value:b,selected:p.batch===b||null},"x"+b))))),
+      h("label",{class:"check",style:"border:0"}, h("input",{type:"checkbox",checked:p.xl,onchange:e=>{p.xl=e.target.checked;save();}}),"XL"),
+      h("label",{class:"f"},"LoRA (체크한 것만 사용)"), loraBox,
+      h("div",{class:"btns"},
+        h("button",{class:"btn sm",onclick:()=>{p.loras.push({name:"새 LoRA",w:0.7,on:true});save();drawLora();}},"＋ LoRA"),
+        h("button",{class:"btn sm",onclick:()=>copy(pixSettings(),"설정 복사")},"📋 설정 요약 복사")),
+      h("div",{class:"tiny",style:"margin-top:6px"},"💡 크레딧 아끼기: 구도 잡을 땐 Batch x1로 확인하고, 마음에 들면 x4로.")),
+    h("div",{class:"card"}, h("h3",null,"🧍 주인공 고정 태그 · ",w.name), ct, cc),
+    h("div",{class:"card"}, h("h3",null,"🏷 태그 고르기"),
+      Object.entries(TAGS).map(([cat, obj]) => h("div",{style:"margin-bottom:8px"}, h("div",{class:"tiny"},cat),
+        Object.entries(obj).map(([ko,en]) => { const b = h("button",{class:"pill",onclick:()=>{ if(sel.has(en)){sel.delete(en);b.classList.remove("on");} else {sel.add(en);b.classList.add("on");} upd(); }}, ko); return b; }))),
+      free,
+      (()=>{ const ko=h("input",{type:"text",placeholder:"한국어로 장면 설명 → AI가 영어 태그로 (예: 성당에서 무릎 꿇고 기도하는 금발 성녀)"}); return h("div",{class:"row",style:"margin-top:8px;flex-wrap:nowrap"}, ko, h("button",{class:"btn v sm",onclick:()=>{ if(!ko.value.trim()) return toast("설명을 적어 주세요"); aiTags(ko.value.trim(), t=>{ free.value=(free.value.trim()?free.value.trim()+", ":"")+t; upd(); }); }},"🤖 태그로")); })()),
+    h("div",{class:"card"}, h("h3",null,"✅ 프롬프트"), out, h("div",{class:"btns"},h("button",{class:"btn p",onclick:()=>copy(out.textContent,"프롬프트 복사")},"📋 프롬프트 복사")),
+      h("label",{class:"f"},"네거티브"), neg,
+      h("div",{class:"btns"},h("button",{class:"btn",onclick:()=>copy(p.negative,"네거티브 복사")},"📋 네거티브 복사"),
+        h("button",{class:"btn",onclick:()=>askText("네거티브 프롬프트 수정",p.negative,v=>{p.negative=v;save();upd();})},"✏️"),
+        h("button",{class:"btn",onclick:()=>askText("품질 태그 수정",p.quality,v=>{p.quality=v;save();upd();})},"✏️ 품질 태그")))
+  );
+  drawLora(); upd();
+};
+
+/* ---------- 웹툰 콘티 ---------- */
+const SHOTS = ["클로즈업","바스트샷","카우보이샷","전신","원경","하이앵글","로우앵글","뒷모습"];
+VIEWS.cuts = (body) => {
+  const w = W();
+  if (!w.eps || !w.eps.length) w.eps = [{id:uid(),title:"1화",cuts:[]}];
+  let ei = Math.min(S.epIdx||0, w.eps.length-1);
+  const tabs = h("div",{class:"tabs"}); const list = h("div");
+  const drawTabs = () => {
+    tabs.innerHTML = "";
+    w.eps.forEach((e,i)=>tabs.append(h("button",{class:"pill"+(i===ei?" on":""),onclick:()=>{ei=i;S.epIdx=i;drawTabs();draw();}},e.title)));
+    tabs.append(h("button",{class:"pill",onclick:()=>{w.eps.push({id:uid(),title:(w.eps.length+1)+"화",cuts:[]});ei=w.eps.length-1;save();drawTabs();draw();}},"＋ 화"));
+  };
+  function cutPrompt(c){
+    const ex = [];
+    const shot = TAGS["구도"][c.shot]; if (shot) ex.push(shot);
+    if (c.face){ const f = TAGS["표정"][c.face]; ex.push(f || c.face); }
+    if (c.tags) ex.push(c.tags);
+    return pixPrompt(ex);
+  }
+  function contiText(e){
+    return `《${w.name}》 ${e.title} 콘티\n\n` + e.cuts.map((c,i)=>
+      `#${i+1} [${c.shot||"구도 미정"}]${c.face?" · 표정: "+c.face:""}\n장면: ${c.scene||"-"}\n`+
+      (c.bubbles.filter(Boolean).length ? c.bubbles.filter(Boolean).map(b=>`  💬 ${b}`).join("\n")+"\n" : "")+
+      (c.note?`메모: ${c.note}\n`:"")).join("\n");
+  }
+  function draw(){
+    const e = w.eps[ei]; list.innerHTML = "";
+    list.append(h("div",{class:"card"},
+      h("div",{class:"row"}, h("input",{type:"text",class:"grow",value:e.title,oninput:ev=>{e.title=ev.target.value;save();},onchange:drawTabs}),
+        h("button",{class:"btn sm d",onclick:()=>{ if(w.eps.length<2) return toast("마지막 화는 못 지워요"); confirmSheet("'"+e.title+"' 삭제?","삭제",()=>{w.eps.splice(ei,1);ei=0;save();drawTabs();draw();}); }},"화 삭제")),
+      h("div",{class:"tiny",style:"margin-top:6px"},`컷 ${e.cuts.length}개 · 말풍선 ${e.cuts.reduce((s,c)=>s+c.bubbles.filter(Boolean).length,0)}개 · 컷당 말풍선 최대 3개, 효과음 최소화`),
+      h("div",{class:"btns"},
+        h("button",{class:"btn p",onclick:()=>{e.cuts.push({id:uid(),shot:"바스트샷",face:"",scene:"",bubbles:[""],note:"",tags:""});save();draw();}},"＋ 컷"),
+        h("button",{class:"btn",onclick:()=>copy(contiText(e),"콘티 복사")},"📋 콘티 복사"),
+        h("button",{class:"btn",onclick:()=>copy(e.cuts.map((c,i)=>`#${i+1}\n${cutPrompt(c)}`).join("\n\n"),"전체 컷 프롬프트 복사")},"🎨 컷별 프롬프트 전부"),
+        h("button",{class:"btn v",onclick:()=>aiConti(w,e,draw)},"🪄 AI 콘티 짜기"),
+        h("button",{class:"btn",onclick:()=>aiContiReview(w,e,contiText(e))},"🤖 AI 검토"))));
+    e.cuts.forEach((c,i)=>{
+      const bub = h("div");
+      const drawB = () => {
+        bub.innerHTML = "";
+        c.bubbles.forEach((b,j)=>bub.append(h("div",{class:"ix",style:"margin-top:6px"},
+          h("span",{class:"n"},"💬"),
+          h("input",{type:"text",value:b,placeholder:"대사 / 나레이션",oninput:ev=>{c.bubbles[j]=ev.target.value;save();}}),
+          h("button",{class:"btn sm",onclick:()=>{c.bubbles.splice(j,1);save();drawB();}},"✕"))));
+        if (c.bubbles.length < 3) bub.append(h("button",{class:"btn sm",style:"margin-top:6px",onclick:()=>{c.bubbles.push("");save();drawB();}},"＋ 말풍선"));
+        else bub.append(h("div",{class:"tiny",style:"margin-top:6px"},"말풍선 3개 (최대)"));
+      };
+      drawB();
+      const face = h("input",{type:"text",value:c.face,placeholder:"표정",list:"faces",style:"flex:1",oninput:ev=>{c.face=ev.target.value;save();}});
+      list.append(h("div",{class:"card"},
+        h("div",{class:"ix"}, h("b",{style:"font-size:17px;min-width:34px"},"#"+(i+1)),
+          h("select",{style:"flex:1",onchange:ev=>{c.shot=ev.target.value;save();}}, SHOTS.map(s=>h("option",{selected:c.shot===s||null},s))), face),
+        h("textarea",{value:c.scene,placeholder:"장면 묘사 (누가, 어디서, 뭘 하는지)",style:"min-height:64px;margin-top:8px",oninput:ev=>{c.scene=ev.target.value;save();}}),
+        bub,
+        h("input",{type:"text",value:c.tags||"",placeholder:"이 컷만의 영어 태그 (선택)",style:"margin-top:8px",oninput:ev=>{c.tags=ev.target.value;save();}}),
+        h("input",{type:"text",value:c.note,placeholder:"메모 (연출, 주의점)",style:"margin-top:6px",oninput:ev=>{c.note=ev.target.value;save();}}),
+        h("div",{class:"btns"},
+          h("button",{class:"btn sm",onclick:()=>copy(cutPrompt(c),"#"+(i+1)+" 프롬프트 복사")},"🎨 프롬프트"),
+          i>0?h("button",{class:"btn sm",onclick:()=>{e.cuts.splice(i,1);e.cuts.splice(i-1,0,c);save();draw();}},"⬆"):null,
+          i<e.cuts.length-1?h("button",{class:"btn sm",onclick:()=>{e.cuts.splice(i,1);e.cuts.splice(i+1,0,c);save();draw();}},"⬇"):null,
+          h("button",{class:"btn sm",onclick:()=>{const d=JSON.parse(JSON.stringify(c));d.id=uid();e.cuts.splice(i+1,0,d);save();draw();}},"복제"),
+          h("button",{class:"btn sm d",onclick:()=>{e.cuts.splice(i,1);save();draw();}},"삭제"))));
+    });
+    if (!e.cuts.length) list.append(h("p",{class:"muted",style:"text-align:center;padding:16px"},"＋ 컷 을 눌러 시작하세요."));
+  }
+  body.append(h("datalist",{id:"faces"}, Object.keys(TAGS["표정"]).map(k=>h("option",{value:k}))), tabs, list,
+    h("div",{class:"btns"}, h("button",{class:"btn",onclick:()=>go("sedotoon")},"🖼 세로툰에서 조립하기 →")));
+  drawTabs(); draw();
+};
+
+/* ---------- 세로툰 ---------- */
+VIEWS.sedotoon = (body, view, bar) => {
+  body.remove();
+  bar.append(h("a",{class:"chip",href:"https://deca19.github.io/zeta/sedotoon/",target:"_blank",rel:"noopener",style:"text-decoration:none;color:var(--tx)"},"원본 열기 ↗"));
+  const fr = h("iframe",{class:"frame",src:"sedotoon/index.html",title:"세로툰"});
+  view.append(fr);
+  const fit = () => { fr.style.top = bar.getBoundingClientRect().bottom + "px"; fr.style.height = (window.innerHeight - bar.getBoundingClientRect().bottom) + "px"; };
+  fit(); window.addEventListener("resize", fit);
+};
+
+/* ---------- 아이디어 뽑기 ---------- */
+const IDEA = {
+  "장르": ["판타지","현대 일상","학원","무협","SF","아포칼립스","궁중","오피스","던전 탐사","이세계"],
+  "주인공": ["최전선 기사단장","은퇴한 용사","마왕군 간부","평범한 회사원","천재 연금술사","몰락한 귀족","현상금 사냥꾼","신입 여신","고등학생 검사","용병단 막내"],
+  "사건": ["신의 전산 오류로 몸이 바뀜","하룻밤 사이 성별이 바뀜","적국 공주와 영혼이 뒤바뀜","죽었다가 성녀로 부활함","기억을 잃고 적진에서 깨어남","원수와 계약 결혼","사냥꾼이 사냥감이 됨","저주로 아이 몸이 됨","게임 속 엑스트라로 빙의","시간이 하루씩 되돌아감"],
+  "반전": ["사실 범인은 여신","{{user}}가 원래 정체를 알고 있었음","부하들이 전부 눈치챔","되돌아갈 방법이 있지만 본인이 안 돌아가고 싶어짐","라이벌도 같은 처지","새 몸이 전설의 성녀 혈통","적이 아군보다 친절함","돌아가려면 {{user}}의 도움이 필수"],
+  "분위기": ["코믹","코믹 + 약간 진지","달달","긴장감","병맛","힐링","다크"],
+  "첫 대사": ["\"…이 목소리, 내 거야?\"","\"전산 오류라니, 그게 무슨 말이오!\"","\"부단장, 날 그런 눈으로 보지 마라.\"","\"반품은… 안 되는 건가요?\"","\"성녀님? 누가? 내가?\"","\"오늘부터 네가 내 보호자다.\""],
+};
+VIEWS.idea = (body) => {
+  const P = S.ideaLock = S.ideaLock || {};
+  const cur = S.ideaCur = S.ideaCur || {};
+  const box = h("div");
+  const roll = (only) => { for (const k in IDEA) if ((!only || only===k) && !P[k]) cur[k] = IDEA[k][Math.floor(Math.random()*IDEA[k].length)]; save(); draw(); };
+  const text = () => Object.keys(IDEA).map(k=>`${k}: ${cur[k]||"-"}`).join("\n");
+  function draw(){
+    box.innerHTML = "";
+    Object.keys(IDEA).forEach(k=>box.append(h("div",{class:"item",style:"display:flex;align-items:center;gap:8px"},
+      h("div",{style:"flex:1"}, h("div",{class:"tiny"},k), h("div",{style:"font-weight:600"},cur[k]||"—")),
+      h("button",{class:"btn sm",onclick:()=>roll(k)},"🎲"),
+      h("button",{class:"btn sm"+(P[k]?" p":""),onclick:()=>{P[k]=!P[k];save();draw();}},P[k]?"🔒":"🔓"))));
+  }
+  body.append(h("div",{class:"card"}, h("div",{class:"muted"},"🔒 잠근 칸은 그대로 두고 나머지만 다시 뽑아요."), box,
+    h("div",{class:"btns"},
+      h("button",{class:"btn p",onclick:()=>roll()},"🎲 전부 뽑기"),
+      h("button",{class:"btn",onclick:()=>copy(text())},"📋 복사"),
+      h("button",{class:"btn v",onclick:()=>aiIdea(text())},"🤖 AI 기획"),
+      h("button",{class:"btn",onclick:()=>askText("새 작품 이름", (cur["주인공"]||"새 작품"), n=>{const w=blankWork(n,{fields:{intro:`${cur["주인공"]||""} — ${cur["사건"]||""} (${cur["장르"]||""} / ${cur["분위기"]||""})`,first:cur["첫 대사"]||""}});S.works[w.id]=w;S.order.unshift(w.id);S.cur=w.id;save();toast("새 작품으로 만들었어요");})},"➕ 이걸로 새 작품"))));
+  if (!Object.keys(cur).length) roll(); else draw();
+};
+
+/* ---------- Tipsy 이전 ---------- */
+const TIPSY_STEPS = ["캐릭터 이름","한 줄 소개","프로필/대표 이미지","캐릭터 설정(프롬프트)","시작 메시지","예시 대화","키워드북","상태창 규칙","태그·장르","공개 설정","테스트 대화 해보기","제타 쪽 정리(비공개 등)"];
+VIEWS.tipsy = (body) => {
+  const w = W(); w.tipsy = w.tipsy || {};
+  const done = () => TIPSY_STEPS.filter(s=>w.tipsy[s]).length;
+  const pr = h("div",{class:"prog"},h("i")); const cnt = h("span",{class:"big"});
+  const upd = () => { cnt.textContent = `${done()} / ${TIPSY_STEPS.length}`; pr.firstChild.style.width = done()/TIPSY_STEPS.length*100+"%"; };
+  const bundle = () => {
+    const parts = [plotAll(w)];
+    if (w.lore.length) parts.push("【키워드북】\n"+w.lore.filter(x=>x.on).map(x=>`[${x.k}]\n${x.v}`).join("\n\n"));
+    if (w.status.items.length) parts.push("【상태창 규칙】\n매 응답 마지막에 아래 상태창을 출력한다.\n"+statusText(w.status));
+    return parts.filter(Boolean).join("\n\n");
+  };
+  body.append(
+    h("div",{class:"card"}, h("div",{class:"tiny"},"이전 진행도"), cnt, pr,
+      w.tipsyNote ? h("div",{class:"warnbox"},"📌 "+w.tipsyNote) : null,
+      h("div",{class:"btns"}, h("button",{class:"btn sm",onclick:()=>askText("이 작품 이전 메모",w.tipsyNote||"",v=>{w.tipsyNote=v;save();renderApp("tipsy");})},"📌 메모 달기"))),
+    h("div",{class:"card"}, TIPSY_STEPS.map(s => h("label",{class:"check"},
+      h("input",{type:"checkbox",checked:!!w.tipsy[s],onchange:e=>{w.tipsy[s]=e.target.checked;save();upd();}}), s))),
+    h("div",{class:"card"}, h("h3",null,"📦 한 번에 옮길 텍스트"),
+      h("div",{class:"muted"},"플롯 + 키워드북 + 상태창을 한 덩어리로 복사해요. Tipsy 입력칸에 항목별로 나눠 붙이면 돼요."),
+      h("div",{class:"btns"},
+        h("button",{class:"btn p",onclick:()=>copy(bundle(),"전체 복사")},"📋 전체 복사"),
+        h("button",{class:"btn",onclick:()=>openSheet("항목별 복사", PLOT_FIELDS.filter(f=>(w.fields[f.k]||"").trim()).map(f=>h("button",{class:"btn",style:"width:100%;margin-bottom:6px;text-align:left",onclick:()=>copy(w.fields[f.k].trim(),f.t+" 복사")},"📋 "+f.t+" ("+len(w.fields[f.k])+"자)")).concat(w.lore.length?[h("button",{class:"btn",style:"width:100%;margin-bottom:6px;text-align:left",onclick:()=>copy(w.lore.map(x=>`[${x.k}]\n${x.v}`).join("\n\n"),"키워드북 복사")},"📋 키워드북")]:[]))},"항목별 복사"))),
+    h("div",{class:"card"}, h("h3",null,"모든 작품 현황"),
+      S.order.map(id=>{const x=S.works[id]; const n=TIPSY_STEPS.filter(s=>(x.tipsy||{})[s]).length; return h("div",{style:"margin-top:8px"}, h("div",{class:"row"},h("span",{class:"grow"},x.name),h("span",{class:"tiny"},n+"/"+TIPSY_STEPS.length)), h("div",{class:"prog"},h("i",{style:`width:${n/TIPSY_STEPS.length*100}%`})));}))
+  );
+  upd();
+};
+
+/* ---------- 메모 ---------- */
+VIEWS.memo = (body) => {
+  const w = W();
+  const [a, ac] = counted(()=>w.memo, v=>w.memo=v, { ph:"이 작품 메모 — 아이디어, 설정 조각, 할 일…", style:"min-height:220px" });
+  const [b, bc] = counted(()=>S.memo, v=>S.memo=v, { ph:"모든 작품 공통 메모", style:"min-height:160px" });
+  body.append(h("div",{class:"card"},h("h3",null,"✦ ",w.name),a,ac,h("div",{class:"btns"},h("button",{class:"btn sm",onclick:()=>copy(a.value)},"📋 복사"))),
+    h("div",{class:"card"},h("h3",null,"🌐 공통 메모"),b,bc,h("div",{class:"btns"},h("button",{class:"btn sm",onclick:()=>copy(b.value)},"📋 복사"))));
+};
+
+/* ---------- 백업 ---------- */
+VIEWS.backup = (body) => {
+  const ta = h("textarea",{style:"min-height:160px",placeholder:"백업 코드를 붙여 넣으세요"});
+  body.append(
+    h("div",{class:"card"}, h("h3",null,"💾 내보내기"),
+      h("div",{class:"muted"},"작업은 이 기기의 브라우저에만 저장돼요. 브라우저 기록을 지우면 사라지니, 가끔 백업 코드를 복사해서 메모장 같은 곳에 보관하세요."),
+      h("div",{class:"btns"},
+        h("button",{class:"btn p",onclick:()=>{ const d=new Date(); saveFile(`제타스튜디오_백업_${d.getFullYear()}${String(d.getMonth()+1).padStart(2,"0")}${String(d.getDate()).padStart(2,"0")}.json`, JSON.stringify(S,null,1), "파일 저장이 안 되는 화면이에요. 백업 코드 복사를 써 주세요"); }},"📄 파일로 저장"),
+        h("button",{class:"btn",onclick:()=>copy(JSON.stringify(S),"백업 코드 복사 ("+Math.round(JSON.stringify(S).length/1024)+"KB)")},"📋 백업 코드 복사"))),
+    h("div",{class:"card"}, h("h3",null,"📥 불러오기"),
+      h("label",{class:"btn",style:"position:relative;overflow:hidden;display:inline-block;margin-bottom:8px"},"📂 백업 파일 열기",
+        h("input",{type:"file",accept:".json,application/json,text/plain",style:"position:absolute;inset:0;opacity:0",onchange:async e=>{ const f=e.target.files[0]; if(!f) return; ta.value=await f.text(); toast("파일을 읽었어요. 아래 버튼으로 적용하세요"); }})),
+      ta,
+      h("div",{class:"btns"},
+        h("button",{class:"btn v",onclick:()=>{ let d; try { d = JSON.parse(ta.value); } catch(e){ return toast("코드가 올바르지 않아요"); } if(!d||!d.works) return toast("코드가 올바르지 않아요");
+          confirmSheet("지금 데이터를 백업으로 덮어쓸까요?","덮어쓰기",()=>{S=d;save();toast("불러왔어요");}); }},"전체 덮어쓰기"),
+        h("button",{class:"btn",onclick:()=>{ let d; try { d = JSON.parse(ta.value); } catch(e){ return toast("코드가 올바르지 않아요"); } if(!d||!d.works) return toast("코드가 올바르지 않아요");
+          let n=0; for(const id of d.order||Object.keys(d.works)){ const w=d.works[id]; if(!w) continue; w.id=uid(); S.works[w.id]=w; S.order.push(w.id); n++; } save(); toast("작품 "+n+"개 추가"); }},"작품만 추가"))),
+    h("div",{class:"card"}, h("h3",null,"⚠️ 초기화"),
+      h("button",{class:"btn d",onclick:()=>confirmSheet("모든 작품과 설정을 지우고 처음 상태로 돌릴까요?","초기화",()=>{S=seed();save();toast("초기화했어요");})},"전부 초기화")),
+    h("p",{class:"tiny",style:"text-align:center"},"제타 스튜디오 · 작품 "+S.order.length+"개")
+  );
+};
+
+document.addEventListener("DOMContentLoaded", route);
+if ("serviceWorker" in navigator && location.protocol === "https:" && !/claude/i.test(location.hostname)) { try { navigator.serviceWorker.register("studio-sw.js").catch(()=>{}); } catch(e){} }
+</script>
+<script src="gif.js"></script>
+<script src="ai.js"></script>
+<script src="dna.js"></script>
+</body>
+</html>

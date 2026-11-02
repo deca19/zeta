@@ -1,0 +1,15 @@
+{
+  "name": "제타 스튜디오",
+  "short_name": "제타 스튜디오",
+  "description": "제타 작품 제작 도구 모음 — 플롯, 키워드북, 상태창, 웹툰, GIF, AI 엔진",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0e0d12",
+  "theme_color": "#0e0d12",
+  "lang": "ko",
+  "icons": [
+    { "src": "studio-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "studio-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
