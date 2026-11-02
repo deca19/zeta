@@ -3,7 +3,7 @@
    🛰 제타 탐사 — 탐사봇이 제타 공개 작품을 읽고 분석하는 걸 실시간으로 보기
    · 실시간 중계: ntfy.sh 채널 (탐사봇이 한 걸음마다 소식을 보냄)
    · 결과: GitHub 저장소의 data/zeta-trends.json
-   · 언리밋(성인 모드) 작품은 탐사봇이 처음부터 건너뜀
+   · 노골적인 성인 태그 작품만 건너뜀 (언리밋 표시는 제외 기준 아님)
    ===================================================================== */
 const EXP = {
   repo: "deca19/zeta",
@@ -13,7 +13,7 @@ const EXP = {
 };
 const EXP_ACTIONS_URL = `https://github.com/${EXP.repo}/actions/workflows/${EXP.workflow}`;
 // 앱에서도 한 번 더 거름 (탐사봇과 같은 기준)
-const EXP_ADULT = /언리밋|unlimited|절륜|문란|19금|^19$|성인|음란|야한|야설|수위|섹시|섹스|육덕|변태|노출|r-?18|nsfw|더티|베드신|원나잇|임신|후방주의/i;
+const EXP_ADULT = /절륜|문란|19금|^19$|성인용|음란|야한|야설|수위|섹시|섹스|육덕|변태|노출|r-?18|nsfw|더티톡|베드신|원나잇|후방주의/i;   // 언리밋 표시는 제외 기준 아님
 const expSafe = w => w && !(w.tags || []).some(t => EXP_ADULT.test(String(t).trim()));
 
 async function expLoad(force){
@@ -108,7 +108,7 @@ function expTrendPrompt(d){
   const ws = [...d.works].sort((a, b) => b.count - a.count).slice(0, 30);
   const st = d.stats || {};
   const strong = (st.feats || []).filter(f => Math.abs(f.c) >= 0.3).map(f => `${f.label} ${f.c > 0 ? "많을수록" : "적을수록"} 인기 (인기작 평균 ${f.topAvg})`).join(", ");
-  return `아래는 제타(AI 캐릭터 채팅)에서 지금 인기 있는 작품 ${ws.length}개의 공개 정보야 (대화 수 순, 언리밋·성인 태그 제외).
+  return `아래는 제타(AI 캐릭터 채팅)에서 지금 인기 있는 작품 ${ws.length}개의 공개 정보야 (대화 수 순, 성인 태그 작품 제외).
 다음을 분석해줘:
 ■ 지금 제타에서 먹히는 소재·장르·관계 공식 TOP 5 (근거 작품 이름과 함께)
 ■ 클릭을 부르는 이름·한 줄 소개 패턴
@@ -167,7 +167,7 @@ function expLive(box){
   const ghIn = h("input", { type:"password", placeholder:"(선택) 깃허브 키 github_pat_… — 넣으면 여기서 바로 시작", value: getKeys().github || "", autocomplete:"off", oninput:e => { const v = e.target.value.trim(); if (!v || /^(github_pat_|ghp_)/.test(v)) setKey("github", v); } });
   box.append(
     h("div", { class:"card" },
-      h("div", { class:"muted" }, "탐사봇이 제타 공개 페이지(홈·랭킹·작품 소개)를 천천히 돌면서 작품을 읽고 분석해요. 언리밋(성인 모드)·성인 태그 작품은 건너뛰어요."),
+      h("div", { class:"muted" }, "탐사봇이 제타 공개 페이지(홈·랭킹·작품 소개)를 천천히 돌면서 작품을 읽고 분석해요. 노골적인 성인 태그가 붙은 작품만 건너뛰어요 (언리밋 표시 작품은 포함)."),
       h("div", { class:"row", style:"margin-top:10px" }, maxSel,
         h("button", { class:"btn p grow", onclick: async e => { e.target.disabled = true; await expStart(S.expMax || 36); setTimeout(() => e.target.disabled = false, 4000); } }, "🛰 지금 탐사 시작")),
       h("details", { style:"margin-top:8px" }, h("summary", { class:"tiny" }, "여기서 바로 시작하려면 (선택)"),
@@ -216,7 +216,7 @@ async function expResult(box){
         h("div", { class:"row", style:"align-items:flex-start" },
           h("b", { style:"min-width:26px;color:var(--tx3)" }, i + 1),
           h("div", { class:"grow", onclick:() => more.classList.toggle("hidden") },
-            h("b", null, w.name), h("div", { class:"tiny" }, (w.creator ? "by " + w.creator + " · " : "") + "💬 " + fmtNum(w.count) + (st.rising && st.rising.includes(w.id) ? " · 🔥 급상승" : "")),
+            h("b", null, w.name), h("div", { class:"tiny" }, (w.creator ? "by " + w.creator + " · " : "") + "💬 " + fmtNum(w.count) + (st.rising && st.rising.includes(w.id) ? " · 🔥 급상승" : "") + (w.unlimited ? " · ★ 언리밋" : "")),
             h("div", { class:"tiny", style:"color:var(--tx2);margin-top:4px" }, w.short),
             h("div", { style:"margin-top:4px" }, w.tags.slice(0, 6).map(t => h("span", { class:"pill", style:"font-size:11px;padding:3px 8px" }, "#" + t)))),
           h("div", { style:"text-align:center" }, h("div", { style:"font-family:'Black Han Sans';font-size:22px" }, w.score), h("div", { class:"tiny", style:"font-size:10px" }, "점수"))),
@@ -233,7 +233,7 @@ async function expResult(box){
     ...(st.tags || []).slice(0, 14).map(([t, c]) => h("button", { class:"pill" + (filter === t ? " on" : ""), onclick:() => { filter = filter === t ? "" : t; drawTags(); drawList(); } }, "#" + t + " " + c)));
   box.append(
     h("div", { class:"card" },
-      h("div", { class:"row" }, h("div", { class:"grow" }, h("b", null, `작품 ${ws.length}개 분석`), h("div", { class:"tiny" }, "마지막 탐사 " + new Date(d.updatedAt).toLocaleString("ko-KR") + " · 언리밋·성인 태그 제외")),
+      h("div", { class:"row" }, h("div", { class:"grow" }, h("b", null, `작품 ${ws.length}개 분석`), h("div", { class:"tiny" }, "마지막 탐사 " + new Date(d.updatedAt).toLocaleString("ko-KR") + " · 성인 태그 작품 제외")),
         h("button", { class:"btn sm", onclick:() => { EXP.data = null; S.expTab = "result"; renderApp("explore"); } }, "🔄")),
       h("div", { class:"btns" },
         h("button", { class:"btn v", onclick:() => aiRun("제타 트렌드 분석", [{ role:"system", content:SYS_WRITER }, { role:"user", content: expTrendPrompt(d) }], { maxTokens: 8000 }) }, "🤖 AI 트렌드 분석"),
