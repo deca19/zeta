@@ -1,4 +1,4 @@
-// 🛰 제타 탐사봇 v1 — 제타(zeta-ai.io) 공개 작품 페이지를 천천히 돌며 인기 공식을 분석해요.
+// 🛰 제타 탐사봇 v2 — 제타(zeta-ai.io) 공개 작품 페이지를 천천히 돌며 인기 공식을 분석해요.
 // · robots.txt 허용 범위(공개 페이지)만, 요청 사이 2.5초 쉬기, 한 번에 최대 MAX개
 // · 언리밋(성인 모드) 작품은 건너뜀
 // · 다른 작가의 글은 짧은 발췌만 저장 (전문은 저장하지 않음)
@@ -52,7 +52,8 @@ async function get(url){
 }
 
 /* ---------- 분석 도구 ---------- */
-const isUnlimited = p => !!p.showUnlimitedBadge || (p.hashtags || []).some(t => /언리밋|unlimited/i.test(String(t)));
+const ADULT_TAG = /언리밋|unlimited|절륜|문란|19금|^19$|성인|음란|야한|야설|수위|섹시|섹스|육덕|변태|노출|r-?18|nsfw|더티|베드신|원나잇|임신|후방주의/i;
+const isUnlimited = p => !!p.showUnlimitedBadge || (p.hashtags || []).some(t => ADULT_TAG.test(String(t).trim())) || /섹스|절륜|음란|19금/.test(String(p.shortDescription || ""));
 const GENRES = {
   "로맨스": ["로맨스","순애","연애","hl","nl","설렘"], "BL·GL": ["bl","gl"], "집착·광기": ["집착","광기","얀데레","소유욕"],
   "판타지": ["판타지","마법","기사","용사","마왕","제국","아카데미"], "로판·회귀": ["로판","회귀","악녀","빙의","환생"],
@@ -140,11 +141,12 @@ function aggregate(works){
 /* ---------- 탐사 시작 ---------- */
 await say("start", `🛰 제타 탐사 시작 — 최대 ${MAX}개 작품을 천천히 읽어요`, { max: MAX });
 const cards = new Map();   // id → { name, count, rank }
+const blocked = new Set();
 const addCards = (s, fromRank) => {
   let n = 0;
   for (const o of objsWith(s, "interactionCount")){
     if (!o || !o.id || !o.name) continue;
-    if (isUnlimited(o)) continue;
+    if (isUnlimited(o)){ blocked.add(o.id); continue; }
     const c = cards.get(o.id);
     const rank = fromRank && o.rank ? +o.rank : (c && c.rank) || null;
     if (!c){ cards.set(o.id, { name: o.name, count: +o.interactionCount || 0, rank }); n++; }
@@ -156,7 +158,7 @@ for (const [label, path, isRank] of [["홈", `/${LANG}`, false], ["랭킹", `/${
   try {
     await say("visit", `🚪 제타 ${label} 화면에 들어가는 중…`, { url: BASE + path });
     const n = addCards(rsc(await get(BASE + path)), isRank);
-    await say("list", `📋 ${label}에서 작품 ${n}개 발견 (언리밋 제외)`, { found: n, total: cards.size });
+    await say("list", `📋 ${label}에서 작품 ${n}개 발견 (언리밋·성인 태그 제외)`, { found: n, total: cards.size });
   } catch(e){ await say("error", `⚠ ${label} 화면 읽기 실패: ${e.message}`); }
   await sleep(DELAY);
 }
@@ -172,7 +174,7 @@ while (works.length < MAX){
     const s = rsc(await get(url));
     const p = objsWith(s, "intros").find(o => o.id === id) || objsWith(s, "interactionCountWithRegen").find(o => o.id === id);
     if (!p){ await say("skip", "⏭ 공개 정보가 없어 건너뜀"); continue; }
-    if (isUnlimited(p)){ skipped++; await say("skip", "⏭ 언리밋 작품이라 건너뜀"); continue; }
+    if (isUnlimited(p)){ skipped++; await say("skip", "⏭ 언리밋·성인 태그 작품이라 건너뜀"); continue; }
     if (p.language && p.language !== "KOREAN"){ await say("skip", "⏭ 한국어 작품이 아니라 건너뜀"); continue; }
     const w = analyze(p, card.rank);
     works.push(w);
@@ -183,7 +185,7 @@ while (works.length < MAX){
 }
 const stats = aggregate(works);
 const best = stats.feats.filter(f => Math.abs(f.c) >= 0.3).slice(0, 3).map(f => `${f.label} ${f.c > 0 ? "↑" : "↓"}`).join(", ");
-await say("done", `🏁 탐사 끝 — ${works.length}개 분석 (언리밋 ${skipped}개 제외)${best ? " · 인기와 관련 큰 요소: " + best : ""}`, { n: works.length });
+await say("done", `🏁 탐사 끝 — ${works.length}개 분석 (언리밋·성인 태그 ${blocked.size + skipped}개 제외)${best ? " · 인기와 관련 큰 요소: " + best : ""}`, { n: works.length });
 
 mkdirSync("data", { recursive: true });
 const prev = existsSync("data/zeta-trends.json") ? JSON.parse(readFileSync("data/zeta-trends.json", "utf8")) : null;

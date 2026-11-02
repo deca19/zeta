@@ -12,6 +12,9 @@ const EXP = {
   data: null, loading: null, es: null, feed: [], live: null, replayT: null,
 };
 const EXP_ACTIONS_URL = `https://github.com/${EXP.repo}/actions/workflows/${EXP.workflow}`;
+// 앱에서도 한 번 더 거름 (탐사봇과 같은 기준)
+const EXP_ADULT = /언리밋|unlimited|절륜|문란|19금|^19$|성인|음란|야한|야설|수위|섹시|섹스|육덕|변태|노출|r-?18|nsfw|더티|베드신|원나잇|임신|후방주의/i;
+const expSafe = w => w && !(w.tags || []).some(t => EXP_ADULT.test(String(t).trim()));
 
 async function expLoad(force){
   if (EXP.data && !force) return EXP.data;
@@ -22,7 +25,7 @@ async function expLoad(force){
       () => fetch(`data/zeta-trends.json?t=${Date.now()}`),
     ];
     for (const t of tries){
-      try { const r = await t(); if (r.ok){ const d = await r.json(); if (d && Array.isArray(d.works)){ EXP.data = d; return d; } } } catch(e){}
+      try { const r = await t(); if (r.ok){ const d = await r.json(); if (d && Array.isArray(d.works)){ d.works = d.works.filter(expSafe); (d.log || []).forEach(e => { if (e.work && !expSafe(e.work)) delete e.work; }); EXP.data = d; return d; } } } catch(e){}
     }
     return null;
   })();
@@ -37,6 +40,7 @@ function expHandle(ev, view){
   if (e.type === "start"){ EXP.feed = []; EXP.live = { run: e.run, max: e.max || 0, i: 0, cur: null, done: false }; }
   EXP.live = EXP.live || { run: e.run, max: 0, i: 0, cur: null, done: false };
   if (e.type === "visit" && e.i) EXP.live.i = e.i;
+  if (e.work && !expSafe(e.work)) delete e.work;
   if (e.type === "work" && e.work) EXP.live.cur = e.work;
   if (e.type === "done"){ EXP.live.done = true; setTimeout(() => expLoad(true).then(() => view && view.refresh && view.refresh()), 8000); }
   EXP.feed.push(e); if (EXP.feed.length > 200) EXP.feed.shift();
@@ -104,7 +108,7 @@ function expTrendPrompt(d){
   const ws = [...d.works].sort((a, b) => b.count - a.count).slice(0, 30);
   const st = d.stats || {};
   const strong = (st.feats || []).filter(f => Math.abs(f.c) >= 0.3).map(f => `${f.label} ${f.c > 0 ? "많을수록" : "적을수록"} 인기 (인기작 평균 ${f.topAvg})`).join(", ");
-  return `아래는 제타(AI 캐릭터 채팅)에서 지금 인기 있는 작품 ${ws.length}개의 공개 정보야 (대화 수 순, 언리밋 제외).
+  return `아래는 제타(AI 캐릭터 채팅)에서 지금 인기 있는 작품 ${ws.length}개의 공개 정보야 (대화 수 순, 언리밋·성인 태그 제외).
 다음을 분석해줘:
 ■ 지금 제타에서 먹히는 소재·장르·관계 공식 TOP 5 (근거 작품 이름과 함께)
 ■ 클릭을 부르는 이름·한 줄 소개 패턴
@@ -163,7 +167,7 @@ function expLive(box){
   const ghIn = h("input", { type:"password", placeholder:"(선택) 깃허브 키 github_pat_… — 넣으면 여기서 바로 시작", value: getKeys().github || "", autocomplete:"off", oninput:e => { const v = e.target.value.trim(); if (!v || /^(github_pat_|ghp_)/.test(v)) setKey("github", v); } });
   box.append(
     h("div", { class:"card" },
-      h("div", { class:"muted" }, "탐사봇이 제타 공개 페이지(홈·랭킹·작품 소개)를 천천히 돌면서 작품을 읽고 분석해요. 언리밋(성인 모드) 작품은 건너뛰어요."),
+      h("div", { class:"muted" }, "탐사봇이 제타 공개 페이지(홈·랭킹·작품 소개)를 천천히 돌면서 작품을 읽고 분석해요. 언리밋(성인 모드)·성인 태그 작품은 건너뛰어요."),
       h("div", { class:"row", style:"margin-top:10px" }, maxSel,
         h("button", { class:"btn p grow", onclick: async e => { e.target.disabled = true; await expStart(S.expMax || 36); setTimeout(() => e.target.disabled = false, 4000); } }, "🛰 지금 탐사 시작")),
       h("details", { style:"margin-top:8px" }, h("summary", { class:"tiny" }, "여기서 바로 시작하려면 (선택)"),
@@ -229,7 +233,7 @@ async function expResult(box){
     ...(st.tags || []).slice(0, 14).map(([t, c]) => h("button", { class:"pill" + (filter === t ? " on" : ""), onclick:() => { filter = filter === t ? "" : t; drawTags(); drawList(); } }, "#" + t + " " + c)));
   box.append(
     h("div", { class:"card" },
-      h("div", { class:"row" }, h("div", { class:"grow" }, h("b", null, `작품 ${ws.length}개 분석`), h("div", { class:"tiny" }, "마지막 탐사 " + new Date(d.updatedAt).toLocaleString("ko-KR") + " · 언리밋 제외")),
+      h("div", { class:"row" }, h("div", { class:"grow" }, h("b", null, `작품 ${ws.length}개 분석`), h("div", { class:"tiny" }, "마지막 탐사 " + new Date(d.updatedAt).toLocaleString("ko-KR") + " · 언리밋·성인 태그 제외")),
         h("button", { class:"btn sm", onclick:() => { EXP.data = null; S.expTab = "result"; renderApp("explore"); } }, "🔄")),
       h("div", { class:"btns" },
         h("button", { class:"btn v", onclick:() => aiRun("제타 트렌드 분석", [{ role:"system", content:SYS_WRITER }, { role:"user", content: expTrendPrompt(d) }], { maxTokens: 8000 }) }, "🤖 AI 트렌드 분석"),
