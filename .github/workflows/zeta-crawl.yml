@@ -31,11 +31,11 @@ jobs:
         run: |
           git config user.name "zeta-bot"
           git config user.email "zeta-bot@users.noreply.github.com"
-          cp data/zeta-trends.json /tmp/zeta-trends.json
+          mkdir -p /tmp/zdata && cp data/zeta-trends.json data/zeta-bank.json /tmp/zdata/
           for n in 1 2 3; do
             git fetch -q origin main && git reset -q --hard origin/main
-            mkdir -p data && cp /tmp/zeta-trends.json data/zeta-trends.json
-            git add data/zeta-trends.json
+            mkdir -p data && cp /tmp/zdata/*.json data/
+            git add data/zeta-trends.json data/zeta-bank.json
             git commit -q -m "🛰 제타 탐사 결과 $(date -u +%Y-%m-%dT%H:%MZ)" || { echo "변화 없음"; break; }
             git push -q && break
             sleep 5

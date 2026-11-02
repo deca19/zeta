@@ -2,7 +2,7 @@
 /* =====================================================================
    🛰 제타 탐사 — 탐사봇이 제타 공개 작품을 읽고 분석하는 걸 실시간으로 보기
    · 실시간 중계: ntfy.sh 채널 (탐사봇이 한 걸음마다 소식을 보냄)
-   · 결과: GitHub 저장소의 data/zeta-trends.json
+   · 결과: GitHub 저장소의 data/zeta-trends.json (공식은 data/zeta-bank.json에 쌓인 전체 작품으로 계산)
    · 노골적인 성인 태그 작품만 건너뜀 (언리밋 표시는 제외 기준 아님)
    ===================================================================== */
 const EXP = {
@@ -25,7 +25,7 @@ async function expLoad(force){
       () => fetch(`data/zeta-trends.json?t=${Date.now()}`),
     ];
     for (const t of tries){
-      try { const r = await t(); if (r.ok){ const d = await r.json(); if (d && Array.isArray(d.works)){ d.works = d.works.filter(expSafe); (d.log || []).forEach(e => { if (e.work && !expSafe(e.work)) delete e.work; }); EXP.data = d; return d; } } } catch(e){}
+      try { const r = await t(); if (r.ok){ const d = await r.json(); if (d && Array.isArray(d.works)){ d.works = d.works.filter(expSafe); if (Array.isArray(d.top)) d.top = d.top.filter(expSafe); (d.log || []).forEach(e => { if (e.work && !expSafe(e.work)) delete e.work; }); EXP.data = d; return d; } } } catch(e){}
     }
     return null;
   })();
@@ -106,7 +106,7 @@ function expAddRefs(list){
   save(); return n;
 }
 function expTrendPrompt(d){
-  const ws = [...d.works].sort((a, b) => b.count - a.count).slice(0, 30);
+  const ws = [...(d.top || d.works)].sort((a, b) => b.count - a.count).slice(0, 30);
   const st = d.stats || {};
   const strong = (st.feats || []).filter(f => Math.abs(f.c) >= 0.3).map(f => `${f.label} ${f.c > 0 ? "많을수록" : "적을수록"} 인기 (인기작 평균 ${f.topAvg})`).join(", ");
   return `아래는 제타(AI 캐릭터 채팅)에서 지금 인기 있는 작품 ${ws.length}개의 공개 정보야 (대화 수 순, 성인 태그 작품 제외).
@@ -118,7 +118,7 @@ function expTrendPrompt(d){
 ■ 내 작품 《${W().name}》에 바로 쓸 수 있는 개선안 3가지
 다른 작가의 문장을 베끼지 말고 원리만 써.
 
-[통계] ${strong || "뚜렷한 상관 없음"}
+[통계 — 지금까지 쌓인 작품 ${st.n || ws.length}개 기준] ${strong || "뚜렷한 상관 없음"}
 자주 나온 태그: ${(st.tags || []).slice(0, 15).map(t => "#" + t[0]).join(" ")}
 
 [작품들]
@@ -168,7 +168,7 @@ function expLive(box){
   const ghIn = h("input", { type:"password", placeholder:"(선택) 깃허브 키 github_pat_… — 넣으면 여기서 바로 시작", value: getKeys().github || "", autocomplete:"off", oninput:e => { const v = e.target.value.trim(); if (!v || /^(github_pat_|ghp_)/.test(v)) setKey("github", v); } });
   box.append(
     h("div", { class:"card" },
-      h("div", { class:"muted" }, "탐사봇이 제타 공개 페이지(홈·랭킹·작품 소개)를 천천히 돌면서 작품을 읽고 분석해요. 노골적인 성인 태그가 붙은 작품만 건너뛰어요 (언리밋 표시 작품은 포함)."),
+      h("div", { class:"muted" }, "탐사봇이 제타 공개 페이지(홈·랭킹·작품 소개)를 천천히 돌면서 작품을 읽고 분석해요. 읽은 작품은 계속 쌓이고, 매번 안 읽은 작품부터 읽어요. 노골적인 성인 태그가 붙은 작품만 건너뛰어요 (언리밋 표시 작품은 포함)."),
       h("div", { class:"row", style:"margin-top:10px" }, maxSel,
         h("button", { class:"btn p grow", onclick: async e => { e.target.disabled = true; await expStart(S.expMax || 36); setTimeout(() => e.target.disabled = false, 4000); } }, "🛰 지금 탐사 시작")),
       h("details", { style:"margin-top:8px" }, h("summary", { class:"tiny" }, "여기서 바로 시작하려면 (선택)"),
@@ -202,8 +202,10 @@ async function expResult(box){
   const wait = h("div", { class:"card muted" }, "결과 불러오는 중…"); box.append(wait);
   const d = await expLoad(); wait.remove();
   if (!d){ box.append(h("div", { class:"card" }, h("div", { class:"muted" }, "아직 탐사 결과가 없어요. 🔴 실시간 탐사에서 탐사를 한 번 돌려 주세요."))); return; }
-  const ws = [...d.works].sort((a, b) => b.count - a.count);
-  const st = d.stats || {};
+  S.expList = S.expList || "top";
+  const src = S.expList === "run" || !d.top ? d.works : d.top;
+  const ws = [...src].sort((a, b) => b.count - a.count);
+  const st = d.stats || {}, bk = d.bank || null;
   let filter = "";
   const list = h("div");
   const drawList = () => {
@@ -212,7 +214,8 @@ async function expResult(box){
       const more = h("div", { class:"hidden" },
         w.introExcerpt ? h("div", { class:"out", style:"margin-top:8px;font-size:12.5px" }, w.introExcerpt) : null,
         w.longExcerpt ? h("div", { class:"tiny", style:"margin-top:6px" }, "설명: " + w.longExcerpt) : null,
-        h("div", { class:"tiny", style:"margin-top:6px" }, `인트로 ${w.f.introLen}자 · 묘사 ${w.f.introNarration}% · 캐릭터 ${w.f.charCount}명 · 예시 대화 ${w.f.exampleConvs}개 · 하루 평균 ${fmtNum(w.f.perDay)}`));
+        h("div", { class:"tiny", style:"margin-top:6px" }, `인트로 ${w.f.introLen}자 · 묘사 ${w.f.introNarration}% · 캐릭터 ${w.f.charCount}명 · 예시 대화 ${w.f.exampleConvs}개 · 출시 후 하루 평균 ${fmtNum(w.f.perDay)}`
+          + (w.growth != null ? ` · 실제로 잰 하루 증가 ${w.growth >= 0 ? "+" : ""}${fmtNum(w.growth)}` : "") + (w.seen > 1 ? ` · ${w.seen}번 읽음` : "")));
       list.append(h("div", { class:"card" },
         h("div", { class:"row", style:"align-items:flex-start" },
           h("b", { style:"min-width:26px;color:var(--tx3)" }, i + 1),
@@ -234,11 +237,15 @@ async function expResult(box){
     ...(st.tags || []).slice(0, 14).map(([t, c]) => h("button", { class:"pill" + (filter === t ? " on" : ""), onclick:() => { filter = filter === t ? "" : t; drawTags(); drawList(); } }, "#" + t + " " + c)));
   box.append(
     h("div", { class:"card" },
-      h("div", { class:"row" }, h("div", { class:"grow" }, h("b", null, `작품 ${ws.length}개 분석`), h("div", { class:"tiny" }, "마지막 탐사 " + new Date(d.updatedAt).toLocaleString("ko-KR") + " · 성인 태그 작품 제외")),
+      h("div", { class:"row" }, h("div", { class:"grow" },
+          h("b", null, bk ? `지금까지 ${fmtNum(bk.n)}개 작품 학습` : `작품 ${ws.length}개 분석`),
+          h("div", { class:"tiny" }, "마지막 탐사 " + new Date(d.updatedAt).toLocaleString("ko-KR") + (bk ? ` · 이번에 새 작품 +${bk.fresh} · ${bk.runs}번째 탐사` : "") + " · 성인 태그 작품 제외")),
         h("button", { class:"btn sm", onclick:() => { EXP.data = null; S.expTab = "result"; renderApp("explore"); } }, "🔄")),
       h("div", { class:"btns" },
         h("button", { class:"btn v", onclick:() => aiRun("제타 트렌드 분석", [{ role:"system", content:SYS_WRITER }, { role:"user", content: expTrendPrompt(d) }], { maxTokens: 8000 }) }, "🤖 AI 트렌드 분석"),
         h("button", { class:"btn", onclick:() => { const n = expAddRefs(ws.slice(0, 20)); toast(n + "개를 참고 작품에 넣었어요 → 🧬 작품 분석실에서 인기 공식 학습"); } }, "➕ 상위 20개 참고 작품에"))),
+    d.top ? h("div", { class:"tabs", style:"margin-bottom:8px" }, [["top", `📚 누적 인기 상위 ${d.top.length}`], ["run", `🆕 이번 탐사 ${d.works.length}개`]].map(([k, t]) =>
+      h("button", { class:"pill" + (S.expList === k ? " on" : ""), onclick:() => { S.expList = k; save(); box.replaceChildren(); expResult(box); } }, t))) : "",
     h("div", { class:"card" }, h("h3", null, "🏷 태그로 보기"), tagRow), list);
   drawTags(); drawList();
 }
@@ -248,8 +255,8 @@ async function expFormula(box){
   const st = d.stats || {}, me = myFeats(W());
   const strong = (st.feats || []).filter(f => Math.abs(f.c) >= 0.25);
   const card = h("div", { class:"card" }, h("h3", null, "🧠 지금 제타의 인기 공식"),
-    h("div", { class:"tiny", style:"margin-bottom:8px" }, `작품 ${st.n}개 · 대화 수와의 순위 상관 · 내 작품 《${W().name}》과 비교`));
-  if (!strong.length) card.append(h("div", { class:"muted" }, "이번 탐사에서는 뚜렷한 공통점이 안 보였어요. 더 많이 탐사하면 정확해져요."));
+    h("div", { class:"tiny", style:"margin-bottom:8px" }, `지금까지 쌓인 작품 ${st.n}개 · 대화 수와의 순위 상관 · 내 작품 《${W().name}》과 비교`));
+  if (!strong.length) card.append(h("div", { class:"muted" }, "아직 뚜렷한 공통점이 안 보여요. 작품이 더 쌓이면 정확해져요."));
   strong.slice(0, 8).forEach(f => {
     const mine = me[f.k];
     const has = mine != null;
@@ -259,7 +266,13 @@ async function expFormula(box){
       bar(Math.abs(f.c), 1, f.c > 0 ? "var(--ok)" : "var(--warn)"),
       h("div", { class:"tiny", style:"margin-top:3px" }, `인기작 평균 ${f.topAvg} · 나머지 평균 ${f.botAvg}` + (has ? ` · 내 작품 ${mine} ${good ? "✅" : "→ " + (f.c > 0 ? "늘려 보세요" : "줄여 보세요")}` : ""))));
   });
-  box.append(card,
+  const bk = d.bank, hist = (d.history || []).filter(x => x.bank);
+  const learn = bk ? h("div", { class:"card" }, h("h3", null, "📚 학습 현황"),
+    h("div", { class:"muted" }, `${bk.since}부터 ${bk.runs}번 탐사해서 작품 ${fmtNum(bk.n)}개를 쌓았어요. 매일 아침 7시 41분에 안 읽은 작품을 더 읽고(일부는 다시 읽어 실제 성장 속도를 재요), 쌓인 전체로 공식을 다시 계산해요. 다음에 읽을 후보 ${fmtNum(bk.frontier)}개 대기 중.`),
+    hist.length > 1 ? h("div", { style:"margin-top:8px" }, ...hist.slice(-7).map(x => h("div", { style:"margin-bottom:4px" },
+      h("div", { class:"row" }, h("span", { class:"grow tiny" }, new Date(x.at).toLocaleDateString("ko-KR")), h("span", { class:"tiny" }, `${fmtNum(x.bank)}개 (+${x.fresh})`)),
+      bar(x.bank, Math.max(1, hist[hist.length - 1].bank))))) : null) : null;
+  box.append(card, learn || "",
     h("div", { class:"card" }, h("h3", null, "📈 인기작에 많은 장르"),
       ...(st.genresTop || []).slice(0, 8).map(([g, c]) => h("div", { style:"margin-bottom:6px" }, h("div", { class:"row" }, h("span", { class:"grow tiny", style:"color:var(--tx)" }, g), h("span", { class:"tiny" }, c + "개")), bar(c, Math.max(1, (st.genresTop[0] || [0, 1])[1])))),
       h("div", { class:"tiny", style:"margin-top:8px" }, "인기작 단골 태그: " + (st.tagsTop || []).slice(0, 12).map(t => "#" + t[0]).join(" "))),

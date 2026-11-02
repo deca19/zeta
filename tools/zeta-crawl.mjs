@@ -1,4 +1,6 @@
-// 🛰 제타 탐사봇 v4 — 제타(zeta-ai.io) 공개 작품 페이지를 천천히 돌며 인기 공식을 분석해요.
+// 🛰 제타 탐사봇 v5 — 제타(zeta-ai.io) 공개 작품 페이지를 천천히 돌며 인기 공식을 분석해요.
+// · 누적 학습: 읽은 작품을 data/zeta-bank.json에 계속 쌓고, 인기 공식은 쌓인 전체로 다시 계산
+// · 매번 안 읽은 작품을 먼저 읽고, 7일 지난 작품은 다시 읽어 실제 성장 속도를 잼
 // · robots.txt 허용 범위(공개 페이지)만, 요청 사이 2.5초 쉬기, 한 번에 최대 MAX개
 // · 태그·소개에 노골적인 성적 표현이 있는 작품은 건너뜀 (언리밋 표시만으로는 제외 안 함)
 // · 다른 작가의 글은 짧은 발췌만 저장 (전문은 저장하지 않음)
@@ -133,17 +135,38 @@ function aggregate(works){
   top.forEach(w => w.tags.forEach(t => { const x = t.toLowerCase(); tagTop[x] = (tagTop[x] || 0) + 1; }));
   works.forEach(w => w.genres.forEach(g => genreCount[g] = (genreCount[g] || 0) + 1));
   top.forEach(w => w.genres.forEach(g => genreTop[g] = (genreTop[g] || 0) + 1));
-  const rising = [...works].filter(w => w.f.ageDays <= 45).sort((a, b) => b.f.perDay - a.f.perDay).slice(0, 6).map(w => w.id);
+  // 급상승: 두 번 이상 재서 실제로 늘어난 속도가 있으면 그걸로, 아니면 출시 후 하루 평균으로
+  const measured = works.filter(w => w.growth > 0);
+  const rising = (measured.length >= 6 ? measured.sort((a, b) => b.growth - a.growth) : [...works].filter(w => w.f.ageDays <= 45).sort((a, b) => b.f.perDay - a.f.perDay)).slice(0, 8).map(w => w.id);
   return {
     n: works.length, feats,
     tags: Object.entries(tagCount).sort((a, b) => b[1] - a[1]).slice(0, 25),
     tagsTop: Object.entries(tagTop).sort((a, b) => b[1] - a[1]).slice(0, 15),
     genres: Object.entries(genreCount).sort((a, b) => b[1] - a[1]),
     genresTop: Object.entries(genreTop).sort((a, b) => b[1] - a[1]),
-    rising,
+    rising, risingBy: measured.length >= 6 ? "measured" : "perDay",
     medianCount: sorted.length ? sorted[Math.floor(sorted.length / 2)].count : 0,
   };
 }
+
+/* ---------- 누적 학습 창고 ---------- */
+const BANK_FILE = "data/zeta-bank.json", BANK_MAX = 1500, FRONTIER_MAX = 400, OBS_MAX = 24, SKIP_DAYS = 30;
+const today = new Date().toISOString().slice(0, 10);
+const readJSON = f => { try { return existsSync(f) ? JSON.parse(readFileSync(f, "utf8")) : null; } catch { return null; } };
+const prevTrends = readJSON("data/zeta-trends.json");
+let bank = readJSON(BANK_FILE);
+if (!bank || !bank.works || typeof bank.works !== "object"){
+  bank = { since: today, runs: 0, works: {}, frontier: {}, skip: {} };
+  // 예전 버전 결과가 있으면 첫 기억으로 옮겨 담기
+  const day = String((prevTrends && prevTrends.updatedAt) || today).slice(0, 10);
+  for (const w of (prevTrends && prevTrends.works) || []) if (w && w.id) bank.works[w.id] = { ...w, first: day, last: day, seen: 1, obs: [[day, w.count]] };
+}
+bank.frontier = bank.frontier || {}; bank.skip = bank.skip || {};
+const daysBetween = (a, b) => (Date.parse(b) - Date.parse(a)) / 86400000;
+for (const [id, d] of Object.entries(bank.skip)) if (daysBetween(d, today) > SKIP_DAYS) delete bank.skip[id];
+// 0 = 처음 보는 작품, 1 = 7일 넘게 안 읽은 작품(다시 재기), 2 = 최근에 읽은 작품
+const priority = id => { const b = bank.works[id]; return !b ? 0 : daysBetween(b.last, today) >= 7 ? 1 : 2; };
+const growthOf = b => { const o = b.obs || []; if (o.length < 2) return null; const d = daysBetween(o[0][0], o[o.length - 1][0]); return d >= 1 ? Math.round((o[o.length - 1][1] - o[0][1]) / d) : null; };
 
 /* ---------- 탐사 시작 ---------- */
 await say("start", `🛰 제타 탐사 시작 — 최대 ${MAX}개 작품을 천천히 읽어요`, { max: MAX });
@@ -152,7 +175,7 @@ const blocked = new Set();
 const addCards = (s, fromRank) => {
   let n = 0;
   for (const o of objsWith(s, "interactionCount")){
-    if (!o || !o.id || !o.name) continue;
+    if (!o || !o.id || !o.name || bank.skip[o.id]) continue;
     if (isUnlimited(o)){ blocked.add(o.id); continue; }
     const c = cards.get(o.id);
     const rank = fromRank && o.rank ? +o.rank : (c && c.rank) || null;
@@ -169,10 +192,26 @@ for (const [label, path, isRank] of [["홈", `/${LANG}`, false], ["랭킹", `/${
   } catch(e){ await say("error", `⚠ ${label} 화면 읽기 실패: ${e.message}`); }
   await sleep(DELAY);
 }
+// 탐사의 1/4은 7일 넘게 안 읽은 인기작을 다시 읽어 '실제로 얼마나 늘었는지' 잼
+const REFRESH = Math.ceil(MAX / 4);
+for (const b of Object.values(bank.works).filter(b => daysBetween(b.last, today) >= 7).sort((a, b) => b.count - a.count).slice(0, REFRESH))
+  if (!cards.has(b.id)) cards.set(b.id, { name: b.name, count: b.count, rank: null });
+{ let n = 0;
+  for (const [id, c] of Object.entries(bank.frontier)) if (!cards.has(id) && !bank.works[id] && !bank.skip[id]){ cards.set(id, { name: c.name, count: +c.count || 0, rank: null }); n++; }
+  const known = Object.keys(bank.works).length;
+  await say("list", `🧠 지금까지 ${known}개 작품을 학습함${n ? ` · 지난번에 찾아둔 안 읽은 작품 ${n}개도 후보에 넣음` : ""} → 처음 보는 작품부터 읽어요`, { known, total: cards.size }); }
 const done = new Set(), works = [];
-let skipped = 0;
+let skipped = 0, refreshed = 0;
+function pick(){
+  const cand = [...cards.entries()].filter(([id]) => !done.has(id));
+  if (refreshed < REFRESH && works.length % 4 === 3){
+    const st = cand.filter(([id]) => priority(id) === 1).sort((a, b) => b[1].count - a[1].count)[0];
+    if (st) return st;
+  }
+  return cand.sort((a, b) => priority(a[0]) - priority(b[0]) || b[1].count - a[1].count)[0];
+}
 while (works.length < MAX){
-  const next = [...cards.entries()].filter(([id]) => !done.has(id)).sort((a, b) => b[1].count - a[1].count)[0];
+  const next = pick();
   if (!next) break;
   const [id, card] = next; done.add(id);
   const url = `${BASE}/${LANG}/plots/${id}/profile`;
@@ -180,22 +219,50 @@ while (works.length < MAX){
   try {
     const s = rsc(await get(url));
     const p = objsWith(s, "intros").find(o => o.id === id) || objsWith(s, "interactionCountWithRegen").find(o => o.id === id);
-    if (!p){ await say("skip", "⏭ 공개 정보가 없어 건너뜀"); continue; }
-    if (isUnlimited(p)){ skipped++; await say("skip", "⏭ 성인 태그 작품이라 건너뜀"); continue; }
-    if (p.language && p.language !== "KOREAN"){ await say("skip", "⏭ 한국어 작품이 아니라 건너뜀"); continue; }
+    if (!p){ bank.skip[id] = today; await say("skip", "⏭ 공개 정보가 없어 건너뜀"); continue; }
+    if (isUnlimited(p)){ skipped++; bank.skip[id] = today; await say("skip", "⏭ 성인 태그 작품이라 건너뜀"); continue; }
+    if (p.language && p.language !== "KOREAN"){ bank.skip[id] = today; await say("skip", "⏭ 한국어 작품이 아니라 건너뜀"); continue; }
     const w = analyze(p, card.rank);
+    w.isNew = !bank.works[id];
+    if (priority(id) === 1) refreshed++;
     works.push(w);
     const added = addCards(s, false);
-    await say("work", `📖 [${works.length}/${MAX}] 「${w.name}」 (💬 ${w.count.toLocaleString("ko-KR")}) — 점수 ${w.score} · 인트로 ${w.f.introLen}자 · ${w.tags.slice(0, 4).map(t => "#" + t).join(" ")}${w.unlimited ? " · ★언리밋" : ""}${added ? ` · 연관작 +${added}` : ""}`, { work: w, i: works.length, max: MAX });
+    await say("work", `📖 [${works.length}/${MAX}] 「${w.name}」 (💬 ${w.count.toLocaleString("ko-KR")}) — 점수 ${w.score} · 인트로 ${w.f.introLen}자 · ${w.tags.slice(0, 4).map(t => "#" + t).join(" ")}${w.unlimited ? " · ★언리밋" : ""}${w.isNew ? " · 🆕" : bank.works[id] ? ` · 다시 잼 (${(w.count >= bank.works[id].count ? "+" : "") + (w.count - bank.works[id].count).toLocaleString("ko-KR")})` : ""}${added ? ` · 연관작 +${added}` : ""}`, { work: w, i: works.length, max: MAX });
   } catch(e){ await say("error", `⚠ 「${card.name}」 읽기 실패: ${e.message}`); }
   await sleep(DELAY);
 }
-const stats = aggregate(works);
-const best = stats.feats.filter(f => Math.abs(f.c) >= 0.3).slice(0, 3).map(f => `${f.label} ${f.c > 0 ? "↑" : "↓"}`).join(", ");
-await say("done", `🏁 탐사 끝 — ${works.length}개 분석 (성인 태그 ${blocked.size + skipped}개 제외)${best ? " · 인기와 관련 큰 요소: " + best : ""}`, { n: works.length });
+/* ---------- 창고에 쌓고, 쌓인 전체로 공식 다시 계산 ---------- */
+let fresh = 0;
+for (const w of works){
+  const b = bank.works[w.id];
+  if (!b) fresh++;
+  const { isNew, ...keep } = w;
+  const obs = ((b && b.obs) || []).filter(o => o[0] !== today).concat([[today, w.count]]).slice(-OBS_MAX);
+  bank.works[w.id] = { ...keep, first: (b && b.first) || today, last: today, seen: ((b && b.seen) || 0) + 1, obs };
+}
+for (const id of done) delete bank.frontier[id];
+for (const [id, c] of cards) if (!done.has(id) && !bank.works[id] && !bank.skip[id]) bank.frontier[id] = { name: c.name, count: c.count };
+const trim = (obj, max, key) => { const e = Object.entries(obj); if (e.length > max){ e.sort(key).slice(max).forEach(([id]) => delete obj[id]); } };
+trim(bank.frontier, FRONTIER_MAX, (a, b) => (b[1].count || 0) - (a[1].count || 0));
+trim(bank.works, BANK_MAX, (a, b) => String(b[1].last).localeCompare(String(a[1].last)) || b[1].count - a[1].count);
+trim(bank.skip, 3000, (a, b) => String(b[1]).localeCompare(String(a[1])));
+bank.runs = (bank.runs || 0) + 1; bank.updatedAt = new Date().toISOString();
 
+const all = Object.values(bank.works).map(b => { const { obs, ...w } = b; return { ...w, growth: growthOf(b) }; });
+const stats = aggregate(all);
+const best = stats.feats.filter(f => Math.abs(f.c) >= 0.3).slice(0, 3).map(f => `${f.label} ${f.c > 0 ? "↑" : "↓"}`).join(", ");
+await say("done", `🏁 탐사 끝 — 이번에 ${works.length}개 읽음 (새 작품 ${fresh}개${refreshed ? ` · 다시 잰 작품 ${refreshed}개` : ""} · 성인 태그 ${blocked.size + skipped}개 제외) · 누적 ${all.length}개로 공식 다시 계산${best ? " · 인기와 관련 큰 요소: " + best : ""}`, { n: works.length, bank: all.length, fresh });
+
+const byCount = [...all].sort((a, b) => b.count - a.count);
+const top = byCount.slice(0, 60);
+for (const id of stats.rising) if (!top.some(w => w.id === id)){ const w = all.find(x => x.id === id); if (w) top.push(w); }
+const thin = w => { const { obs, isNew, ...x } = w; return x; };
 mkdirSync("data", { recursive: true });
-const prev = existsSync("data/zeta-trends.json") ? JSON.parse(readFileSync("data/zeta-trends.json", "utf8")) : null;
-const history = ((prev && prev.history) || []).concat([{ at: new Date().toISOString(), n: works.length, top: works.slice(0, 5).map(w => [w.id, w.count]) }]).slice(-30);
-writeFileSync("data/zeta-trends.json", JSON.stringify({ updatedAt: new Date().toISOString(), run: RUN, topic: TOPIC, works, stats, log, history }, null, 1));
-console.log("saved", works.length);
+const history = ((prevTrends && prevTrends.history) || []).concat([{ at: new Date().toISOString(), n: works.length, bank: all.length, fresh,
+  feats: stats.feats.slice(0, 4).map(f => [f.k, f.c]) }]).slice(-60);
+writeFileSync(BANK_FILE, JSON.stringify(bank));
+writeFileSync("data/zeta-trends.json", JSON.stringify({ updatedAt: new Date().toISOString(), run: RUN, topic: TOPIC,
+  works: works.map(thin), top: top.map(thin), stats,
+  bank: { n: all.length, fresh, runs: bank.runs, since: bank.since, frontier: Object.keys(bank.frontier).length },
+  log, history }, null, 1));
+console.log("saved", works.length, "bank", all.length, "fresh", fresh);
