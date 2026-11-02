@@ -1,0 +1,35 @@
+name: 🛰 제타 탐사
+# 정헌 승인: 매일 자동 + 원할 때 실행. 끄려면 이 파일을 지우거나 Actions에서 Disable workflow.
+on:
+  schedule:
+    - cron: "41 22 * * *"     # 매일 아침 7시 41분 (한국 시간)
+  workflow_dispatch:
+    inputs:
+      max:
+        description: "읽을 작품 수 (5~60)"
+        default: "36"
+permissions:
+  contents: write
+concurrency:
+  group: zeta-crawl
+  cancel-in-progress: false
+jobs:
+  crawl:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      - name: 제타 탐사 (실시간 중계)
+        run: node tools/zeta-crawl.mjs
+        env:
+          MAX: ${{ github.event.inputs.max || '36' }}
+      - name: 결과 저장
+        run: |
+          git config user.name "zeta-bot"
+          git config user.email "zeta-bot@users.noreply.github.com"
+          git add data/zeta-trends.json
+          git commit -m "🛰 제타 탐사 결과 $(date -u +%Y-%m-%dT%H:%MZ)" || echo "변화 없음"
+          git pull --rebase -q || true
+          git push
