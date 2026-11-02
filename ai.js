@@ -61,6 +61,8 @@ function provOf(pid){
   return { pid, P, model: (A.models[pid] || P.models[0][0]).trim(), url: (pid === "custom" ? (A.urls.custom || P.url) : P.url).trim(), key: (getKeys()[pid] || "").trim() };
 }
 function readyProviders(){ const A = AIS(), k = getKeys(); return AUTO_ORDER.filter(p => p === "custom" ? !!(A.urls.custom || "").trim() : !!(k[p] || "").trim()); }
+function inClaudeApp(){ return !!(window.claude && window.claude.use) || /claude|anthropic/i.test(location.hostname) || location.protocol === "blob:" || location.origin === "null"; }
+const SITE_URL = "https://deca19.github.io/zeta/";
 function aiOn(){ const A = AIS(); return A.engine === "cloud" || A.engine === "local"; }
 function aiLabel(){
   const A = AIS();
@@ -92,8 +94,8 @@ function keyPasteBox(onDone){
     setKey(pid, k);
     const A = AIS(); A.engine = "cloud"; if (A.provider !== "auto" && A.provider !== pid) A.provider = "auto"; if (!A.provider) A.provider = "auto"; save();
     msg.textContent = "✅ " + AI_PROVIDERS[pid].name + " 키 저장 · 연결 확인 중…"; inp.value = "";
-    try { const t = await callProvider(pid, [{ role:"user", content:"'연결 성공!'이라고만 말해줘." }], { maxTokens: 600 }); msg.textContent = "✅ " + AI_PROVIDERS[pid].name + " 연결 성공! AI가 켜졌어요. (" + t.trim().slice(0, 20) + ")"; }
-    catch(e){ msg.textContent = "⚠ 키는 저장했지만 연결 확인 실패: " + e.message.slice(0, 120); }
+    try { const t = await callProvider(pid, [{ role:"user", content:"'연결 성공!'이라고만 말해줘." }], { maxTokens: 600 }); msg.textContent = "✅ " + AI_PROVIDERS[pid].name + " 연결 성공! AI가 켜졌어요. (" + t.trim().slice(0, 20) + ")"; toast("✅ " + AI_PROVIDERS[pid].name + " 연결 성공!"); }
+    catch(e){ msg.textContent = "⚠ 키는 저장했지만 연결 확인 실패: " + e.message.slice(0, 160); toast("⚠ 연결 확인 실패 — 메시지를 확인해 주세요"); }
     onDone && onDone(pid);
   };
   inp.addEventListener("input", () => { if (detectKey(inp.value)) apply(); });
@@ -120,17 +122,49 @@ function setupWizard(){
   ]);
 }
 function setupCard(){
-  const has = readyProviders().length > 0 && AIS().engine !== "off";
-  if (has) return null;
+  const A = AIS();
+  if (inClaudeApp()) return h("a", { class:"curwork", href: SITE_URL, target:"_blank", rel:"noopener", style:"text-decoration:none;color:var(--tx);margin-top:0;border-color:rgba(139,123,255,.5);background:rgba(139,123,255,.12)" },
+    h("div", { style:"font-size:26px" }, "🌐"),
+    h("div", { class:"grow" }, h("div", { class:"nm" }, "AI는 내 사이트에서"), h("div", { class:"lbl" }, "Claude 앱 안에선 AI 연결이 막혀요 → deca19.github.io/zeta")),
+    h("div", { class:"chip" }, "열기 ↗"));
+  if (A.engine === "local" || (readyProviders().length > 0 && A.engine !== "off")) return null;
   return h("button", { class:"curwork", style:"width:100%;text-align:left;border-color:rgba(255,93,143,.5);background:rgba(255,93,143,.12);margin-top:0", onclick: setupWizard },
     h("div", { style:"font-size:26px" }, "🚀"),
     h("div", { class:"grow" }, h("div", { class:"nm" }, "AI 켜기 (2분)"), h("div", { class:"lbl" }, "무료 키 만들기 → 붙여넣기. 끝.")),
     h("div", { class:"chip" }, "시작"));
 }
 
+/* ---------------- 캡처 읽기 (Gemini 비전) ---------------- */
+async function imgToB64(file){
+  const im = await loadImg(file), c = toCanvas(im, 1600);
+  const url = c.toDataURL("image/jpeg", 0.88);
+  return { mime: "image/jpeg", data: url.split(",")[1] };
+}
+async function visionRead(files, prompt){
+  const A = AIS(), key = (getKeys().gemini || "").trim();
+  if (!key) throw new Error("캡처 읽기는 구글 Gemini 키가 필요해요. 🚀 AI 켜기에서 구글 키를 넣어 주세요.");
+  const parts = [{ text: prompt }];
+  for (const f of files.slice(0, 8)) parts.push({ inlineData: await imgToB64(f) });
+  const base = (A.urls.gemini || "https://generativelanguage.googleapis.com").replace(/\/$/, "");
+  const models = [provOf("gemini").model].concat(AI_PROVIDERS.gemini.models.map(m => m[0])).filter((m, i, a) => a.indexOf(m) === i);
+  let last = null;
+  for (const model of models){
+    let res;
+    try { res = await fetch(`${base}/v1beta/models/${encodeURIComponent(model)}:generateContent`, { method:"POST", headers:{ "Content-Type":"application/json", "x-goog-api-key": key }, body: JSON.stringify({ contents:[{ role:"user", parts }], generationConfig:{ maxOutputTokens: 16000 } }) }); }
+    catch(e){ throw new Error(inClaudeApp() ? "Claude 앱 안에서는 외부 연결이 막혀 있어요. " + SITE_URL + " 에서 열어 주세요." : "구글 서버에 연결하지 못했어요."); }
+    const t = await res.text();
+    if (!res.ok){ last = new Error("캡처 읽기 실패 (" + res.status + "): " + t.slice(0, 160)); if (res.status === 404 || res.status === 429) continue; throw last; }
+    let j; try { j = JSON.parse(t); } catch(e){ throw new Error("캡처 읽기 응답을 이해하지 못했어요"); }
+    const out = ((j.candidates && j.candidates[0] && j.candidates[0].content && j.candidates[0].content.parts) || []).filter(p => !p.thought).map(p => p.text || "").join("");
+    if (out.trim()) return out;
+    last = new Error("캡처에서 글자를 못 읽었어요");
+  }
+  throw last;
+}
+
 /* ---------------- Gemini 전용 (구글 기본 API, 브라우저에서 바로 호출) ---------------- */
-async function geminiCall(messages, o, stripped){
-  const A = AIS(), { P, model, key } = provOf("gemini");
+async function geminiCall(messages, o, stripped, modelOverride){
+  const A = AIS(), { P, key } = provOf("gemini"), model = modelOverride || provOf("gemini").model;
   if (!key) throw new Error("Google Gemini API 키가 없어요. 🧠 AI 엔진에서 넣어 주세요.");
   const sys = messages.filter(m => m.role === "system").map(m => m.content).join("\n\n");
   const contents = [];
@@ -147,13 +181,13 @@ async function geminiCall(messages, o, stripped){
   const base = (A.urls.gemini || "https://generativelanguage.googleapis.com").replace(/\/$/, "");
   let res;
   try { res = await fetch(`${base}/v1beta/models/${encodeURIComponent(model)}:streamGenerateContent?alt=sse`, { method:"POST", headers:{ "Content-Type":"application/json", "x-goog-api-key": key }, body: JSON.stringify(body), signal: o.signal }); }
-  catch(e){ if (e.name === "AbortError") throw e; const err = new Error("Google Gemini 서버에 연결하지 못했어요. Claude 앱 안에서 열었다면 외부 연결이 막혀 있어요 — GitHub Pages 주소로 열어 주세요. (" + e.message + ")"); err.soft = true; throw err; }
+  catch(e){ if (e.name === "AbortError") throw e; const err = new Error(inClaudeApp() ? "Claude 앱 안에서는 외부 AI 연결이 막혀 있어요. " + SITE_URL + " 에서 열어 주세요." : "Google Gemini 서버에 연결하지 못했어요. 인터넷 연결을 확인해 주세요. (" + e.message + ")"); err.soft = true; throw err; }
   if (!res.ok){
     let msg = ""; try { const t = await res.text(); try { const j = JSON.parse(t); const x = Array.isArray(j) ? j[0] : j; msg = (x.error && x.error.message) || t; } catch(_){ msg = t; } } catch(_){}
     if (/API key not valid|API_KEY_INVALID|PERMISSION_DENIED/i.test(msg) || res.status === 401 || res.status === 403){ const e = new Error("Google Gemini API 키가 틀렸거나 권한이 없어요."); e.soft = true; throw e; }
-    if (res.status === 400 && !stripped) return geminiCall(messages, o, true);
+    if (res.status === 400 && !stripped) return geminiCall(messages, o, true, modelOverride);
     const err = new Error(res.status === 429 ? "Google Gemini 무료 한도를 잠깐 넘었어요. 1분쯤 뒤에 다시 해 주세요. (자동 모드면 다른 서버로 넘어가요)" : res.status === 404 ? "Google Gemini에 이 모델이 없어요: " + model : "Google Gemini 오류 " + res.status + ": " + String(msg).slice(0, 200));
-    err.soft = true; throw err;
+    err.soft = true; err.status = res.status; err.raw = String(msg); throw err;
   }
   const rd = res.body.getReader(), dec = new TextDecoder(); let buf = "", acc = "", thinking = false, block = "";
   for (;;){
@@ -164,7 +198,7 @@ async function geminiCall(messages, o, stripped){
       const line = buf.slice(0, nl).trim(); buf = buf.slice(nl + 1);
       if (!line.startsWith("data:")) continue;
       let j; try { j = JSON.parse(line.slice(5).trim()); } catch(e){ continue; }
-      if (j.error){ const e = new Error("Google Gemini 오류: " + (j.error.message || "").slice(0, 200)); e.soft = !acc; throw e; }
+      if (j.error){ const e = new Error("Google Gemini 오류: " + (j.error.message || "").slice(0, 200)); e.soft = !acc; e.got = !!acc; e.raw = j.error.message || ""; e.status = j.error.code || 0; throw e; }
       if (j.promptFeedback && j.promptFeedback.blockReason) block = j.promptFeedback.blockReason;
       const c = j.candidates && j.candidates[0];
       if (!c) continue;
@@ -179,10 +213,29 @@ async function geminiCall(messages, o, stripped){
   return acc;
 }
 
-/* ---------------- 서버 하나 호출 (OpenAI 호환, 스트리밍) ---------------- */
-async function callProvider(pid, messages, o, stripped){
-  if (pid === "gemini") return geminiCall(messages, o, stripped);
-  const A = AIS(), { P, model, url, key } = provOf(pid);
+/* ---------------- 서버 하나 호출 (+ 같은 서버 안에서 모델 자동 대체) ---------------- */
+async function callProvider(pid, messages, o){
+  const A = AIS(), P = AI_PROVIDERS[pid], cur = provOf(pid).model;
+  try { return await callProviderOnce(pid, messages, o); }
+  catch(e){
+    // 모델이 없거나(404) 무료 한도가 0인 모델(429 quota)이면 같은 서버의 다른 무료 모델로 자동 대체
+    const quota = e.status === 429 && /quota|limit: ?0|free.?tier|RESOURCE_EXHAUSTED|rate-limited upstream|no endpoints/i.test(e.raw || "");
+    if (e.name === "AbortError" || e.got || !(e.status === 404 || quota) || !P || !P.models.some(m => m[0] === cur)) throw e;
+    for (const [m] of P.models){
+      if (m === cur) continue;
+      try {
+        const t = await callProviderOnce(pid, messages, o, false, m);
+        A.models[pid] = m; save();
+        try { toast(`${cur.replace(/:free$/, "")} 대신 ${m.replace(/:free$/, "")}로 자동 전환했어요`); } catch(_){}
+        return t;
+      } catch(e2){ if (e2.name === "AbortError" || e2.got) throw e2; }
+    }
+    throw e;
+  }
+}
+async function callProviderOnce(pid, messages, o, stripped, modelOverride){
+  if (pid === "gemini") return geminiCall(messages, o, stripped, modelOverride);
+  const A = AIS(), { P, url, key } = provOf(pid), model = modelOverride || provOf(pid).model;
   if (!key && pid !== "custom") throw new Error(P.name + " API 키가 없어요. 🧠 AI 엔진에서 넣어 주세요.");
   const body = { model, messages, stream:true, max_tokens: Math.max(o.maxTokens || 0, P.maxTok) };
   if (!stripped){
@@ -197,17 +250,18 @@ async function callProvider(pid, messages, o, stripped){
   try { res = await fetch(url, { method:"POST", headers, body: JSON.stringify(body), signal: o.signal }); }
   catch(e){
     if (e.name === "AbortError") throw e;
-    const err = new Error(P.name + " 서버에 연결하지 못했어요. Claude 앱 안에서 열었다면 외부 연결이 막혀 있어요 — GitHub Pages 주소로 열어 주세요. (" + e.message + ")"); err.soft = true; throw err;
+    const err = new Error(inClaudeApp() ? "Claude 앱 안에서는 외부 AI 연결이 막혀 있어요. " + SITE_URL + " 에서 열어 주세요." : P.name + " 서버에 연결하지 못했어요. 인터넷 연결을 확인하거나 주소를 확인해 주세요. (" + e.message + ")"); err.soft = true; throw err;
   }
   if (!res.ok){
     let msg = ""; try { const t = await res.text(); try { const j = JSON.parse(t); const x = Array.isArray(j) ? j[0] : j; msg = (x.error && (x.error.message || x.error)) || t; } catch(_){ msg = t; } } catch(_){}
-    if (res.status === 400 && !stripped) return callProvider(pid, messages, o, true);   // 선택 옵션 빼고 한 번 더
+    if (res.status === 400 && !stripped) return callProviderOnce(pid, messages, o, true, modelOverride);   // 선택 옵션 빼고 한 번 더
     const err = new Error(
       res.status === 401 || res.status === 403 ? P.name + " API 키가 틀렸거나 권한이 없어요. (" + res.status + ")" :
       res.status === 429 ? P.name + " 무료 한도를 잠깐 넘었어요. 1분쯤 뒤에 다시 해 주세요." :
       res.status === 404 ? P.name + "에 이 모델이 없어요: " + model :
       P.name + " 오류 " + res.status + ": " + String(msg).slice(0, 200));
     err.soft = res.status === 429 || res.status >= 500 || res.status === 404 || res.status === 402;
+    err.status = res.status; err.raw = String(msg);
     throw err;
   }
   const ct = res.headers.get("content-type") || "";
@@ -226,7 +280,7 @@ async function callProvider(pid, messages, o, stripped){
       if (!line.startsWith("data:")) continue;
       const data = line.slice(5).trim(); if (data === "[DONE]") continue;
       let j; try { j = JSON.parse(data); } catch(e){ continue; }
-      if (j.error){ const e = new Error(P.name + " 오류: " + (j.error.message || JSON.stringify(j.error)).slice(0, 200)); e.soft = !acc; throw e; }
+      if (j.error){ const e = new Error(P.name + " 오류: " + (j.error.message || JSON.stringify(j.error)).slice(0, 200)); e.soft = !acc; e.got = !!acc; e.raw = JSON.stringify(j.error); e.status = (j.error.code && +j.error.code) || 0; throw e; }
       const d = j.choices && j.choices[0] && j.choices[0].delta; if (!d) continue;
       if (d.content){ acc += d.content; o.onText && o.onText(acc); }
       else if ((d.reasoning || d.reasoning_content) && !acc && !thinking){ thinking = true; o.onThink && o.onThink(); }
@@ -670,6 +724,7 @@ VIEWS.ai = (body) => {
   }
   body.append(
     card(h("div", { style:"display:flex;align-items:center;gap:12px" }, h("div", { style:"font-size:38px" }, "🧠"), h("div", null, h("div", { style:"font-weight:700;font-size:17px" }, "제타 엔진 v2"), status))),
+    inClaudeApp() ? h("div", { class:"warnbox", style:"margin-bottom:12px" }, "⚠ 지금은 Claude 앱 안이라 외부 AI 연결이 막혀 있어요. 키는 여기 말고 ", h("a", { href:SITE_URL, target:"_blank", rel:"noopener", style:"color:inherit" }, "deca19.github.io/zeta"), " 에서 넣어 주세요.") : null,
     card(h("h3", null, "🔑 키 붙여넣기 (자동 인식)"), h("div", { class:"tiny", style:"margin-bottom:6px" }, "구글·OpenRouter·Groq·Cerebras 키 아무거나 붙여넣으면 알아서 맞는 칸에 넣고 켜요."), keyPasteBox(() => renderApp("ai")),
       h("div", { class:"btns" }, h("button", { class:"btn sm", onclick: setupWizard }, "🚀 처음 세팅 안내 보기"))),
     card(h("h3", null, "엔진 고르기"), engBox),

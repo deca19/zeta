@@ -533,7 +533,10 @@ function srcVideo(box){
   });
   async function extract(){
     if (!vid.duration) return toast("영상을 먼저 골라 주세요");
+    // 아이폰은 한 번 재생해야 프레임을 그릴 수 있어서 잠깐 재생 후 멈춤
+    try { vid.muted = true; await vid.play(); } catch(e){}
     vid.pause();
+    if (vid.readyState < 2) await new Promise(r => { const t = setTimeout(r, 2500); vid.addEventListener("loadeddata", () => { clearTimeout(t); r(); }, { once:true }); });
     const st = +startIn.value, n = Math.max(1, Math.round(P.len * P.fps)), dt = 1 / P.fps, list = [];
     for (let i = 0; i < n; i++){
       const t = st + i*dt; if (t > vid.duration - 0.01) break;
@@ -1035,7 +1038,7 @@ function renderEditor(ed){
       h("div", { class:"tiny", style:"text-align:center;margin-top:6px" }, `${kb >= 1024 ? (kb/1024).toFixed(2) + "MB" : Math.round(kb) + "KB"} · ${W}×${H}`),
       kb > 8*1024 ? h("div", { class:"warnbox" }, "💡 용량이 커요. 가로 크기, 색 수, 프레임 수를 줄이면 작아져요.") : h("div"),
       h("div", { class:"btns" },
-        h("button", { class:"btn p", onclick:() => saveFile(fname("gif"), G.result, "결과 이미지를 길게 눌러 저장하세요") }, "💾 GIF 저장"),
+        h("button", { class:"btn p", onclick:() => saveFile(fname("gif"), G.result, "위 결과 이미지를 길게 눌러 '사진에 저장'을 눌러 주세요") }, "💾 GIF 저장"),
         h("button", { class:"btn", onclick: recordVideo }, "🎥 동영상으로 저장"),
         h("button", { class:"btn", onclick: spriteSheet }, "🧩 스프라이트 PNG"))
     );
@@ -1115,7 +1118,8 @@ function renderEditor(ed){
   tick();
 }
 function fname(ext, suffix){
-  const base = (W().name || "zeta").replace(/[\\/:*?"<>|]/g, "").slice(0, 40).trim() || "zeta";
+  const idx = Math.max(0, S.order.indexOf(S.cur)) + 1;
+  const base = "zeta" + idx;   // 한글 파일 이름은 일부 폰에서 'download'로 바뀌어서 영문으로
   const d = new Date(), ts = `${d.getMonth() + 1}${String(d.getDate()).padStart(2, "0")}_${String(d.getHours()).padStart(2, "0")}${String(d.getMinutes()).padStart(2, "0")}`;
   return `${base}_${ts}${suffix || ""}.${ext}`;
 }

@@ -151,9 +151,29 @@ function getDL(){
   _dl = (async () => { try { return await window.claude.use("downloads"); } catch(e){ return null; } })();
   return _dl;
 }
+const MIME = { gif:"image/gif", png:"image/png", jpg:"image/jpeg", mp4:"video/mp4", webm:"video/webm", json:"application/json", txt:"text/plain" };
+async function plainDownload(name, data){
+  const ext = (name.split(".").pop() || "").toLowerCase();
+  const blob = data instanceof Blob ? data : new Blob([data], { type: MIME[ext] || "application/octet-stream" });
+  // 폰: 공유 창(사진에 저장 가능) → 안 되면 일반 다운로드
+  try {
+    const file = new File([blob], name, { type: blob.type || MIME[ext] || "application/octet-stream" });
+    if (/gif|png|jpe?g|mp4|webm/.test(ext) && navigator.canShare && navigator.canShare({ files:[file] }) && /Android|iPhone|iPad/i.test(navigator.userAgent)){
+      await navigator.share({ files:[file], title:name }); return true;
+    }
+  } catch(e){ if (e && e.name === "AbortError") return false; }
+  try {
+    const url = URL.createObjectURL(blob), a = document.createElement("a");
+    a.href = url; a.download = name; a.rel = "noopener"; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 30000); return true;
+  } catch(e){ return false; }
+}
 async function saveFile(name, data, fallbackMsg){
   const dl = await getDL();
-  if (!dl){ toast(fallbackMsg || "이 화면에서는 파일 저장이 안 돼요"); return false; }
+  if (!dl){
+    if (typeof inClaudeApp === "function" && inClaudeApp()){ toast(fallbackMsg || "이 화면에서는 파일 저장이 안 돼요"); return false; }
+    const ok = await plainDownload(name, data); if (ok) toast("저장했어요"); else toast(fallbackMsg || "저장하지 못했어요"); return ok;
+  }
   try { await dl.save({ filename: name, data }); toast("저장했어요"); return true; }
   catch(e){
     const c = e && e.code;
@@ -212,8 +232,19 @@ function seed(){
 let S;
 try { S = JSON.parse(localStorage.getItem(KEY)); } catch(e){ S = null; }
 if (!S || !S.works) S = seed();
-let saveT;
-function save(){ clearTimeout(saveT); saveT = setTimeout(()=>{ try { localStorage.setItem(KEY, JSON.stringify(S)); } catch(e){} }, 300); }
+let saveT, saveWarned = false;
+function saveNow(){
+  clearTimeout(saveT); saveT = null;
+  try {
+    for (const id in S.works){ const w = S.works[id]; if (w.chat && w.chat.length > 400) w.chat = w.chat.slice(-400); }
+    localStorage.setItem(KEY, JSON.stringify(S)); saveWarned = false;
+  } catch(e){
+    if (!saveWarned){ saveWarned = true; try { toast("⚠ 저장 공간이 꽉 찼어요. 💾 백업 후 오래된 채팅·작품을 정리해 주세요"); } catch(_){} }
+  }
+}
+function save(){ clearTimeout(saveT); saveT = setTimeout(saveNow, 300); }
+window.addEventListener("pagehide", () => { if (saveT) saveNow(); });
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden" && saveT) saveNow(); });
 const W = () => S.works[S.cur] || S.works[S.order[0]];
 
 /* ================= 시트 ================= */
@@ -231,6 +262,10 @@ function askText(title, init, fn){
   const inp = h("input",{type:"text",value:init||""});
   openSheet(title, [inp, h("div",{class:"btns"}, h("button",{class:"btn p",style:"width:100%",onclick:()=>{const v=inp.value.trim(); if(!v) return; closeSheet(); fn(v);}}, "확인"))]);
   setTimeout(()=>inp.focus(),80);
+}
+function askLong(title, init, fn){
+  const ta = h("textarea",{style:"min-height:46vh",value:init||""});
+  openSheet(title, [ta, h("div",{class:"btns"}, h("button",{class:"btn p",style:"width:100%",onclick:()=>{ closeSheet(); fn(ta.value); }}, "저장"))]);
 }
 function pickWork(after){
   openSheet("작품 선택", S.order.map(id => {
@@ -414,7 +449,7 @@ VIEWS.plot = (body) => {
       f.k!=="name" ? h("button",{class:"btn sm",onclick:()=>{setv(toVars(ta.value,w));toast("{{user}}/{{char}}로 바꿨어요");}},"🔁 변수화") : null,
       h("button",{class:"btn sm",onclick:()=>copy(ta.value)},"📋"),
       f.k!=="name" ? h("button",{class:"btn sm",onclick:()=>aiField(w,f,setv)},"🤖 AI 다듬기") : null,
-      h("button",{class:"btn sm",onclick:()=>askText(f.t+" 글자수 제한 (0 = 없음)", String(w.limits[f.k]||0), v=>{w.limits[f.k]=Math.max(0,parseInt(v)||0);save();ta._upd();})}, "📏 "+(w.limits[f.k]?w.limits[f.k]+"자":"제한")),
+      (()=>{ const b=h("button",{class:"btn sm",onclick:()=>askText(f.t+" 글자수 제한 (0 = 없음)", String(w.limits[f.k]||0), v=>{w.limits[f.k]=Math.max(0,parseInt(v)||0);save();ta._upd();b.textContent="📏 "+(w.limits[f.k]?w.limits[f.k]+"자":"제한");})}, "📏 "+(w.limits[f.k]?w.limits[f.k]+"자":"제한")); return b; })(),
     );
     body.append(h("div",{class:"card"}, h("h3",null, h("span",{class:"tiny"},String(i+1).padStart(2,"0")), f.t), ta, c, tools));
   });
@@ -828,7 +863,7 @@ VIEWS.backup = (body) => {
     h("div",{class:"card"}, h("h3",null,"💾 내보내기"),
       h("div",{class:"muted"},"작업은 이 기기의 브라우저에만 저장돼요. 브라우저 기록을 지우면 사라지니, 가끔 백업 코드를 복사해서 메모장 같은 곳에 보관하세요."),
       h("div",{class:"btns"},
-        h("button",{class:"btn p",onclick:()=>{ const d=new Date(); saveFile(`제타스튜디오_백업_${d.getFullYear()}${String(d.getMonth()+1).padStart(2,"0")}${String(d.getDate()).padStart(2,"0")}.json`, JSON.stringify(S,null,1), "파일 저장이 안 되는 화면이에요. 백업 코드 복사를 써 주세요"); }},"📄 파일로 저장"),
+        h("button",{class:"btn p",onclick:()=>{ const d=new Date(); saveFile(`zeta-studio-backup_${d.getFullYear()}${String(d.getMonth()+1).padStart(2,"0")}${String(d.getDate()).padStart(2,"0")}.json`, JSON.stringify(S,null,1), "파일 저장이 안 되는 화면이에요. 백업 코드 복사를 써 주세요"); }},"📄 파일로 저장"),
         h("button",{class:"btn",onclick:()=>copy(JSON.stringify(S),"백업 코드 복사 ("+Math.round(JSON.stringify(S).length/1024)+"KB)")},"📋 백업 코드 복사"))),
     h("div",{class:"card"}, h("h3",null,"📥 불러오기"),
       h("label",{class:"btn",style:"position:relative;overflow:hidden;display:inline-block;margin-bottom:8px"},"📂 백업 파일 열기",
@@ -841,7 +876,7 @@ VIEWS.backup = (body) => {
           let n=0; for(const id of d.order||Object.keys(d.works)){ const w=d.works[id]; if(!w) continue; w.id=uid(); S.works[w.id]=w; S.order.push(w.id); n++; } save(); toast("작품 "+n+"개 추가"); }},"작품만 추가"))),
     h("div",{class:"card"}, h("h3",null,"⚠️ 초기화"),
       h("button",{class:"btn d",onclick:()=>confirmSheet("모든 작품과 설정을 지우고 처음 상태로 돌릴까요?","초기화",()=>{S=seed();save();toast("초기화했어요");})},"전부 초기화")),
-    h("p",{class:"tiny",style:"text-align:center"},"제타 스튜디오 · 작품 "+S.order.length+"개")
+    h("p",{class:"tiny",style:"text-align:center"},"제타 스튜디오 · 내 작품 "+S.order.length+"개 · 참고 작품 "+((S.refs||[]).length)+"개")
   );
 };
 
