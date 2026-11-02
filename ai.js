@@ -51,6 +51,14 @@ function AIS(){
   for (const k in d) if (!(k in S.ai)) S.ai[k] = d[k];
   if (!S.ai.models || typeof S.ai.models !== "object") S.ai.models = {};
   if (!S.ai.urls || typeof S.ai.urls !== "object") S.ai.urls = {};
+  if (!["cloud","local","off"].includes(S.ai.engine)) S.ai.engine = "off";
+  if (S.ai.provider !== "auto" && !AI_PROVIDERS[S.ai.provider]) S.ai.provider = "auto";
+  if (!QUALITY[S.ai.quality]) S.ai.quality = "balanced";
+  if (!LOCAL_MODELS[S.ai.local]) S.ai.local = "base";
+  for (const k in S.ai.models) if (typeof S.ai.models[k] !== "string") delete S.ai.models[k];
+  if (!["low","medium","high"].includes(S.ai.effort)) S.ai.effort = "low";
+  if (!isFinite(+S.ai.temp)) S.ai.temp = 0.8;
+  if (typeof S.ai.userName !== "string" || !S.ai.userName.trim()) S.ai.userName = "유저";
   return S.ai;
 }
 const KEYS_KEY = "zeta-studio-keys";
@@ -70,17 +78,17 @@ function aiLabel(){
     if (A.provider === "auto"){ const r = readyProviders(); return r.length ? "🚀 자동 · " + r.map(p => provOf(p).model.replace(/:free$/, "")).join(" → ") : "🚀 자동 · 키 없음"; }
     const { P, model } = provOf(A.provider); return `${model.replace(/:free$/, "")} · ${P.name}`;
   }
-  if (A.engine === "local") return "폰 내장 " + LOCAL_MODELS[A.local].label;
+  if (A.engine === "local") return "폰 내장 " + (LOCAL_MODELS[A.local] || LOCAL_MODELS.base).label;
   return "꺼짐 (요청문 복사)";
 }
 
 /* ---------------- 키 자동 인식 + 원클릭 세팅 ---------------- */
 function detectKey(k){
   k = (k || "").trim().replace(/^["']|["']$/g, "");
-  if (/^AIza[0-9A-Za-z_\-]{20,}$/.test(k)) return "gemini";
-  if (/^sk-or-/.test(k)) return "openrouter";
-  if (/^gsk_/.test(k)) return "groq";
-  if (/^csk-/.test(k)) return "cerebras";
+  if (/^AIza[0-9A-Za-z_\-]{30,}$/.test(k)) return "gemini";
+  if (/^sk-or-[0-9A-Za-z_\-]{30,}$/.test(k)) return "openrouter";
+  if (/^gsk_[0-9A-Za-z]{30,}$/.test(k)) return "groq";
+  if (/^csk-[0-9A-Za-z]{20,}$/.test(k)) return "cerebras";
   return "";
 }
 async function pasteFromClipboard(){ try { return await navigator.clipboard.readText(); } catch(e){ return ""; } }
@@ -98,9 +106,12 @@ function keyPasteBox(onDone){
     catch(e){ msg.textContent = "⚠ 키는 저장했지만 연결 확인 실패: " + e.message.slice(0, 160); toast("⚠ 연결 확인 실패 — 메시지를 확인해 주세요"); }
     onDone && onDone(pid);
   };
-  inp.addEventListener("input", () => { if (detectKey(inp.value)) apply(); });
+  let deb = null, busy = false;
+  const applyOnce = async () => { if (busy) return; busy = true; try { await apply(); } finally { busy = false; } };
+  inp.addEventListener("input", () => { clearTimeout(deb); deb = setTimeout(() => { if (detectKey(inp.value)) applyOnce(); }, 500); });
+  inp.addEventListener("keydown", e => { if (e.key === "Enter" && !e.isComposing){ e.preventDefault(); clearTimeout(deb); applyOnce(); } });
   return h("div", null, h("div", { class:"row", style:"flex-wrap:nowrap" }, inp,
-    h("button", { class:"btn v sm", onclick: async () => { const t = await pasteFromClipboard(); if (t){ inp.value = t.trim(); apply(); } else { inp.focus(); toast("칸을 길게 눌러 붙여넣기 해 주세요"); } } }, "📋 붙여넣기")), msg);
+    h("button", { class:"btn v sm", onclick: async () => { const t = await pasteFromClipboard(); if (t){ inp.value = t.trim(); clearTimeout(deb); applyOnce(); } else if (inp.value.trim()){ clearTimeout(deb); applyOnce(); } else { inp.focus(); toast("칸을 길게 눌러 붙여넣기 해 주세요"); } } }, inp.value ? "✔ 확인" : "📋 붙여넣기")), msg);
 }
 function setupWizard(){
   const refresh = () => { closeSheet(); if (!location.hash || location.hash === "#") renderHome(); };
@@ -190,9 +201,9 @@ async function geminiCall(messages, o, stripped, modelOverride){
     err.soft = true; err.status = res.status; err.raw = String(msg); throw err;
   }
   const rd = res.body.getReader(), dec = new TextDecoder(); let buf = "", acc = "", thinking = false, block = "";
-  for (;;){
-    const { done, value } = await rd.read(); if (done) break;
-    buf += dec.decode(value, { stream:true });
+  for (let fin = false; !fin;){
+    const { done, value } = await rd.read();
+    if (done){ fin = true; buf += dec.decode() + "\n"; } else buf += dec.decode(value, { stream:true });
     let nl;
     while ((nl = buf.indexOf("\n")) >= 0){
       const line = buf.slice(0, nl).trim(); buf = buf.slice(nl + 1);
@@ -271,9 +282,9 @@ async function callProviderOnce(pid, messages, o, stripped, modelOverride){
     o.onText && o.onText(t); return t;
   }
   const rd = res.body.getReader(), dec = new TextDecoder(); let buf = "", acc = "", thinking = false;
-  for (;;){
-    const { done, value } = await rd.read(); if (done) break;
-    buf += dec.decode(value, { stream:true });
+  for (let fin = false; !fin;){
+    const { done, value } = await rd.read();
+    if (done){ fin = true; buf += dec.decode() + "\n"; } else buf += dec.decode(value, { stream:true });
     let nl;
     while ((nl = buf.indexOf("\n")) >= 0){
       const line = buf.slice(0, nl).trim(); buf = buf.slice(nl + 1);
@@ -486,13 +497,14 @@ function aiRun(title, messages, opt){
       else { out.textContent = "⚠ " + e.message; stg.textContent = ""; text = ""; }
     }
     btns.replaceChildren(...[
-      opt.onApply && text ? h("button", { class:"btn p", onclick:() => { const r = opt.onApply(text); if (r !== false){ closeSheet(); } } }, opt.applyLabel || "✔ 적용") : null,
+      opt.onApply && text ? h("button", { class:"btn p", onclick:() => { const r = opt.onApply(text); if (r !== false){ closeSheet(); } else toast("결과 형식을 못 알아봤어요. 🔄 다시를 눌러 보세요"); } }, opt.applyLabel || "✔ 적용") : null,
       text ? h("button", { class:"btn", onclick:() => copy(text) }, "📋 복사") : null,
       h("button", { class:"btn", onclick: run }, "🔄 다시")
     ].filter(Boolean));
   };
   const stopBtn = h("button", { class:"btn d", onclick:() => ctrl && ctrl.abort() }, "⏹ 멈추기");
   openSheet("🤖 " + title, [out, stg, st, btns, qBox].concat(opt.extra || []));
+  sheetCloseHook = () => { if (ctrl) try { ctrl.abort(); } catch(e){} };   // 창을 닫으면 AI도 멈춤 (무료 한도 아끼기)
   drawQ();
   run();
 }
@@ -534,7 +546,7 @@ ${concept}`;
     aiRun("캐릭터 통째로 만들기", [{ role:"system", content:SYS_WRITER }, { role:"user", content:prompt }], {
       maxTokens: 6000, applyLabel:"✔ 빈 칸만 채우기",
       onApply: t => applyWhole(w, t, false, after),
-      extra: [h("button", { class:"btn d", style:"margin-top:6px", onclick:() => { const t = document.querySelector("#sheet .out").textContent; applyWhole(w, t, true, after); closeSheet(); } }, "⚠ 전부 덮어쓰기")]
+      extra: [h("button", { class:"btn d", style:"margin-top:6px", onclick:() => { const o = document.querySelector("#sheet .out"), t = o ? o.textContent : ""; if (!/【[^】]+】/.test(t) || document.querySelector("#sheet .btn.d") && document.querySelector("#sheet .btns .btn.d")) return toast("생성이 끝난 뒤에 눌러 주세요"); if (applyWhole(w, t, true, after)) closeSheet(); } }, "⚠ 전부 덮어쓰기")]
     });
   };
   openSheet("🪄 캐릭터 통째로 만들기", [h("div", { class:"muted", style:"margin-bottom:8px" }, "콘셉트 한두 줄이면 10개 항목을 전부 써 줘요."), inp, h("button", { class:"btn p", style:"width:100%;margin-top:8px", onclick: go }, "🪄 만들기")]);

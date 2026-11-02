@@ -59,7 +59,7 @@ button{cursor:pointer}
 .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .row>.grow{flex:1;min-width:120px}
 label.f{display:block;font-size:12px;color:var(--tx2);margin:10px 0 4px}
-input[type=text],input[type=number],input[type=password],textarea,select{width:100%;background:var(--bg2);border:1px solid var(--line);border-radius:11px;padding:10px 12px;outline:none}
+input[type=text],input[type=number],input[type=password],textarea,select{font-size:16px;width:100%;background:var(--bg2);border:1px solid var(--line);border-radius:11px;padding:10px 12px;outline:none}
 input:focus,textarea:focus,select:focus{border-color:var(--ac2)}
 textarea{resize:vertical;min-height:84px}
 .btn{background:var(--card2);border:1px solid var(--line);border-radius:11px;padding:8px 12px;font-size:13px;white-space:nowrap}
@@ -95,7 +95,7 @@ textarea{resize:vertical;min-height:84px}
 #sheetBg{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:50}
 #sheet{position:fixed;left:0;right:0;bottom:0;z-index:51;background:var(--bg2);border-radius:22px 22px 0 0;padding:16px 16px calc(var(--safe-b) + 18px);max-height:82vh;overflow:auto;border-top:1px solid var(--line);max-width:820px;margin:0 auto}
 #sheet h3{margin:4px 0 12px}
-#toast{position:fixed;left:50%;bottom:calc(var(--safe-b) + 26px);transform:translateX(-50%);background:#fff;color:#111;padding:9px 16px;border-radius:99px;font-size:13.5px;font-weight:600;z-index:60;opacity:0;transition:opacity .2s;pointer-events:none;white-space:nowrap}
+#toast{position:fixed;left:50%;bottom:calc(var(--safe-b) + 26px);transform:translateX(-50%);background:#fff;color:#111;padding:9px 16px;border-radius:18px;font-size:13.5px;font-weight:600;z-index:60;opacity:0;transition:opacity .2s;pointer-events:none;width:max-content;max-width:88vw;text-align:center;line-height:1.4;word-break:keep-all;overflow-wrap:anywhere}
 #toast.on{opacity:1}
 .wk{display:flex;align-items:center;gap:10px;padding:12px;border-radius:12px;background:var(--card);border:1px solid var(--line);margin-bottom:8px}
 .wk.sel{border-color:var(--ac)}
@@ -137,8 +137,9 @@ function h(tag, attrs, ...kids){
 }
 const uid = () => Math.random().toString(36).slice(2, 9);
 let toastT;
-function toast(m){ const t = $("#toast"); t.textContent = m; t.classList.add("on"); clearTimeout(toastT); toastT = setTimeout(()=>t.classList.remove("on"), 1600); }
+function toast(m){ const t = $("#toast"); t.textContent = m; t.classList.add("on"); clearTimeout(toastT); toastT = setTimeout(()=>t.classList.remove("on"), Math.min(4500, 1400 + String(m).length * 45)); }
 function copy(text, msg){
+  if (!String(text || "").trim()){ toast("복사할 내용이 없어요"); return; }
   const fallback = () => openSheet("복사하기", [h("p",{class:"muted"},"자동 복사가 막혀 있어요. 아래를 길게 눌러 복사하세요."), (()=>{const ta=h("textarea",{style:"min-height:240px",value:text}); setTimeout(()=>{ta.focus();ta.select();},50); return ta;})()]);
   try { navigator.clipboard.writeText(text).then(()=>toast(msg || "복사했어요"), fallback); } catch(e){ fallback(); }
 }
@@ -246,21 +247,72 @@ function save(){ clearTimeout(saveT); saveT = setTimeout(saveNow, 300); }
 window.addEventListener("pagehide", () => { if (saveT) saveNow(); });
 document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden" && saveT) saveNow(); });
 const W = () => S.works[S.cur] || S.works[S.order[0]];
+/* 저장 데이터 점검·복구: 예전 버전·깨진 백업이 들어와도 화면이 멈추지 않게 */
+const str = v => v == null ? "" : String(v);
+function normWork(w, isRef){
+  if (!w || typeof w !== "object" || Array.isArray(w)) return null;
+  w.id = str(w.id) || uid(); w.name = str(w.name).trim() || "이름 없는 작품";
+  for (const k of ["fields","limits","tipsy"]) if (!w[k] || typeof w[k] !== "object" || Array.isArray(w[k])) w[k] = {};
+  for (const k in w.fields) w.fields[k] = str(w.fields[k]);
+  w.lore = (Array.isArray(w.lore) ? w.lore : []).filter(x => x && typeof x === "object").map(x => ({ id: str(x.id) || uid(), k: str(x.k), v: str(x.v), on: x.on !== false }));
+  if (!w.status || typeof w.status !== "object") w.status = {};
+  w.status.title = typeof w.status.title === "string" ? w.status.title : "상태창";
+  if (!["box","list","line","code"].includes(w.status.style)) w.status.style = "box";
+  w.status.items = (Array.isArray(w.status.items) ? w.status.items : []).filter(x => x && typeof x === "object").map(x => ({ l: str(x.l), e: str(x.e) }));
+  w.eps = (Array.isArray(w.eps) ? w.eps : []).filter(e => e && typeof e === "object").map(e => ({ id: str(e.id) || uid(), title: str(e.title) || "화",
+    cuts: (Array.isArray(e.cuts) ? e.cuts : []).filter(c => c && typeof c === "object").map(c => ({ id: str(c.id) || uid(), shot: str(c.shot) || "바스트샷", face: str(c.face), scene: str(c.scene),
+      bubbles: (Array.isArray(c.bubbles) ? c.bubbles.map(str) : [""]).slice(0, 3), note: str(c.note), tags: str(c.tags) })) }));
+  if (!w.eps.length) w.eps = [{ id: uid(), title: "1화", cuts: [] }];
+  w.memo = str(w.memo); w.charTags = str(w.charTags);
+  if (w.chat != null){
+    w.chat = (Array.isArray(w.chat) ? w.chat : []).filter(m => m && typeof m === "object").map(m => {
+      const o = { r: m.r === "user" ? "user" : "assistant", t: str(m.t) };
+      if (Array.isArray(m.alts) && m.alts.length > 1){ o.alts = m.alts.map(str); o.ai = Math.max(0, Math.min(o.alts.length - 1, +m.ai || 0)); }
+      return o; });
+    w.chatMem = str(w.chatMem); w.chatMemUpto = Math.max(0, Math.min(w.chat.length, +w.chatMemUpto || 0));
+  }
+  if (isRef){ w.ref = true; w.author = str(w.author); if (!w.pop || typeof w.pop !== "object") w.pop = {}; w.pop = { chats: Math.max(0, +w.pop.chats || 0), likes: Math.max(0, +w.pop.likes || 0) }; }
+  return w;
+}
+function normalizeState(){
+  if (!S || typeof S !== "object" || Array.isArray(S)) S = seed();
+  if (!S.works || typeof S.works !== "object" || Array.isArray(S.works)) S.works = {};
+  for (const id of Object.keys(S.works)){ const w = normWork(S.works[id]); if (!w){ delete S.works[id]; continue; } w.id = id; }
+  const seen = new Set();
+  S.order = (Array.isArray(S.order) ? S.order : []).map(str).filter(id => S.works[id] && !seen.has(id) && seen.add(id));
+  for (const id of Object.keys(S.works)) if (!seen.has(id)) S.order.push(id);
+  if (!S.order.length){ const w = blankWork("새 작품"); S.works[w.id] = w; S.order = [w.id]; }
+  if (!S.works[S.cur]) S.cur = S.order[0];
+  const base = seed().pixai;
+  if (!S.pixai || typeof S.pixai !== "object") S.pixai = base;
+  for (const k in base) if (S.pixai[k] == null) S.pixai[k] = base[k];
+  S.pixai.loras = (Array.isArray(S.pixai.loras) ? S.pixai.loras : []).filter(l => l && typeof l === "object").map(l => ({ name: str(l.name), w: isFinite(+l.w) ? +l.w : 0.7, on: !!l.on }));
+  for (const k of ["model","ratio","quality","negative"]) S.pixai[k] = str(S.pixai[k]);
+  S.pixai.batch = [1,2,4].includes(+S.pixai.batch) ? +S.pixai.batch : 4;
+  S.refs = (Array.isArray(S.refs) ? S.refs : []).map(r => normWork(r, true)).filter(Boolean);
+  S.recent = (Array.isArray(S.recent) ? S.recent : []).map(str);
+  S.memo = str(S.memo);
+}
 
 /* ================= 시트 ================= */
+let sheetCloseHook = null;
+function runSheetHook(){ const f = sheetCloseHook; sheetCloseHook = null; if (f) try { f(); } catch(e){} }
 function openSheet(title, kids){
-  const sh = $("#sheet"); sh.innerHTML = "";
+  runSheetHook();
+  const sh = $("#sheet"); sh.innerHTML = ""; sh.scrollTop = 0;
   sh.append(h("h3", null, title), ...kids, h("div",{class:"btns",style:"margin-top:14px"}, h("button",{class:"btn",style:"width:100%",onclick:closeSheet},"닫기")));
   sh.classList.remove("hidden"); $("#sheetBg").classList.remove("hidden");
 }
-function closeSheet(){ $("#sheet").classList.add("hidden"); $("#sheetBg").classList.add("hidden"); }
+function closeSheet(){ runSheetHook(); $("#sheet").classList.add("hidden"); $("#sheetBg").classList.add("hidden"); }
 $("#sheetBg").onclick = closeSheet;
 function confirmSheet(msg, okLabel, fn){
   openSheet(msg, [h("button",{class:"btn p",style:"width:100%",onclick:()=>{closeSheet();fn();}}, okLabel)]);
 }
-function askText(title, init, fn){
+function askText(title, init, fn, allowEmpty){
   const inp = h("input",{type:"text",value:init||""});
-  openSheet(title, [inp, h("div",{class:"btns"}, h("button",{class:"btn p",style:"width:100%",onclick:()=>{const v=inp.value.trim(); if(!v) return; closeSheet(); fn(v);}}, "확인"))]);
+  const ok = ()=>{const v=inp.value.trim(); if(!v && !allowEmpty) return toast("내용을 입력해 주세요"); closeSheet(); fn(v);};
+  inp.addEventListener("keydown", e => { if (e.key === "Enter" && !e.isComposing){ e.preventDefault(); ok(); } });
+  openSheet(title, [inp, h("div",{class:"btns"}, h("button",{class:"btn p",style:"width:100%",onclick:ok}, "확인"))]);
   setTimeout(()=>inp.focus(),80);
 }
 function askLong(title, init, fn){
@@ -510,7 +562,7 @@ VIEWS.lore = (body) => {
       list.append(h("div",{class:"card",style:x.on?"":"opacity:.5"},
         h("div",{class:"ix"},
           h("input",{type:"checkbox",checked:x.on,style:"width:20px;height:20px;accent-color:var(--ac)",onchange:e=>{x.on=e.target.checked;save();draw();}}),
-          h("input",{type:"text",value:x.k,placeholder:"키워드 (예: 흑철기사단, 기사단)",oninput:e=>{x.k=e.target.value;save();}}),
+          h("input",{type:"text",value:x.k,placeholder:"키워드 (예: 흑철기사단, 기사단)",oninput:e=>{x.k=e.target.value;save();},onchange:()=>draw()}),
         ),
         vt, vc,
         h("div",{class:"btns"},
@@ -587,6 +639,13 @@ VIEWS.dialog = (body) => {
     const res = lines.map(raw => {
       let s = raw.trim(); if (!s) return "";
       let kind = "n";
+      const mix = s.match(/^["“]([^"”]+)["”]\s*(.+)$/);
+      if (mix){
+        const q = mix[1].trim(), rest = mix[2].replace(/^\*|\*$/g,"").trim();
+        if (P.mode === "zeta") return `"${q}" *${rest}*`;
+        if (P.mode === "script") return `${nm}: "${q}" (${rest})`;
+        return `"${q}" ${rest}`;
+      }
       if (/^[-–—]\s*/.test(s)){ s = s.replace(/^[-–—]\s*/,""); kind = "d"; }
       else if (/^["“「『]/.test(s)){ s = s.replace(/^["“「『]|["”」』]$/g,""); kind = "d"; }
       else if (/^\(.*\)$/.test(s)){ s = s.slice(1,-1); kind = "t"; }
@@ -614,8 +673,8 @@ VIEWS.dialog = (body) => {
       h("label",{class:"check",style:"border:0"}, h("input",{type:"checkbox",checked:P.useVar,onchange:e=>{P.useVar=e.target.checked;conv();}}), "대본식 이름을 {{char}}로")),
     h("div",{class:"card"}, h("h3",null,"결과"), out, h("div",{class:"btns"},
       h("button",{class:"btn p",onclick:()=>copy(out.textContent)},"📋 복사"),
-      h("button",{class:"btn",onclick:()=>{w.fields.first=out.textContent;save();toast("시작 메시지에 넣었어요");}},"➡ 시작 메시지로"),
-      h("button",{class:"btn",onclick:()=>{w.fields.example=((w.fields.example||"").trim()+"\n\n"+out.textContent).trim();save();toast("예시 대화에 추가했어요");}},"➕ 예시 대화에 추가")))
+      h("button",{class:"btn",onclick:()=>{ if(!out.textContent.trim()) return toast("변환된 내용이 없어요"); const put=()=>{w.fields.first=out.textContent;save();toast("시작 메시지에 넣었어요");}; (w.fields.first||"").trim() ? confirmSheet("지금 시작 메시지를 이 내용으로 바꿀까요?","바꾸기",put) : put(); }},"➡ 시작 메시지로"),
+      h("button",{class:"btn",onclick:()=>{ if(!out.textContent.trim()) return toast("변환된 내용이 없어요"); w.fields.example=((w.fields.example||"").trim()+"\n\n"+out.textContent).trim();save();toast("예시 대화에 추가했어요");}},"➕ 예시 대화에 추가")))
   );
   drawModes(); conv();
 };
@@ -673,7 +732,7 @@ VIEWS.pixai = (body) => {
     p.loras.forEach((l,i)=>loraBox.append(h("div",{class:"item"},h("div",{class:"ix"},
       h("input",{type:"checkbox",checked:l.on,style:"width:20px;height:20px;accent-color:var(--ac)",onchange:e=>{l.on=e.target.checked;save();}}),
       h("input",{type:"text",value:l.name,style:"flex:1",oninput:e=>{l.name=e.target.value;save();}}),
-      h("input",{type:"number",step:"0.05",min:"0",max:"1.5",value:l.w,style:"width:76px",oninput:e=>{l.w=+e.target.value;save();}}),
+      h("input",{type:"number",step:"0.05",min:"0",max:"1.5",value:l.w,style:"width:76px",oninput:e=>{const v=parseFloat(e.target.value); if(isFinite(v)){l.w=Math.max(0,Math.min(2,v));save();}}}),
       h("button",{class:"btn sm d",onclick:()=>{p.loras.splice(i,1);save();drawLora();}},"✕")))));
   };
   const [ct, cc] = counted(()=>w.charTags, v=>{w.charTags=v;upd();}, { ph:"이 작품 주인공 고정 태그 (예: 1girl, blonde hair, long hair)", style:"min-height:60px" });
@@ -784,6 +843,8 @@ VIEWS.sedotoon = (body, view, bar) => {
   view.append(fr);
   const fit = () => { fr.style.top = bar.getBoundingClientRect().bottom + "px"; fr.style.height = (window.innerHeight - bar.getBoundingClientRect().bottom) + "px"; };
   fit(); window.addEventListener("resize", fit);
+  const off = () => { window.removeEventListener("resize", fit); window.removeEventListener("hashchange", off); };
+  window.addEventListener("hashchange", off);
 };
 
 /* ---------- 아이디어 뽑기 ---------- */
@@ -833,7 +894,7 @@ VIEWS.tipsy = (body) => {
   body.append(
     h("div",{class:"card"}, h("div",{class:"tiny"},"이전 진행도"), cnt, pr,
       w.tipsyNote ? h("div",{class:"warnbox"},"📌 "+w.tipsyNote) : null,
-      h("div",{class:"btns"}, h("button",{class:"btn sm",onclick:()=>askText("이 작품 이전 메모",w.tipsyNote||"",v=>{w.tipsyNote=v;save();renderApp("tipsy");})},"📌 메모 달기"))),
+      h("div",{class:"btns"}, h("button",{class:"btn sm",onclick:()=>askText("이 작품 이전 메모 (비우면 삭제)",w.tipsyNote||"",v=>{w.tipsyNote=v;save();renderApp("tipsy");},true)},"📌 메모 달기"))),
     h("div",{class:"card"}, TIPSY_STEPS.map(s => h("label",{class:"check"},
       h("input",{type:"checkbox",checked:!!w.tipsy[s],onchange:e=>{w.tipsy[s]=e.target.checked;save();upd();}}), s))),
     h("div",{class:"card"}, h("h3",null,"📦 한 번에 옮길 텍스트"),
@@ -871,16 +932,18 @@ VIEWS.backup = (body) => {
       ta,
       h("div",{class:"btns"},
         h("button",{class:"btn v",onclick:()=>{ let d; try { d = JSON.parse(ta.value); } catch(e){ return toast("코드가 올바르지 않아요"); } if(!d||!d.works) return toast("코드가 올바르지 않아요");
-          confirmSheet("지금 데이터를 백업으로 덮어쓸까요?","덮어쓰기",()=>{S=d;save();toast("불러왔어요");}); }},"전체 덮어쓰기"),
+          confirmSheet("지금 데이터를 백업으로 덮어쓸까요?","덮어쓰기",()=>{S=d;normalizeState();saveNow();toast("불러왔어요 · 작품 "+S.order.length+"개");renderApp("backup");}); }},"전체 덮어쓰기"),
         h("button",{class:"btn",onclick:()=>{ let d; try { d = JSON.parse(ta.value); } catch(e){ return toast("코드가 올바르지 않아요"); } if(!d||!d.works) return toast("코드가 올바르지 않아요");
-          let n=0; for(const id of d.order||Object.keys(d.works)){ const w=d.works[id]; if(!w) continue; w.id=uid(); S.works[w.id]=w; S.order.push(w.id); n++; } save(); toast("작품 "+n+"개 추가"); }},"작품만 추가"))),
+          let n=0; const ids = Array.isArray(d.order) ? d.order : Object.keys(d.works); for(const id of ids){ const w=normWork(d.works[id]); if(!w) continue; w.id=uid(); S.works[w.id]=w; S.order.push(w.id); n++; }
+          if (Array.isArray(d.refs)) { S.refs = S.refs || []; d.refs.forEach(r => { const x = normWork(r, true); if (x){ x.id = uid(); S.refs.push(x); } }); }
+          saveNow(); toast("작품 "+n+"개 추가"); renderApp("backup"); }},"작품만 추가"))),
     h("div",{class:"card"}, h("h3",null,"⚠️ 초기화"),
-      h("button",{class:"btn d",onclick:()=>confirmSheet("모든 작품과 설정을 지우고 처음 상태로 돌릴까요?","초기화",()=>{S=seed();save();toast("초기화했어요");})},"전부 초기화")),
+      h("button",{class:"btn d",onclick:()=>confirmSheet("모든 작품과 설정을 지우고 처음 상태로 돌릴까요? (AI 키는 그대로)","초기화",()=>{S=seed();normalizeState();saveNow();toast("초기화했어요");renderApp("backup");})},"전부 초기화")),
     h("p",{class:"tiny",style:"text-align:center"},"제타 스튜디오 · 내 작품 "+S.order.length+"개 · 참고 작품 "+((S.refs||[]).length)+"개")
   );
 };
 
-document.addEventListener("DOMContentLoaded", route);
+document.addEventListener("DOMContentLoaded", () => { try { normalizeState(); } catch(e){ console.error(e); } route(); });
 if ("serviceWorker" in navigator && location.protocol === "https:" && !/claude/i.test(location.hostname)) { try { navigator.serviceWorker.register("studio-sw.js").catch(()=>{}); } catch(e){} }
 </script>
 <script src="gif.js"></script>

@@ -240,7 +240,7 @@ function runEncode(job, onProg){
   return new Promise((res, rej) => {
     const mainThread = () => setTimeout(() => { try { res(encodeGIF(job, onProg)); } catch(e){ rej(e); } }, 30);
     let wk = null;
-    try { wk = new Worker(URL.createObjectURL(new Blob([GIF_ENGINE_SRC], { type: "text/javascript" }))); } catch(e){ wk = null; }
+    try { const u = URL.createObjectURL(new Blob([GIF_ENGINE_SRC], { type: "text/javascript" })); wk = new Worker(u); setTimeout(() => URL.revokeObjectURL(u), 5000); } catch(e){ wk = null; }
     if (!wk) return mainThread();
     let ok = false;
     wk.onmessage = e => {
@@ -369,6 +369,17 @@ function decodeGIF(buf){
 const G = { frames: [], sel: 0, result: null, resultUrl: null };
 function srcOpts(key, d){ S.gifSrc = S.gifSrc || {}; const o = S.gifSrc[key] = (S.gifSrc[key] && typeof S.gifSrc[key] === "object") ? S.gifSrc[key] : {}; for (const k in d) if (!(k in o)) o[k] = d[k]; return o; }
 const sleep = ms => new Promise(r => setTimeout(r, ms));
+/* 버튼 연타 방지: 실행 중엔 같은 작업을 다시 시작하지 않음 */
+function once(btnLabel, fn){
+  let busy = false;
+  const b = h("button", { class:"btn v", onclick: async () => {
+    if (busy) return toast("만드는 중이에요… 잠시만요");
+    busy = true; b.disabled = true; const old = b.textContent; b.textContent = "⏳ " + old;
+    try { await fn(); } catch(e){ toast("⚠ " + (e && e.message || e)); }
+    busy = false; b.disabled = false; b.textContent = old;
+  } }, btnLabel);
+  return b;
+}
 function mkCanvas(w, h){ const c = document.createElement("canvas"); c.width = w; c.height = h; return c; }
 const dimOf = s => [s.naturalWidth || s.videoWidth || s.width, s.naturalHeight || s.videoHeight || s.height];
 function toCanvas(src, maxDim){
@@ -484,8 +495,10 @@ function srcPhoto(box){
       status.textContent = "불러오는 중…";
       try {
         files.sort((a, b) => a.name.localeCompare(b.name, "ko", { numeric:true }));
-        const imgs = [];
-        for (const f of files) imgs.push(await loadImg(f));
+        const imgs = []; let bad = 0;
+        for (const f of files){ try { imgs.push(await loadImg(f)); } catch(e){ bad++; } }
+        if (!imgs.length) throw new Error("사진을 하나도 못 읽었어요 (HEIC면 JPG로 바꿔 주세요)");
+        if (bad) toast(bad + "장은 못 읽어서 뺐어요");
         let cvs = imgs.map(im => toCanvas(im, 720));
         const list = [];
         if (P.fade && cvs.length > 1){
@@ -524,7 +537,7 @@ function srcVideo(box){
       lab("길이 (초)", h("input", { type:"number", min:0.5, max:15, step:0.5, value:P.len, oninput:e => { P.len = Math.min(15, +e.target.value || 3); save(); } })),
       lab("초당 프레임", sel([[5,"5"],[8,"8"],[10,"10"],[12,"12"],[15,"15"],[20,"20"]], P.fps, v => { P.fps = +v; save(); })),
       lab("크기 (긴 쪽)", sel([[240,"240"],[320,"320"],[400,"400"],[480,"480"],[640,"640"]], P.max, v => { P.max = +v; save(); }))),
-    h("div", { class:"btns" }, h("button", { class:"btn v", onclick: extract }, "🎞 프레임 뽑기")),
+    h("div", { class:"btns" }, once("🎞 프레임 뽑기", extract)),
   );
   startIn.oninput = () => { startLbl.textContent = (+startIn.value).toFixed(1) + "초"; vid.currentTime = +startIn.value; };
   const seek = t => new Promise(res => {
@@ -537,14 +550,16 @@ function srcVideo(box){
     try { vid.muted = true; await vid.play(); } catch(e){}
     vid.pause();
     if (vid.readyState < 2) await new Promise(r => { const t = setTimeout(r, 2500); vid.addEventListener("loadeddata", () => { clearTimeout(t); r(); }, { once:true }); });
+    const dur = isFinite(vid.duration) ? vid.duration : 1e9;
     const st = +startIn.value, n = Math.max(1, Math.round(P.len * P.fps)), dt = 1 / P.fps, list = [];
     for (let i = 0; i < n; i++){
-      const t = st + i*dt; if (t > vid.duration - 0.01) break;
+      const t = st + i*dt; if (t > dur - 0.01) break;
       await seek(t);
       list.push({ c: toCanvas(vid, P.max), d: Math.round(1000 / P.fps) });
       status.textContent = `프레임 뽑는 중… ${i+1}/${n}`;
     }
     status.textContent = "";
+    if (!list.length) return toast("프레임을 못 뽑았어요. 시작 위치를 앞으로 옮겨 보세요");
     addFrames(list);
   }
   box.append(
@@ -554,7 +569,11 @@ function srcVideo(box){
       G.videoUrl = URL.createObjectURL(files[0]);
       vid.src = G.videoUrl; vid.classList.remove("hidden");
       status.textContent = "영상 읽는 중…";
-      vid.onloadedmetadata = () => { startIn.max = Math.max(0, vid.duration - 0.1); startIn.value = 0; startIn.oninput(); ctl.classList.remove("hidden"); status.textContent = `길이 ${vid.duration.toFixed(1)}초 · ${vid.videoWidth}×${vid.videoHeight}`; };
+      vid.onloadedmetadata = () => {
+        const d = isFinite(vid.duration) ? vid.duration : 60;
+        startIn.max = Math.max(0, d - 0.1); startIn.value = 0; startIn.oninput(); ctl.classList.remove("hidden");
+        status.textContent = `길이 ${isFinite(vid.duration) ? vid.duration.toFixed(1) + "초" : "알 수 없음"} · ${vid.videoWidth}×${vid.videoHeight}`;
+      };
       vid.onerror = () => { status.textContent = "⚠ 이 영상 형식은 이 브라우저에서 못 열어요"; };
       vid.load();
     })),
@@ -599,11 +618,13 @@ function srcDraw(box){
     pageLbl.textContent = `${D.cur + 1} / ${D.pages.length}`;
   }
   const pos = e => { const r = stage.getBoundingClientRect(), c = D.pages[D.cur].c; return { x: (e.clientX - r.left) * c.width / r.width, y: (e.clientY - r.top) * c.height / r.height }; };
-  const pushUndo = pg => { pg.u.push(pg.c.getContext("2d").getImageData(0, 0, pg.c.width, pg.c.height)); if (pg.u.length > 20) pg.u.shift(); };
+  const pushUndo = pg => { pg.u.push(pg.c.getContext("2d").getImageData(0, 0, pg.c.width, pg.c.height)); if (pg.u.length > 12) pg.u.shift(); };
   const ink = (ctx) => { ctx.lineCap = "round"; ctx.lineJoin = "round"; ctx.lineWidth = D.size; ctx.strokeStyle = ctx.fillStyle = D.color; ctx.globalCompositeOperation = D.tool === "eraser" ? "destination-out" : "source-over"; };
-  let drawing = false, last = null;
+  let drawing = false, last = null, pid = null;
   stage.addEventListener("pointerdown", e => {
     e.preventDefault();
+    if (drawing && e.pointerId !== pid) return;   // 두 번째 손가락 무시
+    pid = e.pointerId;
     const pg = D.pages[D.cur], p = pos(e);
     pushUndo(pg);
     if (D.tool === "fill"){ floodFill(pg.c, Math.floor(p.x), Math.floor(p.y), D.color); return; }
@@ -614,13 +635,13 @@ function srcDraw(box){
     ctx.globalCompositeOperation = "source-over";
   });
   stage.addEventListener("pointermove", e => {
-    if (!drawing) return;
+    if (!drawing || e.pointerId !== pid) return;
     const ctx = D.pages[D.cur].c.getContext("2d"); ink(ctx);
     const evs = e.getCoalescedEvents ? e.getCoalescedEvents() : [e];
     for (const ev of (evs.length ? evs : [e])){ const p = pos(ev); ctx.beginPath(); ctx.moveTo(last.x, last.y); ctx.lineTo(p.x, p.y); ctx.stroke(); last = p; }
     ctx.globalCompositeOperation = "source-over";
   });
-  const up = () => { drawing = false; };
+  const up = e => { if (e.pointerId === pid) drawing = false; };
   stage.addEventListener("pointerup", up); stage.addEventListener("pointercancel", up);
 
   const COLORS = ["#222222","#ffffff","#ff3b5c","#ff8a3d","#ffd43b","#3ddc97","#3a8bff","#8b5cf6","#ff7eb6","#8d6e63","#9ca3af","#f5d0a9"];
@@ -633,9 +654,10 @@ function srcDraw(box){
   box.append(
     h("div", { class:"muted" }, "한 장씩 그려서 넘기는 플립북이에요. 🧅 어니언을 켜면 앞 장이 흐리게 비쳐요."),
     h("div", { class:"row", style:"margin:8px 0" },
-      sel([["1:1","1:1"],["3:5","3:5"],["9:16","9:16"],["4:3","4:3"],["16:9","16:9"]], D.ratio, v => {
-        confirmSheet("비율을 바꾸면 그린 장이 모두 지워져요.", "바꾸기", () => { D.ratio = v; D.pages = [newPage()]; D.cur = 0; show(); });
-      }, "width:auto"),
+      (() => { const rs = sel([["1:1","1:1"],["3:5","3:5"],["9:16","9:16"],["4:3","4:3"],["16:9","16:9"]], D.ratio, v => {
+        rs.value = D.ratio;
+        confirmSheet("비율을 바꾸면 그린 장이 모두 지워져요.", "바꾸기", () => { D.ratio = v; rs.value = v; D.pages = [newPage()]; D.cur = 0; show(); });
+      }, "width:auto"); return rs; })(),
       h("div", { class:"grow" }, h("input", { type:"range", min:1, max:48, value:D.size, oninput:e => { D.size = +e.target.value; } }))),
     toolBox, h("div", { style:"margin:8px 0" }, swBox),
     stage,
@@ -649,7 +671,7 @@ function srcDraw(box){
     h("div", { class:"btns" },
       h("button", { class:"btn sm", onclick:() => { D.pages.splice(D.cur + 1, 0, newPage()); D.cur++; show(); } }, "＋ 빈 장"),
       h("button", { class:"btn sm", onclick:() => { const src = D.pages[D.cur].c, np = newPage(); np.c.getContext("2d").drawImage(src, 0, 0); D.pages.splice(D.cur + 1, 0, np); D.cur++; show(); } }, "⧉ 복제해서 다음 장"),
-      h("button", { class:"btn sm d", onclick:() => { if (D.pages.length < 2){ const pg = D.pages[0]; pg.c.getContext("2d").clearRect(0, 0, pg.c.width, pg.c.height); return; } D.pages.splice(D.cur, 1); show(); } }, "🗑 장 삭제"),
+      h("button", { class:"btn sm d", onclick:() => { if (D.pages.length < 2){ const pg = D.pages[0]; pushUndo(pg); pg.c.getContext("2d").clearRect(0, 0, pg.c.width, pg.c.height); return; } confirmSheet((D.cur + 1) + "번 장을 지울까요?", "지우기", () => { D.pages.splice(D.cur, 1); show(); }); } }, "🗑 장 삭제"),
       G.frames.length ? h("button", { class:"btn sm", onclick:() => {
         confirmSheet("편집기의 " + G.frames.length + "프레임을 그리기 장으로 가져올까요? (위에 덧그리기용)", "가져오기", () => {
           const [w, hh] = dims(D.ratio), o = GO();
@@ -757,10 +779,11 @@ function srcText(box){
     lab("글자 크기", h("input", { type:"range", min:5, max:30, value:T.size, oninput:e => { T.size = +e.target.value; sv(); } })),
     h("label", { class:"check", style:"border:0" }, h("input", { type:"checkbox", checked:T.stroke, onchange:e => { T.stroke = e.target.checked; sv(); } }), "테두리"),
     h("label", { class:"check", style:"border:0" }, h("input", { type:"checkbox", checked:T.transparent, onchange:e => { T.transparent = e.target.checked; sv(); } }), "배경 투명 (스티커용)"),
-    h("div", { class:"btns" }, h("button", { class:"btn v", onclick: async () => {
+    h("div", { class:"btns" }, once("🔤 글자 GIF 만들기", async () => {
+      if (!T.text.trim()) return toast("글자를 입력해 주세요");
       const fr = await renderTextFrames(T);
       addFrames(fr, () => { const o = GO(); o.transparent = T.transparent; o.fit = "contain"; o.optimize = !T.transparent; o.cap = ""; });
-    } }, "🔤 글자 GIF 만들기"))
+    }))
   );
 }
 
@@ -801,9 +824,9 @@ function srcScroll(box){
     h("div", { class:"btns" }, filePick("📜 세로툰 이미지 고르기", "image/*", true, async files => {
       files.sort((a, b) => a.name.localeCompare(b.name, "ko", { numeric:true }));
       status.textContent = "불러오는 중…";
-      G.scrollImgs = [];
-      for (const f of files) G.scrollImgs.push(await loadImg(f));
-      status.textContent = ""; showList();
+      G.scrollImgs = []; let bad = 0;
+      for (const f of files){ try { G.scrollImgs.push(await loadImg(f)); } catch(e){ bad++; } }
+      status.textContent = bad ? `⚠ ${bad}장은 못 읽었어요` : ""; showList();
     })),
     listBox,
     h("div", { class:"g3" },
@@ -811,7 +834,7 @@ function srcScroll(box){
       lab("가로 (px)", sel([[240,"240"],[320,"320"],[360,"360"],[480,"480"]], P.width, v => { P.width = +v; save(); })),
       lab("처음/끝 멈춤", sel([[0,"없음"],[0.5,"0.5초"],[1,"1초"],[2,"2초"]], P.pause, v => { P.pause = +v; save(); }))),
     lab("내려가는 속도", h("input", { type:"range", min:1, max:12, value:P.speed, oninput:e => { P.speed = +e.target.value; save(); } })),
-    h("div", { class:"btns" }, h("button", { class:"btn v", onclick: build }, "📜 스크롤 GIF 만들기")),
+    h("div", { class:"btns" }, once("📜 스크롤 GIF 만들기", build)),
     status
   );
   showList();
@@ -909,7 +932,7 @@ function srcFx(box){
   const showThumb = () => { thumb.replaceChildren(); if (G.fxImg){ const c = toCanvas(G.fxImg, 160); c.style.cssText = "border-radius:10px;margin-top:8px;max-height:120px"; thumb.append(c); } };
   box.append(
     h("div", { class:"muted" }, "사진 한 장에 움직이는 효과를 입혀요. 캐릭터 프로필, 웹툰 강조 컷용."),
-    h("div", { class:"btns" }, filePick("🖼 사진 고르기", "image/*", false, async files => { G.fxImg = await loadImg(files[0]); showThumb(); })),
+    h("div", { class:"btns" }, filePick("🖼 사진 고르기", "image/*", false, async files => { try { G.fxImg = await loadImg(files[0]); showThumb(); } catch(e){ toast("⚠ " + e.message); } })),
     thumb,
     lab("효과", sel(FX, F.fx, v => { F.fx = v; save(); })),
     h("div", { class:"g3" },
@@ -919,10 +942,11 @@ function srcFx(box){
     h("div", { class:"g2" },
       lab("세기", sel([[1,"약하게"],[2,"보통"],[3,"강하게"]], F.power, v => { F.power = +v; save(); })),
       lab("집중선 색", h("input", { type:"color", value:F.color, oninput:e => { F.color = e.target.value; save(); } }))),
-    h("div", { class:"btns" }, h("button", { class:"btn v", onclick:() => {
+    h("div", { class:"btns" }, once("✨ 효과 GIF 만들기", async () => {
       if (!G.fxImg) return toast("사진을 먼저 골라 주세요");
+      await sleep(30);
       addFrames(renderFxFrames(G.fxImg, F), () => { GO().fit = "cover"; });
-    } }, "✨ 효과 GIF 만들기"))
+    }))
   );
   showThumb();
 }
@@ -1006,6 +1030,7 @@ function renderEditor(ed){
   const resBox = h("div");
   const makeBtn = h("button", { class:"btn p", style:"width:100%;padding:13px;font-size:15px", onclick: make }, "🎞 GIF 만들기");
   async function make(){
+    if (!G.frames.length) return toast("프레임이 없어요");
     makeBtn.disabled = true; bar.classList.remove("hidden"); resBox.replaceChildren();
     const setP = (p, msg) => { bar.firstChild.style.width = Math.round(p*100) + "%"; barTxt.textContent = msg || (p < .1 ? "색 분석 중…" : p < .8 ? "색 줄이고 프레임 정리 중…" : "LZW 압축 중…") + " " + Math.round(p*100) + "%"; };
     try {
@@ -1043,7 +1068,9 @@ function renderEditor(ed){
         h("button", { class:"btn", onclick: spriteSheet }, "🧩 스프라이트 PNG"))
     );
   }
+  let recording = false;
   async function recordVideo(){
+    if (recording) return toast("녹화 중이에요… 잠시만요");
     if (!window.MediaRecorder || !HTMLCanvasElement.prototype.captureStream) return toast("이 브라우저는 동영상 저장을 못 해요");
     const mt = ["video/mp4;codecs=avc1", "video/mp4", "video/webm;codecs=vp9", "video/webm"].find(t => { try { return MediaRecorder.isTypeSupported(t); } catch(e){ return false; } });
     if (!mt) return toast("이 브라우저는 동영상 저장을 못 해요");
@@ -1056,16 +1083,22 @@ function renderEditor(ed){
     const draw = f => { compose(f, ctx, W, H, oo); if (o.filter !== "none"){ const im = ctx.getImageData(0, 0, W, H); gifFilter(im.data, o.filter); ctx.putImageData(im, 0, 0); } };
     const sq = seqOf(o), dur = sq.reduce((s, i) => s + G.frames[i].d, 0), reps = Math.max(1, Math.min(10, Math.ceil(3000 / dur)));
     draw(G.frames[sq[0]]);
-    const stream = cv.captureStream(30), chunks = [];
-    const rec = new MediaRecorder(stream, { mimeType: mt, videoBitsPerSecond: 5e6 });
-    rec.ondataavailable = e => { if (e.data && e.data.size) chunks.push(e.data); };
-    const stopped = new Promise(r => rec.onstop = r);
-    rec.start(200);
-    for (let r = 0; r < reps; r++) for (const i of sq){ draw(G.frames[i]); await sleep(G.frames[i].d); }
-    rec.stop(); await stopped;
-    note.remove(); cv.remove();
-    const blob = new Blob(chunks, { type: mt.split(";")[0] });
-    saveFile(fname(mt.includes("mp4") ? "mp4" : "webm"), blob, "이 화면에서는 파일 저장이 안 돼요");
+    recording = true;
+    try {
+      const stream = cv.captureStream(30), chunks = [];
+      const rec = new MediaRecorder(stream, { mimeType: mt, videoBitsPerSecond: 5e6 });
+      rec.ondataavailable = e => { if (e.data && e.data.size) chunks.push(e.data); };
+      const stopped = new Promise(r => { rec.onstop = r; rec.onerror = r; });
+      rec.start(200);
+      for (let r = 0; r < reps; r++) for (const i of sq){ if (!G.frames[i]) break; draw(G.frames[i]); await sleep(G.frames[i].d); }
+      if (rec.state !== "inactive") rec.stop();
+      await Promise.race([stopped, sleep(4000)]);
+      stream.getTracks().forEach(t => t.stop());
+      const blob = new Blob(chunks, { type: mt.split(";")[0] });
+      if (!blob.size) throw new Error("녹화된 내용이 없어요");
+      saveFile(fname(mt.includes("mp4") ? "mp4" : "webm"), blob, "이 화면에서는 파일 저장이 안 돼요");
+    } catch(e){ toast("⚠ 동영상 저장 실패: " + (e && e.message || e)); }
+    finally { recording = false; note.remove(); cv.remove(); }
   }
   function spriteSheet(){
     const { W, H } = outSize(o), n = G.frames.length, cols = Math.ceil(Math.sqrt(n)), rows = Math.ceil(n / cols);
