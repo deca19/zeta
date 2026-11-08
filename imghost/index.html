@@ -90,12 +90,13 @@ button:disabled{opacity:.5}
     <div class="row3">
       <div><label>파일명 방식</label><select id="mode"><option value="code">캐릭터_상황</option><option value="num">넘버링 1,2,3</option></select></div>
       <div><label>긴 변 최대(px, 0=원본)</label><input id="maxside" type="number" value="1600" min="0"></div>
-      <div><label>품질 (1~100)</label><input id="q" type="number" value="62" min="1" max="100"></div>
+      <div><label>품질 (1~100)</label><input id="q" type="number" value="60" min="1" max="100"></div>
     </div>
     <div class="row">
       <div><label>저장 형식</label><select id="fmtimg"><option value="avif">AVIF — 같은 화질에 용량 최소 (추천)</option><option value="webp">WebP — 변환 빠름</option></select></div>
-      <div><label>&nbsp;</label><p class="hint" style="margin:6px 0 0">AVIF는 WebP보다 30~50% 작아요. 품질 62 ≈ WebP 88 화질.</p></div>
+      <div><label>압축 모드 (AVIF)</label><select id="cmode"><option value="fast">균형 — 빠름</option><option value="max">최대 압축 — 약 15% 더 작음, 3~4배 느림</option></select></div>
     </div>
+    <p class="hint">AVIF 10비트로 저장해서 하늘·피부 그라데이션이 계단지지 않고, WebP보다 30~50% 작아요. 여러 장은 동시에 변환돼요.</p>
     <div class="drop" id="drop" style="margin-top:10px">눌러서 이미지 선택 (여러 장)<br><small>드래그 · 복사 후 붙여넣기(Ctrl+V)도 돼요</small></div>
     <input type="file" id="file" accept="image/*" multiple hidden>
     <div id="queue"></div>
@@ -150,7 +151,7 @@ button:disabled{opacity:.5}
 
 <script>
 const $=s=>document.querySelector(s);
-const LS='imghost_cfg2';
+const LS='imghost_cfg3';
 let cfg={}, sb=null, B='images', folders=[], cur=null, files=[], sel=new Set(), queue=[], fmt='compact';
 
 const toast=(m,ms=2000)=>{const t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(toast._t);toast._t=setTimeout(()=>t.classList.remove('show'),ms)};
@@ -179,7 +180,7 @@ let si=+(cfg.store||0); if(!STORES[si]) si=0;
 const clients=window.supabase?STORES.map(s=>supabase.createClient(s.url,s.key)):[];
 const usage=STORES.map(()=>null);
 cfg.url=STORES[si].url;cfg.key=STORES[si].key;cfg.bucket=STORES[si].bucket;
-['maxside','q','mode','lead','fmtimg'].forEach(k=>{if(cfg[k]!=null)$('#'+k).value=cfg[k]; $('#'+k).addEventListener('change',()=>{cfg[k]=$('#'+k).value;saveCfg(); if(k==='mode')renderQueue()})});
+['maxside','q','mode','lead','fmtimg','cmode'].forEach(k=>{if(cfg[k]!=null)$('#'+k).value=cfg[k]; $('#'+k).addEventListener('change',()=>{cfg[k]=$('#'+k).value;saveCfg(); if(k==='mode')renderQueue()})});
 function saveCfg(){try{localStorage.setItem(LS,JSON.stringify(cfg))}catch(e){}}
 
 async function boot(){
@@ -329,18 +330,26 @@ $('#del-folder').onclick=async()=>{
 // ---------- 업로드 큐 ----------
 const mode=()=>$('#mode').value;
 // AVIF 인코더는 별도 워커에서 (화면 안 멈춤)
-let avifW=null, avifSeq=0, avifCb={};
-function avifWorker(){
-  if(!avifW){
-    avifW=new Worker('./avif-worker.js',{type:'module'});
-    avifW.onmessage=e=>{const c=avifCb[e.data.id];delete avifCb[e.data.id];if(!c)return;e.data.error?c.rej(new Error(e.data.error)):c.res(e.data.buf)};
-    avifW.onerror=()=>{Object.values(avifCb).forEach(c=>c.rej(new Error('worker')));avifCb={};avifW=null};
+const POOL=Math.max(1,Math.min(2,(navigator.hardwareConcurrency||2)-1));
+let workers=[], avifSeq=0, avifCb={}, rr=0;
+function getWorker(){
+  if(!workers.length){
+    for(let i=0;i<POOL;i++){
+      const w=new Worker('./avif-worker.js',{type:'module'});
+      w.onmessage=e=>{const c=avifCb[e.data.id];delete avifCb[e.data.id];if(!c)return;e.data.error?c.rej(new Error(e.data.error)):c.res(e.data.buf)};
+      w.onerror=()=>{Object.values(avifCb).forEach(c=>c.rej(new Error('worker')));avifCb={};workers.forEach(x=>x.terminate());workers=[]};
+      workers.push(w);
+    }
   }
-  return avifW;
+  return workers[(rr++)%workers.length];
 }
-function encAvif(img,q){return new Promise((res,rej)=>{const id=++avifSeq;avifCb[id]={res,rej};avifWorker().postMessage({id,data:img.data,width:img.width,height:img.height,quality:q,speed:6},[img.data.buffer])})}
+function encAvif(img,q){
+  const max=$('#cmode').value==='max';
+  return new Promise((res,rej)=>{const id=++avifSeq;avifCb[id]={res,rej};
+    getWorker().postMessage({id,data:img.data,width:img.width,height:img.height,quality:max?Math.max(1,q-2):q,speed:max?5:6},[img.data.buffer])});
+}
 async function convert(file){
-  const max=+$('#maxside').value||0, q=Math.min(100,Math.max(1,+$('#q').value||62)), fmt=$('#fmtimg').value;
+  const max=+$('#maxside').value||0, q=Math.min(100,Math.max(1,+$('#q').value||60)), fmt=$('#fmtimg').value;
   if(file.type==='image/gif') return {blob:file,ext:'gif'}; // 움짤은 그대로
   const bmp=await createImageBitmap(file);
   let w=bmp.width,h=bmp.height; const resized=max&&Math.max(w,h)>max;
@@ -365,14 +374,22 @@ async function convert(file){
 function guessSit(fname){ return toCode(fname.replace(/\.[^.]+$/,'')) }
 async function enqueue(list){
   if(!cur) return toast('먼저 폴더를 고르세요');
-  const imgs=list.filter(f=>f.type.startsWith('image/')); let n=0;
-  for(const f of imgs){
-    toast(`변환 중 ${++n}/${imgs.length}…`,60000);
-    try{const {blob,ext}=await convert(f); queue.push({blob,ext,orig:f.size,sit:guessSit(f.name),prev:URL.createObjectURL(blob)})}
-    catch(e){toast('변환 실패: '+f.name)}
-    renderQueue();
-  }
-  toast(`${imgs.length}장 준비됨`);
+  const imgs=list.filter(f=>f.type.startsWith('image/')); if(!imgs.length) return;
+  const par=$('#fmtimg').value==='avif'?POOL:1; let next=0, done=0;
+  const slots=imgs.map(()=>null);
+  toast(`변환 중 0/${imgs.length}…`,600000);
+  const run=async()=>{
+    while(next<imgs.length){
+      const i=next++, f=imgs[i];
+      try{const {blob,ext}=await convert(f); slots[i]={blob,ext,orig:f.size,sit:guessSit(f.name),prev:URL.createObjectURL(blob)}}
+      catch(e){slots[i]=false}
+      toast(`변환 중 ${++done}/${imgs.length}…`,600000);
+    }
+  };
+  await Promise.all(Array.from({length:Math.min(par,imgs.length)},run));
+  const fail=slots.filter(x=>x===false).length;
+  slots.forEach(x=>x&&queue.push(x)); renderQueue();
+  toast(fail?`${imgs.length-fail}장 준비됨, ${fail}장 변환 실패`:`${imgs.length}장 준비됨`,3000);
 }
 function queueNames(){
   const taken=new Set(files.map(f=>f.name));
