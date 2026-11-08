@@ -103,8 +103,17 @@ button:disabled{opacity:.5}
     <datalist id="sits"></datalist>
     <div class="bar" id="qbar" hidden>
       <label style="margin:0;display:flex;gap:6px;align-items:center;width:auto"><input type="checkbox" id="upsert" style="width:auto"> 같은 이름 덮어쓰기</label>
+      <button id="ai-fill">✨ AI로 상황 채우기</button>
       <button class="pri" id="upload">업로드</button><button id="qclear">비우기</button>
     </div>
+    <details id="ai-box" style="margin-top:10px">
+      <summary style="cursor:pointer;font-size:13px;color:var(--mute)">AI 설정 (Gemini 무료 키)</summary>
+      <div class="row" style="margin-top:6px">
+        <div><label>Gemini API 키</label><input id="ai-key" type="password" placeholder="AIza..." autocomplete="off"></div>
+        <div><label>모델</label><input id="ai-model" value="gemini-3.8-flash"></div>
+      </div>
+      <p class="hint">키는 <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a> 에서 무료로 발급(카드 필요 없음). 이 기기에만 저장돼요. 무료 키로 보낸 이미지는 구글이 서비스 개선에 쓸 수 있어요. 직접 입력한 상황은 AI가 덮어쓰지 않아요.</p>
+    </details>
     <p class="hint">상황 이름은 영문/숫자/_ 만 가능해요 (Supabase가 한글 파일명을 막음). 한글로 쓰면 자주 쓰는 건 자동 변환돼요: 기본→default, 웃음→smile …</p>
   </div>
 
@@ -189,7 +198,7 @@ let si=+(cfg.store||0); if(!STORES[si]) si=0;
 const clients=window.supabase?STORES.map(s=>supabase.createClient(s.url,s.key)):[];
 const usage=STORES.map(()=>null);
 cfg.url=STORES[si].url;cfg.key=STORES[si].key;cfg.bucket=STORES[si].bucket;
-['maxside','q','mode','lead','fmtimg','cmode'].forEach(k=>{if(cfg[k]!=null)$('#'+k).value=cfg[k]; $('#'+k).addEventListener('change',()=>{cfg[k]=$('#'+k).value;saveCfg(); if(k==='mode')renderQueue()})});
+['maxside','q','mode','lead','fmtimg','cmode','ai-key','ai-model'].forEach(k=>{if(cfg[k]!=null)$('#'+k).value=cfg[k]; $('#'+k).addEventListener('change',()=>{cfg[k]=$('#'+k).value;saveCfg(); if(k==='mode')renderQueue()})});
 function saveCfg(){try{localStorage.setItem(LS,JSON.stringify(cfg))}catch(e){}}
 
 async function boot(){
@@ -424,7 +433,7 @@ function renderQueue(){
       ${mode()==='code'?`<input list="sits" placeholder="상황 (예: 웃음, smile)" value="${esc(r.sit)}">`:''}
       <div class="meta">${esc(names[i])} · ${kb(r.blob.size)} (원본 ${kb(r.orig)})${taken.has(names[i])?' · <b style="color:var(--bad)">이미 있음</b>':''}</div></div>
       <button class="sm" data-x>✕</button>`;
-    const inp=d.querySelector('input'); if(inp) inp.addEventListener('change',()=>{r.sit=toCode(inp.value);renderQueue()});
+    const inp=d.querySelector('input'); if(inp) inp.addEventListener('change',()=>{r.sit=toCode(inp.value);r.manual=true;renderQueue()});
     d.querySelector('[data-x]').onclick=()=>{URL.revokeObjectURL(r.prev);queue.splice(i,1);renderQueue()};
     Q.appendChild(d);
   });
@@ -441,6 +450,73 @@ document.addEventListener('paste',ev=>{
   const fs=[...ev.clipboardData.files].filter(f=>f.type.startsWith('image/'));
   if(fs.length){ev.preventDefault();enqueue(fs.map((f,i)=>new File([f],f.name&&f.name!=='image.png'?f.name:`paste${Date.now()}${i}.png`,{type:f.type})))}
 });
+// ---------- AI 상황 판단 (Gemini) ----------
+const AI_FALLBACK=['gemini-3.8-flash','gemini-3.6-flash','gemini-3.5-flash-lite'];
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+async function thumb64(blob){
+  const bmp=await createImageBitmap(blob); const k=Math.min(1,640/Math.max(bmp.width,bmp.height));
+  const cv=document.createElement('canvas');cv.width=Math.round(bmp.width*k);cv.height=Math.round(bmp.height*k);
+  const cx=cv.getContext('2d');cx.imageSmoothingQuality='high';cx.drawImage(bmp,0,0,cv.width,cv.height);bmp.close&&bmp.close();
+  const b=await new Promise(r=>cv.toBlob(r,'image/jpeg',.85));
+  return await new Promise(r=>{const fr=new FileReader();fr.onload=()=>r(fr.result.split(',')[1]);fr.readAsDataURL(b)});
+}
+async function askGemini(model,key,b64,prompt){
+  for(let tryN=0;tryN<4;tryN++){
+    const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`,{
+      method:'POST',headers:{'Content-Type':'application/json','x-goog-api-key':key},
+      body:JSON.stringify({contents:[{role:'user',parts:[{inline_data:{mime_type:'image/jpeg',data:b64}},{text:prompt}]}],
+        generationConfig:{temperature:0.2,responseMimeType:'application/json',
+          responseSchema:{type:'OBJECT',properties:{code:{type:'STRING'},ko:{type:'STRING'}},required:['code']}}})});
+    const j=await res.json().catch(()=>({}));
+    if(res.ok){
+      const txt=(j.candidates?.[0]?.content?.parts||[]).map(p=>p.text||'').join('');
+      try{return JSON.parse(txt)}catch(e){const m=txt.match(/[a-z][a-z0-9_]*/i);return {code:m?m[0]:''}}
+    }
+    if(res.status===429){
+      const d=(j.error?.details||[]).find(x=>x.retryDelay); const sec=d?parseFloat(d.retryDelay):15*(tryN+1);
+      toast(`무료 한도 대기 중… ${Math.ceil(sec)}초`,sec*1000); await sleep(sec*1000+500); continue;
+    }
+    const err=new Error(j.error?.message||('HTTP '+res.status)); err.status=res.status; throw err;
+  }
+  throw new Error('무료 한도 초과 — 잠시 후 다시');
+}
+$('#ai-fill').onclick=async()=>{
+  const key=$('#ai-key').value.trim();
+  if(!key){$('#ai-box').open=true;$('#ai-key').focus();return toast('Gemini API 키를 먼저 넣어 주세요 (무료)',3500)}
+  if(mode()!=='code') return toast('파일명 방식이 "캐릭터_상황"일 때만 써요');
+  const targets=queue.filter(r=>!r.manual); if(!targets.length) return toast('채울 이미지가 없어요 (직접 쓴 건 건너뜀)');
+  const btn=$('#ai-fill'); btn.disabled=true;
+  let models=[$('#ai-model').value.trim()||AI_FALLBACK[0],...AI_FALLBACK].filter((m,i,a)=>a.indexOf(m)===i);
+  const known=[...new Set(Object.values(DICT))];
+  const usedHere=new Set(files.map(f=>f.name.replace(/\.[^.]+$/,'').replace(`${cur}_`,'')));
+  queue.filter(r=>r.manual).forEach(r=>usedHere.add(r.sit));
+  let ok=0;
+  try{
+    for(let i=0;i<targets.length;i++){
+      const r=targets[i]; btn.textContent=`AI 판단 중 ${i+1}/${targets.length}`;
+      const prompt=`캐릭터 채팅(캐챗)에 쓸 캐릭터 일러스트야. 이 그림의 표정·상황을 나타내는 상황 코드 1개를 정해.
+규칙:
+- 코드는 영어 소문자, 1~2단어, 단어 사이는 _ (예: smile, angry, cry, battle_pose)
+- 가능하면 이 목록에서 골라: ${known.join(', ')}
+- 목록에 맞는 게 없으면 그림을 잘 설명하는 짧은 코드를 새로 만들어
+- 이미 쓰인 코드와 겹치지 않게, 겹치면 더 구체적으로 (이미 쓰인 코드: ${[...usedHere].join(', ')||'없음'})
+code에 코드, ko에 한국어 한두 단어 설명을 넣어.`;
+      const b64=await thumb64(r.blob);
+      let ans=null;
+      while(models.length){
+        try{ans=await askGemini(models[0],key,b64,prompt);break}
+        catch(e){ if(e.status===404||/not found|not supported/i.test(e.message)){models.shift();continue} throw e }
+      }
+      if(!ans) throw new Error('쓸 수 있는 Gemini 모델이 없어요 — 모델 이름을 확인하세요');
+      let c=toCode(ans.code||''); if(!c) continue;
+      let base=c,k=2; while(usedHere.has(c)) c=`${base}_${k++}`;
+      r.sit=c; usedHere.add(c); ok++; renderQueue();
+    }
+    toast(`AI가 ${ok}장 채웠어요 · 틀린 건 칸에서 고치세요`,3500);
+  }catch(e){
+    toast('AI 실패: '+(/API key not valid|API_KEY_INVALID/i.test(e.message)?'키가 잘못됐어요':e.message),5000);
+  }finally{btn.disabled=false;btn.textContent='✨ AI로 상황 채우기';}
+};
 $('#qclear').onclick=()=>{queue.forEach(r=>URL.revokeObjectURL(r.prev));queue=[];renderQueue()};
 $('#upload').onclick=async()=>{
   if(!cur||!queue.length) return;
