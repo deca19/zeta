@@ -122,17 +122,26 @@ button:disabled{opacity:.5}
 
   <!-- 코드 -->
   <div class="card">
-    <h2>프롬프트 코드 만들기 (선택한 이미지, 없으면 폴더 전체)</h2>
+    <h2>프롬프트 코드 만들기</h2>
+    <label>범위</label>
+    <div class="chips" id="scope" style="margin-bottom:6px">
+      <span class="chip on" data-s="one">현재 캐릭터 (선택한 것만, 없으면 전체)</span>
+      <span class="chip" data-s="all">모든 캐릭터 합치기</span>
+    </div>
+    <label>형식</label>
     <div class="chips" id="fmt">
       <span class="chip on" data-f="compact">압축형 (칸 절약)</span>
       <span class="chip" data-f="list">상황별 나열</span>
       <span class="chip" data-f="md">마크다운만</span>
+      <span class="chip" data-f="lore">로어북용</span>
+      <span class="chip" data-f="table">마크다운 표</span>
       <span class="chip" data-f="url">주소만</span>
     </div>
     <label>앞 문구</label>
     <input id="lead" value="응답 마지막 줄에 현재 상황에 가장 맞는 이미지를 아래 형식 그대로 1장 출력. 목록에 없는 코드는 절대 만들지 말 것.">
     <div class="bar"><button class="pri" id="gen">만들기</button><button id="copy">복사</button><span class="stat" id="chars"></span></div>
-    <textarea id="out" style="margin-top:10px" readonly></textarea>
+    <textarea id="out" style="margin-top:10px;min-height:180px" readonly></textarea>
+    <p class="hint" id="fmt-hint"></p>
   </div>
 </div>
 
@@ -454,29 +463,77 @@ $('#upload').onclick=async()=>{
 };
 
 // ---------- 코드 생성 ----------
+let scope='one';
+const HINT={
+  compact:'상황 코드 방식: 주소 형식을 한 번만 쓰고 코드만 나열해 프롬프트 칸을 아껴요. 여러 캐릭터면 공통 코드와 캐릭터 전용 코드로 나눠 줘요.',
+  list:'상황마다 주소를 다 적어요. 칸은 더 먹지만 AI가 헷갈릴 일이 가장 적어요.',
+  lore:'캐릭터마다 로어북 항목 1개씩 만들어요. 키워드(보통 캐릭터 이름)가 대화에 나올 때만 불러와서 메인 프롬프트 칸을 거의 안 써요. 키워드는 실제 캐릭터 이름으로 바꾸세요.',
+  table:'상태창·도감처럼 이미지를 표 안에 넣을 때 쓰는 마크다운 표예요.',
+  md:'이미지 마크다운만 한 줄씩. 단독 이미지(특정 장면 1장)를 넣을 때 써요.',
+  url:'주소만 한 줄씩.'
+};
 $('#fmt').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{fmt=c.dataset.f;$('#fmt').querySelectorAll('.chip').forEach(x=>x.classList.toggle('on',x===c));gen()});
-function gen(){
-  if(!cur) return;
-  let list=files.filter(f=>sel.has(f.name)); if(!list.length) list=files;
-  if(!list.length){$('#out').value='';$('#chars').textContent='';return toast('이미지가 없어요')}
-  const base=pub(`${cur}/`).replace(/\/?$/,'/');
-  const lead=$('#lead').value.trim(); let out='';
-  const stem=n=>n.replace(/\.[^.]+$/,''), ext=n=>n.slice(n.lastIndexOf('.'));
+$('#scope').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{scope=c.dataset.s;$('#scope').querySelectorAll('.chip').forEach(x=>x.classList.toggle('on',x===c));gen()});
+async function listFolder(f){
+  if(f===cur) return files;
+  const {data}=await sb.storage.from(B).list(f,{limit:1000,sortBy:{column:'name',order:'asc'}});
+  return (data||[]).filter(o=>o.id!==null&&!o.name.startsWith('.')).map(o=>({name:o.name})).sort((a,b)=>natural(a.name,b.name));
+}
+const stemOf=n=>n.replace(/\.[^.]+$/,''), extOf=n=>n.slice(n.lastIndexOf('.'));
+// 캐릭터 1명 정보: 코드 목록(접두어 제거), 확장자, 주소
+function charInfo(f,list){
+  const pre=`${f}_`, base=pub(`${f}/`).replace(/\/?$/,'/');
+  const items=list.map(x=>{const s=stemOf(x.name);return {code:s.startsWith(pre)?s.slice(pre.length):s,file:x.name,url:base+x.name}});
+  const exts=[...new Set(list.map(x=>extOf(x.name)))], allPre=list.every(x=>x.name.startsWith(pre));
+  return {f,items,ext:exts.length===1?exts[0]:null,allPre,base};
+}
+async function gen(){
+  if(!cur&&scope==='one') return;
+  $('#fmt-hint').textContent=HINT[fmt]||'';
+  let chars=[];
+  if(scope==='one'){
+    let list=files.filter(f=>sel.has(f.name)); if(!list.length) list=files;
+    if(list.length) chars=[charInfo(cur,list)];
+  } else {
+    $('#out').value='불러오는 중…';
+    const all=await Promise.all(folders.map(async f=>[f,await listFolder(f)]));
+    chars=all.filter(([,l])=>l.length).map(([f,l])=>charInfo(f,l));
+  }
+  if(!chars.length){$('#out').value='';$('#chars').textContent='';return toast('이미지가 없어요')}
+  const lead=$('#lead').value.trim(), L=lead?lead+'\n':'';
+  const root=pub('').replace(/\/?$/,'/');
+  const total=chars.reduce((s,c)=>s+c.items.length,0);
+  const tmplOf=c=>c.ext&&c.allPre?`![](${c.base}${c.f}_{상황}${c.ext})`:null;
+  let out='';
   if(fmt==='compact'){
-    // 확장자/접두어가 모두 같으면 공통 부분을 한 번만 쓰고 코드만 나열 (DC글의 '상황 코드' 방식)
-    const exts=[...new Set(list.map(f=>ext(f.name)))];
-    const pre=`${cur}_`, allPre=list.every(f=>f.name.startsWith(pre));
-    if(exts.length===1){
-      const codes=list.map(f=>{const s=stem(f.name);return allPre?s.slice(pre.length):s});
-      const tmpl=`![](${base}${allPre?pre:''}{코드}${exts[0]})`;
-      out=(lead?lead+'\n':'')+`형식: ${tmpl}\n코드: ${codes.join(', ')}`;
-    } else out=(lead?lead+'\n':'')+list.map(f=>`![](${base}${f.name})`).join('\n');
+    const same=chars.every(c=>c.ext&&c.allPre&&c.ext===chars[0].ext);
+    if(chars.length===1){
+      const c=chars[0], t=tmplOf(c);
+      out=t?`${L}형식: ${t}\n상황: ${c.items.map(i=>i.code).join(', ')}`:L+c.items.map(i=>`![](${i.url})`).join('\n');
+    } else if(same){
+      const sets=chars.map(c=>new Set(c.items.map(i=>i.code)));
+      const common=[...sets[0]].filter(x=>sets.every(s=>s.has(x)));
+      out=`${L}형식: ![](${root}{캐릭터}/{캐릭터}_{상황}${chars[0].ext})\n캐릭터: ${chars.map(c=>c.f).join(', ')}`;
+      if(common.length) out+=`\n공통 상황: ${common.join(', ')}`;
+      const own=chars.map(c=>[c.f,c.items.map(i=>i.code).filter(x=>!common.includes(x))]).filter(([,l])=>l.length);
+      if(own.length) out+=`\n전용 상황:\n`+own.map(([f,l])=>`- ${f}: ${l.join(', ')}`).join('\n');
+      out+=`\n(캐릭터와 상황은 위 목록에 있는 것만 사용)`;
+    } else {
+      out=L+chars.map(c=>{const t=tmplOf(c);return t?`[${c.f}] 형식: ${t}\n상황: ${c.items.map(i=>i.code).join(', ')}`:`[${c.f}]\n`+c.items.map(i=>`${i.code}: ![](${i.url})`).join('\n')}).join('\n\n');
+    }
   } else if(fmt==='list'){
-    const pre=`${cur}_`;
-    out=(lead?lead+'\n':'')+list.map(f=>{let s=stem(f.name);if(s.startsWith(pre))s=s.slice(pre.length);return `- ${s}: ![](${base}${f.name})`}).join('\n');
-  } else if(fmt==='md') out=list.map(f=>`![](${base}${f.name})`).join('\n');
-  else out=list.map(f=>base+f.name).join('\n');
-  $('#out').value=out; $('#chars').textContent=`${out.length}자 · ${list.length}장`;
+    out=L+chars.map(c=>(chars.length>1?`[${c.f}]\n`:'')+c.items.map(i=>`- ${i.code}: ![](${i.url})`).join('\n')).join('\n\n');
+  } else if(fmt==='lore'){
+    const main=`[메인 프롬프트에 넣을 것]\n${lead||'응답 마지막 줄에 현재 장면의 캐릭터 이미지를 해당 로어북의 형식대로 1장 출력. 목록에 없는 상황은 만들지 말 것.'}`;
+    const entries=chars.map(c=>{const t=tmplOf(c);
+      const body=t?`${c.f} 이미지 형식: ${t}\n${c.f} 상황: ${c.items.map(i=>i.code).join(', ')}`:c.items.map(i=>`${c.f} ${i.code}: ![](${i.url})`).join('\n');
+      return `[로어북 항목 — 키워드: ${c.f} ← 실제 캐릭터 이름으로 바꾸기]\n${body}`});
+    out=main+'\n\n'+entries.join('\n\n');
+  } else if(fmt==='table'){
+    out=chars.map(c=>(chars.length>1?`**${c.f}**\n\n`:'')+`| 상황 | 이미지 |\n|---|---|\n`+c.items.map(i=>`| ${i.code} | ![](${i.url}) |`).join('\n')).join('\n\n');
+  } else if(fmt==='md') out=chars.flatMap(c=>c.items.map(i=>`![](${i.url})`)).join('\n');
+  else out=chars.flatMap(c=>c.items.map(i=>i.url)).join('\n');
+  $('#out').value=out; $('#chars').textContent=`${out.length}자 · ${chars.length}캐릭터 · ${total}장`;
 }
 $('#gen').onclick=gen;
 $('#copy').onclick=()=>{if(!$('#out').value)gen(); copy($('#out').value)};
