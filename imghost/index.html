@@ -109,10 +109,10 @@ button:disabled{opacity:.5}
     <details id="ai-box" style="margin-top:10px">
       <summary style="cursor:pointer;font-size:13px;color:var(--mute)">AI 설정 (Gemini 무료 키)</summary>
       <div class="row" style="margin-top:6px">
-        <div><label>Gemini API 키</label><input id="ai-key" type="password" placeholder="AIza..." autocomplete="off"></div>
+        <div><label>Gemini API 키 <span id="ai-saved" style="color:var(--ac)"></span></label><input id="ai-key" type="password" placeholder="AIza..." autocomplete="off"></div>
         <div><label>모델</label><input id="ai-model" value="gemini-3.8-flash"></div>
       </div>
-      <p class="hint">키는 <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a> 에서 무료로 발급(카드 필요 없음). 이 기기에만 저장돼요. 무료 키로 보낸 이미지는 구글이 서비스 개선에 쓸 수 있어요. 직접 입력한 상황은 AI가 덮어쓰지 않아요.</p>
+      <p class="hint">키는 <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a> 에서 무료로 발급(카드 필요 없음). 한 번 넣으면 내 계정에 저장돼서 다시 안 써도 돼요(다른 기기에서도). 무료 키로 보낸 이미지는 구글이 서비스 개선에 쓸 수 있어요. 직접 입력한 상황은 AI가 덮어쓰지 않아요.</p>
     </details>
     <p class="hint">상황 이름은 영문/숫자/_ 만 가능해요 (Supabase가 한글 파일명을 막음). 한글로 쓰면 자주 쓰는 건 자동 변환돼요: 기본→default, 웃음→smile …</p>
   </div>
@@ -198,7 +198,25 @@ let si=+(cfg.store||0); if(!STORES[si]) si=0;
 const clients=window.supabase?STORES.map(s=>supabase.createClient(s.url,s.key)):[];
 const usage=STORES.map(()=>null);
 cfg.url=STORES[si].url;cfg.key=STORES[si].key;cfg.bucket=STORES[si].bucket;
-['maxside','q','mode','lead','fmtimg','cmode','ai-key','ai-model'].forEach(k=>{if(cfg[k]!=null)$('#'+k).value=cfg[k]; $('#'+k).addEventListener('change',()=>{cfg[k]=$('#'+k).value;saveCfg(); if(k==='mode')renderQueue()})});
+['maxside','q','mode','lead','fmtimg','cmode','ai-key','ai-model'].forEach(k=>{if(cfg[k]!=null)$('#'+k).value=cfg[k]; ['input','change'].forEach(ev=>$('#'+k).addEventListener(ev,()=>{cfg[k]=$('#'+k).value;saveCfg(); if(k==='mode'&&ev==='change')renderQueue(); if(k.startsWith('ai-'))syncAiCloud()}))});
+// AI 키는 계정에도 저장 → 브라우저를 지우거나 다른 기기에서 열어도 그대로
+let aiT=null;
+function syncAiCloud(){
+  clearTimeout(aiT); aiT=setTimeout(async()=>{
+    if(!sb) return; const {data:{session}}=await sb.auth.getSession(); if(!session) return;
+    const key=$('#ai-key').value.trim(), model=$('#ai-model').value.trim();
+    const md=session.user.user_metadata||{}; if(md.gemini_key===key&&md.gemini_model===model) return;
+    const {error}=await sb.auth.updateUser({data:{gemini_key:key,gemini_model:model}});
+    $('#ai-saved').textContent=error?'⚠ 계정 저장 실패(이 기기에는 저장됨)':(key?'✓ 저장됨 — 다음에도 그대로 있어요':'');
+  },800);
+}
+function loadAiCloud(session){
+  const md=session.user.user_metadata||{};
+  if(md.gemini_key&&!$('#ai-key').value){$('#ai-key').value=md.gemini_key;cfg['ai-key']=md.gemini_key}
+  if(md.gemini_model&&!cfg['ai-model']){$('#ai-model').value=md.gemini_model;cfg['ai-model']=md.gemini_model}
+  saveCfg();
+  if($('#ai-key').value){$('#ai-saved').textContent='✓ 저장된 키 사용 중'; if(!md.gemini_key) syncAiCloud()}
+}
 function saveCfg(){try{localStorage.setItem(LS,JSON.stringify(cfg))}catch(e){}}
 
 async function boot(){
@@ -207,7 +225,7 @@ async function boot(){
   B=STORES[si].bucket; sb=clients[si];
   const {data:{session}}=await sb.auth.getSession();
   if(!session){$('#btn-out').hidden=true;$('#btn-pw').hidden=true;return show('#v-login')}
-  $('#btn-out').hidden=false; $('#btn-pw').hidden=false; show('#v-app'); renderStores(); await loadFolders(); measureAll();
+  $('#btn-out').hidden=false; $('#btn-pw').hidden=false; show('#v-app'); loadAiCloud(session); renderStores(); await loadFolders(); measureAll();
 }
 function renderStores(){
   $('#stores-box').hidden=STORES.length<2;
