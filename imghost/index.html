@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>내 이미지 호스팅</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{--bg:#f6f5f2;--card:#fff;--ink:#1d1d1f;--mute:#6b6b70;--line:#e4e2dc;--ac:#3b5bdb;--acs:#e8edff;--bad:#d6336c}
+@media(prefers-color-scheme:dark){:root{--bg:#141416;--card:#1e1e21;--ink:#f0f0f2;--mute:#9a9aa2;--line:#2e2e33;--ac:#8ea2ff;--acs:#262c4a;--bad:#ff7aa2}}
+*{box-sizing:border-box}
+body{margin:0 auto;background:var(--bg);color:var(--ink);font:15px/1.5 -apple-system,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;padding:14px;max-width:860px}
+h1{font-size:19px;margin:4px 0 12px;display:flex;justify-content:space-between;align-items:center}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px}
+.card h2{font-size:14px;margin:0 0 10px;color:var(--mute);font-weight:600}
+label{display:block;font-size:12px;color:var(--mute);margin:8px 0 3px}
+input,select,textarea{width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:9px;background:var(--bg);color:var(--ink);font:inherit}
+textarea{font-family:ui-monospace,Menlo,monospace;font-size:12.5px;min-height:110px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+button{border:1px solid var(--line);background:var(--card);color:var(--ink);padding:9px 12px;border-radius:9px;font:inherit;cursor:pointer}
+button.pri,button.on{background:var(--ac);border-color:var(--ac);color:#fff}
+button.bad{color:var(--bad)}
+button.sm{padding:5px 9px;font-size:12px}
+button:disabled{opacity:.5}
+.bar{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;align-items:center}
+.hint{font-size:12px;color:var(--mute);margin:6px 0 0}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{padding:6px 12px;border-radius:99px;border:1px solid var(--line);background:var(--card);font-size:13px;cursor:pointer}
+.chip.on{background:var(--ac);color:#fff;border-color:var(--ac)}
+.drop{border:2px dashed var(--line);border-radius:14px;text-align:center;padding:22px 10px;color:var(--mute);cursor:pointer}
+.drop.over{border-color:var(--ac);background:var(--acs)}
+.q{display:grid;grid-template-columns:52px 1fr auto;gap:8px;align-items:center;padding:8px 0;border-top:1px solid var(--line)}
+.q img{width:52px;height:52px;object-fit:cover;border-radius:8px}
+.q .meta{font-size:11.5px;color:var(--mute)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}
+.tile{border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--bg);position:relative}
+.tile img{width:100%;aspect-ratio:1;object-fit:cover;display:block;cursor:pointer}
+.tile .nm{font-size:12px;padding:6px 8px 2px;word-break:break-all}
+.tile .sz{font-size:11px;color:var(--mute);padding:0 8px 6px}
+.tile .ck{position:absolute;top:6px;left:6px;width:22px;height:22px}
+.tile .ops{display:flex;gap:4px;padding:0 6px 8px;flex-wrap:wrap}
+.tile .ops button{flex:1;padding:4px 0;font-size:11.5px}
+.stat{font-size:12px;color:var(--mute)}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:16px;z-index:9}
+.modal[hidden]{display:none}
+.modal .box{background:var(--card);border-radius:14px;padding:16px;max-width:420px;width:100%}
+.toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:99px;font-size:13px;opacity:0;transition:.25s;pointer-events:none;z-index:10;max-width:90vw;text-align:center}
+.toast.show{opacity:1}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+
+<h1><span>내 이미지 호스팅</span><button class="sm" id="btn-out" hidden>로그아웃</button></h1>
+
+<!-- 설정 -->
+<div class="card" id="v-setup" hidden>
+  <h2>처음 설정 (한 번만)</h2>
+  <label>Supabase Project URL</label><input id="s-url" placeholder="https://xxxx.supabase.co">
+  <label>anon public key</label><input id="s-key" placeholder="eyJhbGciOi...">
+  <label>버킷 이름</label><input id="s-bucket" value="images">
+  <div class="bar"><button class="pri" id="s-save">저장</button></div>
+  <p class="hint">Supabase 대시보드 → Project Settings → API 에서 복사하세요. 이 브라우저에만 저장됩니다.</p>
+</div>
+
+<!-- 로그인 -->
+<div class="card" id="v-login" hidden>
+  <h2>로그인</h2>
+  <label>이메일</label><input id="l-email" type="email" autocomplete="username">
+  <label>비밀번호</label><input id="l-pw" type="password" autocomplete="current-password">
+  <div class="bar"><button class="pri" id="l-go">로그인</button></div>
+</div>
+
+<div id="v-app" hidden>
+  <!-- 폴더 -->
+  <div class="card">
+    <h2>저장소 (각 1GB 무료 · 눌러서 전환)</h2>
+    <div class="chips" id="stores" style="margin-bottom:12px"></div>
+    <h2>캐릭터 폴더</h2>
+    <div class="chips" id="folders"></div>
+    <div class="bar"><input id="new-folder" placeholder="새 폴더 (영문, 예: knight)" style="flex:1"><button id="add-folder">추가</button></div>
+    <p class="stat" id="usage"></p>
+  </div>
+
+  <!-- 업로드 -->
+  <div class="card">
+    <h2>업로드 → <b id="cur-name">폴더를 고르세요</b></h2>
+    <div class="row3">
+      <div><label>파일명 방식</label><select id="mode"><option value="code">캐릭터_상황</option><option value="num">넘버링 1,2,3</option></select></div>
+      <div><label>긴 변 최대(px, 0=원본)</label><input id="maxside" type="number" value="1024" min="0"></div>
+      <div><label>WebP 품질</label><input id="q" type="number" value="0.85" min="0.5" max="1" step="0.05"></div>
+    </div>
+    <div class="drop" id="drop" style="margin-top:10px">눌러서 이미지 선택 (여러 장)<br><small>드래그 · 복사 후 붙여넣기(Ctrl+V)도 돼요</small></div>
+    <input type="file" id="file" accept="image/*" multiple hidden>
+    <div id="queue"></div>
+    <datalist id="sits"></datalist>
+    <div class="bar" id="qbar" hidden>
+      <label style="margin:0;display:flex;gap:6px;align-items:center;width:auto"><input type="checkbox" id="upsert" style="width:auto"> 같은 이름 덮어쓰기</label>
+      <button class="pri" id="upload">업로드</button><button id="qclear">비우기</button>
+    </div>
+    <p class="hint">상황 이름은 영문/숫자/_ 만 가능해요 (Supabase가 한글 파일명을 막음). 한글로 쓰면 자주 쓰는 건 자동 변환돼요: 기본→default, 웃음→smile …</p>
+  </div>
+
+  <!-- 갤러리 -->
+  <div class="card">
+    <h2>이미지 <span id="cnt"></span></h2>
+    <div class="bar" style="margin-top:0;margin-bottom:10px">
+      <button class="sm" id="sel-all">전체 선택</button><button class="sm" id="sel-none">선택 해제</button>
+      <button class="sm bad" id="del-sel">선택 삭제</button><button class="sm" id="refresh">새로고침</button>
+      <button class="sm bad" id="del-folder">폴더 통째 삭제</button>
+    </div>
+    <input id="search" placeholder="파일명 검색" style="margin-bottom:10px">
+    <div class="grid" id="grid"></div>
+  </div>
+
+  <!-- 코드 -->
+  <div class="card">
+    <h2>프롬프트 코드 만들기 (선택한 이미지, 없으면 폴더 전체)</h2>
+    <div class="chips" id="fmt">
+      <span class="chip on" data-f="compact">압축형 (칸 절약)</span>
+      <span class="chip" data-f="list">상황별 나열</span>
+      <span class="chip" data-f="md">마크다운만</span>
+      <span class="chip" data-f="url">주소만</span>
+    </div>
+    <label>앞 문구</label>
+    <input id="lead" value="응답 마지막 줄에 현재 상황에 가장 맞는 이미지를 아래 형식 그대로 1장 출력. 목록에 없는 코드는 절대 만들지 말 것.">
+    <div class="bar"><button class="pri" id="gen">만들기</button><button id="copy">복사</button><span class="stat" id="chars"></span></div>
+    <textarea id="out" style="margin-top:10px" readonly></textarea>
+  </div>
+</div>
+
+<div class="modal" id="m-ren" hidden><div class="box">
+  <h2 style="margin:0 0 8px;font-size:15px">이름 바꾸기</h2>
+  <input id="ren-in">
+  <div class="bar"><button class="pri" id="ren-ok">변경</button><button id="ren-no">취소</button></div>
+</div></div>
+
+<div class="modal" id="m-cf" hidden><div class="box">
+  <p id="cf-msg" style="margin:0 0 6px"></p>
+  <div class="bar"><button class="pri bad" id="cf-ok" style="color:#fff;background:var(--bad);border-color:var(--bad)">삭제</button><button id="cf-no">취소</button></div>
+</div></div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const $=s=>document.querySelector(s);
+const LS='imghost_cfg';
+let cfg={}, sb=null, B='images', folders=[], cur=null, files=[], sel=new Set(), queue=[], fmt='compact';
+
+const toast=(m,ms=2000)=>{const t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(toast._t);toast._t=setTimeout(()=>t.classList.remove('show'),ms)};
+const show=id=>['#v-setup','#v-login','#v-app'].forEach(v=>$(v).hidden=v!==id);
+const kb=n=>n>1048576?(n/1048576).toFixed(1)+'MB':Math.round((n||0)/1024)+'KB';
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+// 자주 쓰는 상황: 한글 → 코드
+const DICT={기본:'default',평소:'default',웃음:'smile',미소:'smile',행복:'happy',기쁨:'happy',화남:'angry',분노:'angry',슬픔:'sad',울음:'cry',눈물:'cry',놀람:'surprised',당황:'flustered',부끄러움:'shy',수줍음:'shy',홍조:'blush',짜증:'annoyed',삐짐:'pout',걱정:'worried',무서움:'scared',공포:'scared',졸림:'sleepy',잠:'sleep',수면:'sleep',생각:'thinking',고민:'thinking',자신감:'smug',의기양양:'smug',진지:'serious',전투:'battle',공격:'attack',부상:'hurt',피곤:'tired',식사:'eating',먹기:'eating',윙크:'wink',사랑:'love',설렘:'love',경멸:'disgust',혐오:'disgust',무표정:'blank',피곤함:'tired',승리:'victory',패배:'defeat',기도:'pray',치유:'heal',변신:'transform'};
+$('#sits').innerHTML=Object.entries(DICT).map(([k,v])=>`<option value="${v}">${k}</option>`).join('');
+function toCode(s){
+  s=(s||'').trim(); if(!s) return '';
+  return s.split(/[\s_\-]+/).map(w=>DICT[w]||w).join('_')
+    .toLowerCase().replace(/[^a-z0-9_\-]+/g,'').replace(/_+/g,'_').replace(/^_|_$/g,'');
+}
+const cleanFolder=s=>(s||'').trim().toLowerCase().replace(/[^a-z0-9_\-]+/g,'_').replace(/^_+|_+$/g,'');
+
+// ---------- 시작 ----------
+try{cfg=JSON.parse(localStorage.getItem(LS)||'{}')}catch(e){}
+// 저장소 목록 — Supabase 무료 프로젝트 1개당 1GB, 여러 개 합쳐서 사용 (anon key는 공개용 키라 넣어둬도 안전)
+const STORES=[
+  {name:'저장소 1',url:'https://xscxtgnvtylkaiozqqrl.supabase.co',key:'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhzY3h0Z252dHlsa2Fpb3pxcXJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUwNDM3MDksImV4cCI6MjEwMDYxOTcwOX0.OI6xtF0lge5M-9CnN0Z5-fswtsUaptdzPUr8VRGjnIM',bucket:'chat-images'},
+  {name:'저장소 2',url:'https://djkvbaylazqpnydosksg.supabase.co',key:'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRqa3ZiYXlsYXpxcG55ZG9za3NnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI4NDI4NTksImV4cCI6MjEwODQxODg1OX0.PMiuxop7t1m1O_-E0lkXtnzusLMjnzLhz0tdqhDQRl8',bucket:'chat-images'}
+];
+const QUOTA=1024*1048576;
+let si=+(cfg.store||0); if(!STORES[si]) si=0;
+const clients=window.supabase?STORES.map(s=>supabase.createClient(s.url,s.key)):[];
+const usage=STORES.map(()=>null);
+cfg.url=STORES[si].url;cfg.key=STORES[si].key;cfg.bucket=STORES[si].bucket;
+['maxside','q','mode','lead'].forEach(k=>{if(cfg[k]!=null)$('#'+k).value=cfg[k]; $('#'+k).addEventListener('change',()=>{cfg[k]=$('#'+k).value;saveCfg(); if(k==='mode')renderQueue()})});
+function saveCfg(){try{localStorage.setItem(LS,JSON.stringify(cfg))}catch(e){}}
+
+async function boot(){
+  if(!cfg.url||!cfg.key){ $('#s-url').value=cfg.url||''; $('#s-key').value=cfg.key||''; $('#s-bucket').value=cfg.bucket||'images'; return show('#v-setup'); }
+  if(!window.supabase){toast('Supabase 라이브러리를 못 불러왔어요. 인터넷 확인',4000);return}
+  B=STORES[si].bucket; sb=clients[si];
+  const {data:{session}}=await sb.auth.getSession();
+  if(!session){$('#btn-out').hidden=true;return show('#v-login')}
+  $('#btn-out').hidden=false; show('#v-app'); renderStores(); await loadFolders(); measureAll();
+}
+function renderStores(){
+  $('#stores').innerHTML=STORES.map((s,i)=>{
+    const u=usage[i]; const t=u==null?'…':`${kb(u)} / 1GB`;
+    return `<span class="chip ${i===si?'on':''}" data-i="${i}">${s.name} · ${t}</span>`}).join('');
+  $('#stores').querySelectorAll('.chip').forEach(c=>c.onclick=async()=>{
+    const i=+c.dataset.i; if(i===si) return;
+    const {data:{session}}=await clients[i].auth.getSession();
+    if(!session) return toast(`${STORES[i].name}에 로그인이 안 돼 있어요. 그 프로젝트에도 같은 계정을 만들고 다시 로그인하세요.`,4500);
+    si=i;cfg.store=i;saveCfg();folders=[];cur=null;files=[];sel.clear();boot();
+  });
+}
+// 저장소별 전체 사용량 계산 (가득 차면 다른 저장소 추천)
+async function measureAll(){
+  await Promise.all(STORES.map(async(s,i)=>{
+    const c=clients[i]; const {data:{session}}=await c.auth.getSession(); if(!session) return;
+    const st=c.storage.from(s.bucket);
+    const {data:top}=await st.list('',{limit:1000}); if(!top) return;
+    let sum=0;
+    await Promise.all(top.map(async o=>{
+      if(o.id!==null){sum+=o.metadata?.size||0;return}
+      const {data}=await st.list(o.name,{limit:1000}); (data||[]).forEach(f=>sum+=f.metadata?.size||0);
+    }));
+    usage[i]=sum;
+  }));
+  renderStores();
+  if(usage[si]!=null&&usage[si]>QUOTA*0.9){
+    const alt=usage.findIndex((u,i)=>i!==si&&u!=null&&u<QUOTA*0.8);
+    toast(`${STORES[si].name}이 거의 찼어요${alt>=0?` — ${STORES[alt].name}로 바꿔서 올리세요`:''}`,5000);
+  }
+}
+$('#s-save').onclick=()=>{
+  const url=$('#s-url').value.trim().replace(/\/+$/,''), key=$('#s-key').value.trim();
+  if(!/^https:\/\/.+/.test(url)||key.length<20) return toast('URL과 key를 확인하세요');
+  cfg.url=url;cfg.key=key;cfg.bucket=$('#s-bucket').value.trim()||'images';saveCfg();boot();
+};
+// 같은 이메일/비번으로 모든 저장소에 한 번에 로그인
+$('#l-go').onclick=async()=>{
+  const email=$('#l-email').value.trim(), password=$('#l-pw').value;
+  const res=await Promise.all(clients.map(c=>c.auth.signInWithPassword({email,password})));
+  const okIdx=res.map((r,i)=>r.error?-1:i).filter(i=>i>=0);
+  if(!okIdx.length) return toast('로그인 실패: '+res[0].error.message,3500);
+  if(okIdx.length<clients.length) toast(`${res.map((r,i)=>r.error?STORES[i].name:'').filter(Boolean).join(', ')} 로그인 실패 — 그 프로젝트에도 같은 계정을 만들어 주세요`,5000);
+  if(!okIdx.includes(si)){si=okIdx[0];cfg.store=si;saveCfg()}
+  boot();
+};
+$('#l-pw').addEventListener('keydown',e=>{if(e.key==='Enter')$('#l-go').click()});
+$('#btn-out').onclick=async()=>{await Promise.all(clients.map(c=>c.auth.signOut()));boot()};
+
+// ---------- 폴더 ----------
+async function loadFolders(){
+  const {data,error}=await sb.storage.from(B).list('',{limit:1000,sortBy:{column:'name',order:'asc'}});
+  if(error) return toast('목록 실패: '+error.message+' (setup.sql 실행했는지 확인)',4500);
+  const found=data.filter(o=>o.id===null).map(o=>o.name);
+  folders=[...new Set([...found,...folders])].sort();
+  if(!cur&&cfg.last&&folders.includes(cfg.last)) cur=cfg.last;
+  if(!cur&&folders.length) cur=folders[0];
+  renderFolders(); if(cur) await loadFiles(); else renderFiles();
+}
+function renderFolders(){
+  $('#folders').innerHTML=folders.length?folders.map(f=>`<span class="chip ${f===cur?'on':''}" data-f="${esc(f)}">${esc(f)}</span>`).join(''):'<span class="stat">아직 폴더가 없어요. 아래에서 추가하세요.</span>';
+  $('#folders').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{cur=c.dataset.f;cfg.last=cur;saveCfg();sel.clear();renderFolders();loadFiles()});
+  $('#cur-name').textContent=cur||'폴더를 고르세요';
+  renderQueue();
+}
+$('#add-folder').onclick=()=>{
+  const f=cleanFolder($('#new-folder').value); if(!f) return toast('영문/숫자로 입력하세요');
+  if(!folders.includes(f)) folders.push(f); folders.sort(); cur=f; cfg.last=f; saveCfg();
+  $('#new-folder').value=''; sel.clear(); renderFolders(); loadFiles();
+  toast('폴더는 첫 업로드 때 실제로 만들어져요');
+};
+
+// ---------- 파일 ----------
+async function loadFiles(){
+  if(!cur){files=[];return renderFiles()}
+  const {data,error}=await sb.storage.from(B).list(cur,{limit:1000,sortBy:{column:'name',order:'asc'}});
+  if(error) return toast('불러오기 실패: '+error.message,3500);
+  files=data.filter(o=>o.id!==null&&!o.name.startsWith('.')).map(o=>({name:o.name,size:o.metadata?.size||0,t:o.updated_at||''}));
+  files.sort((a,b)=>natural(a.name,b.name));
+  renderFiles();
+}
+const natural=(a,b)=>a.localeCompare(b,undefined,{numeric:true});
+const pub=p=>sb.storage.from(B).getPublicUrl(p).data.publicUrl;
+function renderFiles(){
+  $('#cnt').textContent=files.length?`(${files.length}장)`:'';
+  const total=files.reduce((s,f)=>s+f.size,0);
+  $('#usage').textContent=cur?`${cur}: ${files.length}장 · ${kb(total)} · Supabase 무료 저장공간 1GB`:'';
+  $('#grid').innerHTML=files.length?'':'<span class="stat">이미지가 없어요.</span>';
+  const term=($('#search').value||'').trim().toLowerCase();
+  files.filter(f=>!term||f.name.toLowerCase().includes(term)).forEach(f=>{
+    const p=`${cur}/${f.name}`, u=pub(p);
+    const d=document.createElement('div');d.className='tile';
+    d.innerHTML=`<input type="checkbox" class="ck" ${sel.has(f.name)?'checked':''}>
+      <img loading="lazy" src="${esc(u)}?v=${encodeURIComponent(f.t)}" alt="">
+      <div class="nm">${esc(f.name)}</div><div class="sz">${kb(f.size)}</div>
+      <div class="ops"><button data-a="url">주소</button><button data-a="md">MD</button><button data-a="ren">이름</button><button data-a="del" class="bad">삭제</button></div>`;
+    d.querySelector('.ck').onchange=e=>{e.target.checked?sel.add(f.name):sel.delete(f.name)};
+    d.querySelector('img').onclick=()=>{const c=d.querySelector('.ck');c.checked=!c.checked;c.onchange({target:c})};
+    d.querySelectorAll('.ops button').forEach(b=>b.onclick=()=>fileAct(b.dataset.a,f));
+    $('#grid').appendChild(d);
+  });
+}
+async function fileAct(a,f){
+  const p=`${cur}/${f.name}`;
+  if(a==='url') return copy(pub(p));
+  if(a==='md') return copy(`![](${pub(p)})`);
+  if(a==='del'){ if(await confirmBox(`${f.name} 삭제할까요?`)) await removeNames([f.name]); return }
+  if(a==='ren'){
+    const ext=f.name.includes('.')?f.name.slice(f.name.lastIndexOf('.')):'';
+    const nn=await renameBox(f.name.slice(0,f.name.length-ext.length)); if(!nn) return;
+    const base=mode()==='num'?nn.replace(/[^0-9a-z_\-]/gi,''):toCode(nn); if(!base) return toast('영문/숫자로 입력하세요');
+    const to=`${cur}/${base}${ext}`; if(to===p) return;
+    if(files.some(x=>x.name===base+ext)) return toast('같은 이름이 이미 있어요');
+    const {error}=await sb.storage.from(B).move(p,to);
+    if(error) return toast('실패: '+error.message,3500);
+    sel.delete(f.name); toast('바꿨어요'); loadFiles();
+  }
+}
+async function removeNames(names){
+  const {error}=await sb.storage.from(B).remove(names.map(n=>`${cur}/${n}`));
+  if(error) return toast('삭제 실패: '+error.message,3500);
+  names.forEach(n=>sel.delete(n)); toast(`${names.length}장 삭제`); loadFiles(); measureAll();
+}
+$('#sel-all').onclick=()=>{files.forEach(f=>sel.add(f.name));renderFiles()};
+$('#sel-none').onclick=()=>{sel.clear();renderFiles()};
+$('#del-sel').onclick=async()=>{const n=[...sel].filter(x=>files.some(f=>f.name===x)); if(!n.length)return toast('선택한 게 없어요'); if(await confirmBox(`${n.length}장을 삭제할까요? 되돌릴 수 없어요.`)) removeNames(n)};
+$('#refresh').onclick=()=>loadFolders();
+$('#search').addEventListener('input',renderFiles);
+$('#del-folder').onclick=async()=>{
+  if(!cur||!files.length) return toast('비어 있는 폴더예요');
+  if(!await confirmBox(`'${cur}' 폴더의 ${files.length}장을 전부 삭제할까요? 주소가 모두 끊겨요.`)) return;
+  const names=files.map(f=>f.name);
+  for(let i=0;i<names.length;i+=100){const {error}=await sb.storage.from(B).remove(names.slice(i,i+100).map(n=>`${cur}/${n}`)); if(error) return toast('삭제 실패: '+error.message,3500)}
+  folders=folders.filter(f=>f!==cur); cur=folders[0]||null; sel.clear(); toast('폴더 삭제됨'); renderFolders(); loadFiles();
+};
+
+// ---------- 업로드 큐 ----------
+const mode=()=>$('#mode').value;
+async function convert(file){
+  const max=+$('#maxside').value||0, q=Math.min(1,Math.max(.5,+$('#q').value||.85));
+  if(file.type==='image/gif') return {blob:file,ext:'gif'}; // 움짤은 그대로
+  const bmp=await createImageBitmap(file);
+  let w=bmp.width,h=bmp.height;
+  if(max&&Math.max(w,h)>max){const k=max/Math.max(w,h);w=Math.round(w*k);h=Math.round(h*k)}
+  const cv=document.createElement('canvas');cv.width=w;cv.height=h;cv.getContext('2d').drawImage(bmp,0,0,w,h);
+  const blob=await new Promise(r=>cv.toBlob(r,'image/webp',q));
+  if(blob&&blob.type==='image/webp') return {blob,ext:'webp'};
+  const png=await new Promise(r=>cv.toBlob(r,'image/png'));
+  return {blob:png,ext:'png'};
+}
+function guessSit(fname){ return toCode(fname.replace(/\.[^.]+$/,'')) }
+async function enqueue(list){
+  if(!cur) return toast('먼저 폴더를 고르세요');
+  for(const f of list){
+    if(!f.type.startsWith('image/')) continue;
+    try{const {blob,ext}=await convert(f); queue.push({blob,ext,orig:f.size,sit:guessSit(f.name),prev:URL.createObjectURL(blob)})}
+    catch(e){toast('변환 실패: '+f.name)}
+  }
+  renderQueue();
+}
+function queueNames(){
+  const taken=new Set(files.map(f=>f.name));
+  let next=files.reduce((m,f)=>{const n=parseInt(f.name,10);return /^\d+\./.test(f.name)&&n>m?n:m},0);
+  const used=new Set();
+  return queue.map((r,i)=>{
+    if(mode()==='num'){ do{next++}while(used.has(next+'.'+r.ext)); const n=`${next}.${r.ext}`; used.add(n); return n }
+    const c=r.sit||('img'+(i+1)); let n=`${cur}_${c}.${r.ext}`;
+    let k=2; while(used.has(n)){n=`${cur}_${c}${k}.${r.ext}`;k++}
+    used.add(n); return n;
+  });
+}
+function renderQueue(){
+  const Q=$('#queue'); Q.innerHTML=''; $('#qbar').hidden=!queue.length; if(!queue.length) return;
+  const names=queueNames(), taken=new Set(files.map(f=>f.name));
+  queue.forEach((r,i)=>{
+    const d=document.createElement('div');d.className='q';
+    d.innerHTML=`<img src="${r.prev}"><div>
+      ${mode()==='code'?`<input list="sits" placeholder="상황 (예: 웃음, smile)" value="${esc(r.sit)}">`:''}
+      <div class="meta">${esc(names[i])} · ${kb(r.blob.size)} (원본 ${kb(r.orig)})${taken.has(names[i])?' · <b style="color:var(--bad)">이미 있음</b>':''}</div></div>
+      <button class="sm" data-x>✕</button>`;
+    const inp=d.querySelector('input'); if(inp) inp.addEventListener('change',()=>{r.sit=toCode(inp.value);renderQueue()});
+    d.querySelector('[data-x]').onclick=()=>{URL.revokeObjectURL(r.prev);queue.splice(i,1);renderQueue()};
+    Q.appendChild(d);
+  });
+}
+const drop=$('#drop'),fi=$('#file');
+drop.onclick=()=>fi.click();
+fi.onchange=()=>{enqueue([...fi.files]);fi.value=''};
+['dragover','dragenter'].forEach(e=>drop.addEventListener(e,ev=>{ev.preventDefault();drop.classList.add('over')}));
+['dragleave','drop'].forEach(e=>drop.addEventListener(e,ev=>{ev.preventDefault();drop.classList.remove('over')}));
+drop.addEventListener('drop',ev=>enqueue([...ev.dataTransfer.files]));
+// 붙여넣기(Ctrl+V)로도 업로드 대기열에 추가
+document.addEventListener('paste',ev=>{
+  if(/INPUT|TEXTAREA/.test(document.activeElement?.tagName)&&!ev.clipboardData.files.length) return;
+  const fs=[...ev.clipboardData.files].filter(f=>f.type.startsWith('image/'));
+  if(fs.length){ev.preventDefault();enqueue(fs.map((f,i)=>new File([f],f.name&&f.name!=='image.png'?f.name:`paste${Date.now()}${i}.png`,{type:f.type})))}
+});
+$('#qclear').onclick=()=>{queue.forEach(r=>URL.revokeObjectURL(r.prev));queue=[];renderQueue()};
+$('#upload').onclick=async()=>{
+  if(!cur||!queue.length) return;
+  const names=queueNames(), up=$('#upsert').checked, btn=$('#upload'); btn.disabled=true;
+  let ok=0, fail=[], idx=0, done=0;
+  // 4장씩 동시에 업로드 (속도 ↑)
+  const worker=async()=>{
+    while(idx<queue.length){
+      const i=idx++, r=queue[i];
+      const {error}=await sb.storage.from(B).upload(`${cur}/${names[i]}`,r.blob,{upsert:up,contentType:r.blob.type,cacheControl:up?'3600':'31536000'});
+      if(error) fail.push(names[i]+': '+(/exists|Duplicate/i.test(error.message)?'이미 있음':error.message)); else {ok++; URL.revokeObjectURL(r.prev); r.done=true}
+      btn.textContent=`업로드 중 ${++done}/${queue.length}`;
+    }
+  };
+  await Promise.all(Array.from({length:Math.min(4,queue.length)},worker));
+  queue=queue.filter(r=>!r.done); btn.disabled=false; btn.textContent='업로드';
+  toast(fail.length?`${ok}장 성공, ${fail.length}장 실패 — ${fail[0]}`:`${ok}장 업로드 완료`,fail.length?5000:2000);
+  if(!folders.includes(cur)){folders.push(cur);folders.sort()}
+  await loadFiles(); renderQueue(); measureAll();
+};
+
+// ---------- 코드 생성 ----------
+$('#fmt').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{fmt=c.dataset.f;$('#fmt').querySelectorAll('.chip').forEach(x=>x.classList.toggle('on',x===c));gen()});
+function gen(){
+  if(!cur) return;
+  let list=files.filter(f=>sel.has(f.name)); if(!list.length) list=files;
+  if(!list.length){$('#out').value='';$('#chars').textContent='';return toast('이미지가 없어요')}
+  const base=pub(`${cur}/`).replace(/\/?$/,'/');
+  const lead=$('#lead').value.trim(); let out='';
+  const stem=n=>n.replace(/\.[^.]+$/,''), ext=n=>n.slice(n.lastIndexOf('.'));
+  if(fmt==='compact'){
+    // 확장자/접두어가 모두 같으면 공통 부분을 한 번만 쓰고 코드만 나열 (DC글의 '상황 코드' 방식)
+    const exts=[...new Set(list.map(f=>ext(f.name)))];
+    const pre=`${cur}_`, allPre=list.every(f=>f.name.startsWith(pre));
+    if(exts.length===1){
+      const codes=list.map(f=>{const s=stem(f.name);return allPre?s.slice(pre.length):s});
+      const tmpl=`![](${base}${allPre?pre:''}{코드}${exts[0]})`;
+      out=(lead?lead+'\n':'')+`형식: ${tmpl}\n코드: ${codes.join(', ')}`;
+    } else out=(lead?lead+'\n':'')+list.map(f=>`![](${base}${f.name})`).join('\n');
+  } else if(fmt==='list'){
+    const pre=`${cur}_`;
+    out=(lead?lead+'\n':'')+list.map(f=>{let s=stem(f.name);if(s.startsWith(pre))s=s.slice(pre.length);return `- ${s}: ![](${base}${f.name})`}).join('\n');
+  } else if(fmt==='md') out=list.map(f=>`![](${base}${f.name})`).join('\n');
+  else out=list.map(f=>base+f.name).join('\n');
+  $('#out').value=out; $('#chars').textContent=`${out.length}자 · ${list.length}장`;
+}
+$('#gen').onclick=gen;
+$('#copy').onclick=()=>{if(!$('#out').value)gen(); copy($('#out').value)};
+async function copy(t){
+  try{await navigator.clipboard.writeText(t);toast('복사됨')}
+  catch(e){const ta=document.createElement('textarea');ta.value=t;document.body.appendChild(ta);ta.select();try{document.execCommand('copy');toast('복사됨')}catch(_){toast('복사 실패')}ta.remove()}
+}
+
+// ---------- 모달 ----------
+function confirmBox(msg){return new Promise(res=>{$('#cf-msg').textContent=msg;$('#m-cf').hidden=false;$('#cf-ok').onclick=()=>{$('#m-cf').hidden=true;res(true)};$('#cf-no').onclick=()=>{$('#m-cf').hidden=true;res(false)}})}
+function renameBox(v){return new Promise(res=>{$('#ren-in').value=v;$('#m-ren').hidden=false;$('#ren-in').focus();$('#ren-ok').onclick=()=>{$('#m-ren').hidden=true;res($('#ren-in').value.trim())};$('#ren-no').onclick=()=>{$('#m-ren').hidden=true;res(null)}})}
+
+boot();
+</script>
+</body>
+</html>
