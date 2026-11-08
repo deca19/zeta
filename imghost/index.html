@@ -76,8 +76,8 @@ button:disabled{opacity:.5}
 <div id="v-app" hidden>
   <!-- 폴더 -->
   <div class="card">
-    <h2>저장소 (각 1GB 무료 · 눌러서 전환)</h2>
-    <div class="chips" id="stores" style="margin-bottom:12px"></div>
+    <div id="stores-box"><h2>저장소 (각 1GB 무료 · 눌러서 전환)</h2>
+    <div class="chips" id="stores" style="margin-bottom:12px"></div></div>
     <h2>캐릭터 폴더</h2>
     <div class="chips" id="folders"></div>
     <div class="bar"><input id="new-folder" placeholder="새 폴더 (영문, 예: knight)" style="flex:1"><button id="add-folder">추가</button></div>
@@ -89,8 +89,12 @@ button:disabled{opacity:.5}
     <h2>업로드 → <b id="cur-name">폴더를 고르세요</b></h2>
     <div class="row3">
       <div><label>파일명 방식</label><select id="mode"><option value="code">캐릭터_상황</option><option value="num">넘버링 1,2,3</option></select></div>
-      <div><label>긴 변 최대(px, 0=원본)</label><input id="maxside" type="number" value="1024" min="0"></div>
-      <div><label>WebP 품질</label><input id="q" type="number" value="0.85" min="0.5" max="1" step="0.05"></div>
+      <div><label>긴 변 최대(px, 0=원본)</label><input id="maxside" type="number" value="1600" min="0"></div>
+      <div><label>품질 (1~100)</label><input id="q" type="number" value="62" min="1" max="100"></div>
+    </div>
+    <div class="row">
+      <div><label>저장 형식</label><select id="fmtimg"><option value="avif">AVIF — 같은 화질에 용량 최소 (추천)</option><option value="webp">WebP — 변환 빠름</option></select></div>
+      <div><label>&nbsp;</label><p class="hint" style="margin:6px 0 0">AVIF는 WebP보다 30~50% 작아요. 품질 62 ≈ WebP 88 화질.</p></div>
     </div>
     <div class="drop" id="drop" style="margin-top:10px">눌러서 이미지 선택 (여러 장)<br><small>드래그 · 복사 후 붙여넣기(Ctrl+V)도 돼요</small></div>
     <input type="file" id="file" accept="image/*" multiple hidden>
@@ -146,7 +150,7 @@ button:disabled{opacity:.5}
 
 <script>
 const $=s=>document.querySelector(s);
-const LS='imghost_cfg';
+const LS='imghost_cfg2';
 let cfg={}, sb=null, B='images', folders=[], cur=null, files=[], sel=new Set(), queue=[], fmt='compact';
 
 const toast=(m,ms=2000)=>{const t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(toast._t);toast._t=setTimeout(()=>t.classList.remove('show'),ms)};
@@ -168,15 +172,14 @@ const cleanFolder=s=>(s||'').trim().toLowerCase().replace(/[^a-z0-9_\-]+/g,'_').
 try{cfg=JSON.parse(localStorage.getItem(LS)||'{}')}catch(e){}
 // 저장소 목록 — Supabase 무료 프로젝트 1개당 1GB, 여러 개 합쳐서 사용 (anon key는 공개용 키라 넣어둬도 안전)
 const STORES=[
-  {name:'저장소 1',url:'https://xscxtgnvtylkaiozqqrl.supabase.co',key:'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhzY3h0Z252dHlsa2Fpb3pxcXJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUwNDM3MDksImV4cCI6MjEwMDYxOTcwOX0.OI6xtF0lge5M-9CnN0Z5-fswtsUaptdzPUr8VRGjnIM',bucket:'chat-images'},
-  {name:'저장소 2',url:'https://djkvbaylazqpnydosksg.supabase.co',key:'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRqa3ZiYXlsYXpxcG55ZG9za3NnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI4NDI4NTksImV4cCI6MjEwODQxODg1OX0.PMiuxop7t1m1O_-E0lkXtnzusLMjnzLhz0tdqhDQRl8',bucket:'chat-images'}
+  {name:'저장소 1',url:'https://xscxtgnvtylkaiozqqrl.supabase.co',key:'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhzY3h0Z252dHlsa2Fpb3pxcXJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUwNDM3MDksImV4cCI6MjEwMDYxOTcwOX0.OI6xtF0lge5M-9CnN0Z5-fswtsUaptdzPUr8VRGjnIM',bucket:'chat-images'}
 ];
 const QUOTA=1024*1048576;
 let si=+(cfg.store||0); if(!STORES[si]) si=0;
 const clients=window.supabase?STORES.map(s=>supabase.createClient(s.url,s.key)):[];
 const usage=STORES.map(()=>null);
 cfg.url=STORES[si].url;cfg.key=STORES[si].key;cfg.bucket=STORES[si].bucket;
-['maxside','q','mode','lead'].forEach(k=>{if(cfg[k]!=null)$('#'+k).value=cfg[k]; $('#'+k).addEventListener('change',()=>{cfg[k]=$('#'+k).value;saveCfg(); if(k==='mode')renderQueue()})});
+['maxside','q','mode','lead','fmtimg'].forEach(k=>{if(cfg[k]!=null)$('#'+k).value=cfg[k]; $('#'+k).addEventListener('change',()=>{cfg[k]=$('#'+k).value;saveCfg(); if(k==='mode')renderQueue()})});
 function saveCfg(){try{localStorage.setItem(LS,JSON.stringify(cfg))}catch(e){}}
 
 async function boot(){
@@ -188,6 +191,7 @@ async function boot(){
   $('#btn-out').hidden=false; show('#v-app'); renderStores(); await loadFolders(); measureAll();
 }
 function renderStores(){
+  $('#stores-box').hidden=STORES.length<2;
   $('#stores').innerHTML=STORES.map((s,i)=>{
     const u=usage[i]; const t=u==null?'…':`${kb(u)} / 1GB`;
     return `<span class="chip ${i===si?'on':''}" data-i="${i}">${s.name} · ${t}</span>`}).join('');
@@ -211,7 +215,7 @@ async function measureAll(){
     }));
     usage[i]=sum;
   }));
-  renderStores();
+  renderStores(); renderFiles();
   if(usage[si]!=null&&usage[si]>QUOTA*0.9){
     const alt=usage.findIndex((u,i)=>i!==si&&u!=null&&u<QUOTA*0.8);
     toast(`${STORES[si].name}이 거의 찼어요${alt>=0?` — ${STORES[alt].name}로 바꿔서 올리세요`:''}`,5000);
@@ -272,7 +276,7 @@ const pub=p=>sb.storage.from(B).getPublicUrl(p).data.publicUrl;
 function renderFiles(){
   $('#cnt').textContent=files.length?`(${files.length}장)`:'';
   const total=files.reduce((s,f)=>s+f.size,0);
-  $('#usage').textContent=cur?`${cur}: ${files.length}장 · ${kb(total)} · Supabase 무료 저장공간 1GB`:'';
+  $('#usage').textContent=(cur?`${cur}: ${files.length}장 · ${kb(total)}`:'')+(usage[si]!=null?` · 전체 ${kb(usage[si])} / 1GB 사용 (${(usage[si]/QUOTA*100).toFixed(1)}%)`:'');
   $('#grid').innerHTML=files.length?'':'<span class="stat">이미지가 없어요.</span>';
   const term=($('#search').value||'').trim().toLowerCase();
   files.filter(f=>!term||f.name.toLowerCase().includes(term)).forEach(f=>{
@@ -324,27 +328,51 @@ $('#del-folder').onclick=async()=>{
 
 // ---------- 업로드 큐 ----------
 const mode=()=>$('#mode').value;
+// AVIF 인코더는 별도 워커에서 (화면 안 멈춤)
+let avifW=null, avifSeq=0, avifCb={};
+function avifWorker(){
+  if(!avifW){
+    avifW=new Worker('./avif-worker.js',{type:'module'});
+    avifW.onmessage=e=>{const c=avifCb[e.data.id];delete avifCb[e.data.id];if(!c)return;e.data.error?c.rej(new Error(e.data.error)):c.res(e.data.buf)};
+    avifW.onerror=()=>{Object.values(avifCb).forEach(c=>c.rej(new Error('worker')));avifCb={};avifW=null};
+  }
+  return avifW;
+}
+function encAvif(img,q){return new Promise((res,rej)=>{const id=++avifSeq;avifCb[id]={res,rej};avifWorker().postMessage({id,data:img.data,width:img.width,height:img.height,quality:q,speed:6},[img.data.buffer])})}
 async function convert(file){
-  const max=+$('#maxside').value||0, q=Math.min(1,Math.max(.5,+$('#q').value||.85));
+  const max=+$('#maxside').value||0, q=Math.min(100,Math.max(1,+$('#q').value||62)), fmt=$('#fmtimg').value;
   if(file.type==='image/gif') return {blob:file,ext:'gif'}; // 움짤은 그대로
   const bmp=await createImageBitmap(file);
-  let w=bmp.width,h=bmp.height;
-  if(max&&Math.max(w,h)>max){const k=max/Math.max(w,h);w=Math.round(w*k);h=Math.round(h*k)}
-  const cv=document.createElement('canvas');cv.width=w;cv.height=h;cv.getContext('2d').drawImage(bmp,0,0,w,h);
-  const blob=await new Promise(r=>cv.toBlob(r,'image/webp',q));
-  if(blob&&blob.type==='image/webp') return {blob,ext:'webp'};
-  const png=await new Promise(r=>cv.toBlob(r,'image/png'));
-  return {blob:png,ext:'png'};
+  let w=bmp.width,h=bmp.height; const resized=max&&Math.max(w,h)>max;
+  if(resized){const k=max/Math.max(w,h);w=Math.round(w*k);h=Math.round(h*k)}
+  const cv=document.createElement('canvas');cv.width=w;cv.height=h;
+  const cx=cv.getContext('2d');cx.imageSmoothingEnabled=true;cx.imageSmoothingQuality='high';cx.drawImage(bmp,0,0,w,h);bmp.close&&bmp.close();
+  let out=null;
+  if(fmt==='avif'){
+    try{out={blob:new Blob([await encAvif(cx.getImageData(0,0,w,h),q)],{type:'image/avif'}),ext:'avif'}}
+    catch(e){toast('AVIF 변환 실패 → WebP로 저장',3000)}
+  }
+  if(!out){
+    const wq=Math.min(.95,.3+q/100*.9);
+    const blob=await new Promise(r=>cv.toBlob(r,'image/webp',wq));
+    out=blob&&blob.type==='image/webp'?{blob,ext:'webp'}:{blob:await new Promise(r=>cv.toBlob(r,'image/png')),ext:'png'};
+  }
+  // 원본이 이미 더 작고 크기도 그대로면 원본 사용 (화질 손해 없이)
+  const okType={'image/avif':'avif','image/webp':'webp','image/jpeg':'jpg','image/png':'png'}[file.type];
+  if(!resized&&okType&&file.size<=out.blob.size) return {blob:file,ext:okType};
+  return out;
 }
 function guessSit(fname){ return toCode(fname.replace(/\.[^.]+$/,'')) }
 async function enqueue(list){
   if(!cur) return toast('먼저 폴더를 고르세요');
-  for(const f of list){
-    if(!f.type.startsWith('image/')) continue;
+  const imgs=list.filter(f=>f.type.startsWith('image/')); let n=0;
+  for(const f of imgs){
+    toast(`변환 중 ${++n}/${imgs.length}…`,60000);
     try{const {blob,ext}=await convert(f); queue.push({blob,ext,orig:f.size,sit:guessSit(f.name),prev:URL.createObjectURL(blob)})}
     catch(e){toast('변환 실패: '+f.name)}
+    renderQueue();
   }
-  renderQueue();
+  toast(`${imgs.length}장 준비됨`);
 }
 function queueNames(){
   const taken=new Set(files.map(f=>f.name));
