@@ -53,7 +53,7 @@ button:disabled{opacity:.5}
 </head>
 <body>
 
-<h1><span>내 이미지 호스팅</span><button class="sm" id="btn-out" hidden>로그아웃</button></h1>
+<h1><span>내 이미지 호스팅</span><span><button class="sm" id="btn-pw" hidden>비밀번호 변경</button> <button class="sm" id="btn-out" hidden>로그아웃</button></span></h1>
 
 <!-- 설정 -->
 <div class="card" id="v-setup" hidden>
@@ -90,11 +90,11 @@ button:disabled{opacity:.5}
     <div class="row3">
       <div><label>파일명 방식</label><select id="mode"><option value="code">캐릭터_상황</option><option value="num">넘버링 1,2,3</option></select></div>
       <div><label>긴 변 최대(px, 0=원본)</label><input id="maxside" type="number" value="1600" min="0"></div>
-      <div><label>품질 (1~100)</label><input id="q" type="number" value="60" min="1" max="100"></div>
+      <div><label>품질 (1~100)</label><input id="q" type="number" value="62" min="1" max="100"></div>
     </div>
     <div class="row">
       <div><label>저장 형식</label><select id="fmtimg"><option value="avif">AVIF — 같은 화질에 용량 최소 (추천)</option><option value="webp">WebP — 변환 빠름</option></select></div>
-      <div><label>압축 모드 (AVIF)</label><select id="cmode"><option value="fast">균형 — 빠름</option><option value="max">최대 압축 — 약 15% 더 작음, 3~4배 느림</option></select></div>
+      <div><label>변환 방식 (AVIF)</label><select id="cmode"><option value="best">고화질·저용량 (추천)</option><option value="fast">빠르게 — 많이 올릴 때</option></select></div>
     </div>
     <p class="hint">AVIF 10비트로 저장해서 하늘·피부 그라데이션이 계단지지 않고, WebP보다 30~50% 작아요. 여러 장은 동시에 변환돼요.</p>
     <div class="drop" id="drop" style="margin-top:10px">눌러서 이미지 선택 (여러 장)<br><small>드래그 · 복사 후 붙여넣기(Ctrl+V)도 돼요</small></div>
@@ -137,7 +137,7 @@ button:disabled{opacity:.5}
 </div>
 
 <div class="modal" id="m-ren" hidden><div class="box">
-  <h2 style="margin:0 0 8px;font-size:15px">이름 바꾸기</h2>
+  <h2 id="ren-t" style="margin:0 0 8px;font-size:15px">이름 바꾸기</h2>
   <input id="ren-in">
   <div class="bar"><button class="pri" id="ren-ok">변경</button><button id="ren-no">취소</button></div>
 </div></div>
@@ -151,7 +151,7 @@ button:disabled{opacity:.5}
 
 <script>
 const $=s=>document.querySelector(s);
-const LS='imghost_cfg3';
+const LS='imghost_cfg4';
 let cfg={}, sb=null, B='images', folders=[], cur=null, files=[], sel=new Set(), queue=[], fmt='compact';
 
 const toast=(m,ms=2000)=>{const t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(toast._t);toast._t=setTimeout(()=>t.classList.remove('show'),ms)};
@@ -188,8 +188,8 @@ async function boot(){
   if(!window.supabase){toast('Supabase 라이브러리를 못 불러왔어요. 인터넷 확인',4000);return}
   B=STORES[si].bucket; sb=clients[si];
   const {data:{session}}=await sb.auth.getSession();
-  if(!session){$('#btn-out').hidden=true;return show('#v-login')}
-  $('#btn-out').hidden=false; show('#v-app'); renderStores(); await loadFolders(); measureAll();
+  if(!session){$('#btn-out').hidden=true;$('#btn-pw').hidden=true;return show('#v-login')}
+  $('#btn-out').hidden=false; $('#btn-pw').hidden=false; show('#v-app'); renderStores(); await loadFolders(); measureAll();
 }
 function renderStores(){
   $('#stores-box').hidden=STORES.length<2;
@@ -238,6 +238,10 @@ $('#l-go').onclick=async()=>{
   boot();
 };
 $('#l-pw').addEventListener('keydown',e=>{if(e.key==='Enter')$('#l-go').click()});
+$('#btn-pw').onclick=async()=>{
+  const pw=await renameBox('','새 비밀번호 (8자 이상)','password'); if(!pw) return; if(pw.length<8) return toast('8자 이상으로 해주세요');
+  const {error}=await sb.auth.updateUser({password:pw}); toast(error?'실패: '+error.message:'비밀번호를 바꿨어요',3000);
+};
 $('#btn-out').onclick=async()=>{await Promise.all(clients.map(c=>c.auth.signOut()));boot()};
 
 // ---------- 폴더 ----------
@@ -344,12 +348,12 @@ function getWorker(){
   return workers[(rr++)%workers.length];
 }
 function encAvif(img,q){
-  const max=$('#cmode').value==='max';
+  const best=$('#cmode').value!=='fast';
   return new Promise((res,rej)=>{const id=++avifSeq;avifCb[id]={res,rej};
-    getWorker().postMessage({id,data:img.data,width:img.width,height:img.height,quality:max?Math.max(1,q-2):q,speed:max?5:6},[img.data.buffer])});
+    getWorker().postMessage({id,data:img.data,width:img.width,height:img.height,quality:q,speed:best?5:6},[img.data.buffer])});
 }
 async function convert(file){
-  const max=+$('#maxside').value||0, q=Math.min(100,Math.max(1,+$('#q').value||60)), fmt=$('#fmtimg').value;
+  const max=+$('#maxside').value||0, q=Math.min(100,Math.max(1,+$('#q').value||62)), fmt=$('#fmtimg').value;
   if(file.type==='image/gif') return {blob:file,ext:'gif'}; // 움짤은 그대로
   const bmp=await createImageBitmap(file);
   let w=bmp.width,h=bmp.height; const resized=max&&Math.max(w,h)>max;
@@ -483,7 +487,7 @@ async function copy(t){
 
 // ---------- 모달 ----------
 function confirmBox(msg){return new Promise(res=>{$('#cf-msg').textContent=msg;$('#m-cf').hidden=false;$('#cf-ok').onclick=()=>{$('#m-cf').hidden=true;res(true)};$('#cf-no').onclick=()=>{$('#m-cf').hidden=true;res(false)}})}
-function renameBox(v){return new Promise(res=>{$('#ren-in').value=v;$('#m-ren').hidden=false;$('#ren-in').focus();$('#ren-ok').onclick=()=>{$('#m-ren').hidden=true;res($('#ren-in').value.trim())};$('#ren-no').onclick=()=>{$('#m-ren').hidden=true;res(null)}})}
+function renameBox(v,title='이름 바꾸기',type='text'){return new Promise(res=>{$('#ren-t').textContent=title;$('#ren-in').type=type;$('#ren-in').value=v;$('#m-ren').hidden=false;$('#ren-in').focus();$('#ren-ok').onclick=()=>{$('#m-ren').hidden=true;res($('#ren-in').value.trim())};$('#ren-no').onclick=()=>{$('#m-ren').hidden=true;res(null)}})}
 
 boot();
 </script>
