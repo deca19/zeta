@@ -508,7 +508,9 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     <div class="m-head"><h2 id="eTitle">이미지 저장</h2><button class="btn small" type="button" data-close>닫기</button></div>
     <div class="fld"><span class="fld-l">나눠 저장하기</span><div class="seg" id="eParts"></div></div>
     <div class="fld"><span class="fld-l">가로 폭</span><div class="seg" id="eWidth"></div></div>
+    <div class="fld"><span class="fld-l">선명도 (저장할 때만 키워요 · 편집 화면은 그대로)</span><div class="seg" id="eScale"></div></div>
     <div class="fld"><span class="fld-l">형식</span><div class="seg" id="eFormat"></div></div>
+    <p class="hint" id="eFmtHint"></p>
     <p class="stat" id="eInfo"></p>
     <p class="hint">제타 인트로에는 이미지를 5장까지 넣을 수 있어요. 나눌 때는 컷 중간을 자르지 않고 컷 사이 여백에서 끊어요.</p>
     <button class="btn primary wide" type="button" id="eSave">이미지로 저장하기</button>
@@ -638,7 +640,7 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     red: { fill: "#e5392f", ink: "#ffffff", line: "#111111", label: "빨강" }
   };
   const BGS = [["#000000", "검정"], ["#17181c", "먹색"], ["#ffffff", "흰색"], ["#f4efe6", "종이"]];
-  const DEF = { width: 720, bg: "#000000", gap: 0, frame: "full", narrFont: "myeongjo", bubbleFont: "gothic", bubbleShape: "oval", parts: 1, format: "png", sign: "", pageRatio: "a4", perPage: 4, rtl: false, comicJoin: false };
+  const DEF = { width: 720, bg: "#000000", gap: 0, frame: "full", narrFont: "myeongjo", bubbleFont: "gothic", bubbleShape: "oval", parts: 1, format: "webp", scale: 1, sign: "", pageRatio: "a4", perPage: 4, rtl: false, comicJoin: false };
 
   const APP_VER = "v19";
   const errLog = (() => { try { const a = JSON.parse(localStorage.getItem("sedo-errlog") || "[]"); return Array.isArray(a) ? a.slice(-30) : []; } catch (e) { return []; } })();
@@ -1549,7 +1551,7 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   }, true);
   function pickEnded() {
     if (!picking) return; picking = false;
-    try { sessionStorage.removeItem("sedo-picking"); } catch (e) { /* ignore */ }
+    try { sessionStorage.removeItem("sedo-picking"); sessionStorage.setItem("sedo-picked-at", String(Date.now())); } catch (e) { /* ignore */ }
   }
   document.addEventListener("change", (e) => { if (e.target && e.target.type === "file") pickEnded(); }, true);
   window.addEventListener("focus", () => setTimeout(() => { if (picking) { pickEnded(); pickHooks.after.forEach((f) => { try { f(); } catch (e) { /* ignore */ } }); } }, 1200));
@@ -2579,6 +2581,8 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     if (!/^#[0-9a-f]{3,8}$/i.test(st.bg)) st.bg = DEF.bg;
     st.width = clamp(Math.round(st.width), 320, 2400); st.gap = clamp(st.gap, 0, 800);
     st.perPage = clamp(Math.round(st.perPage), 1, 6); st.parts = clamp(Math.round(st.parts), 1, 30);
+    if (!["png", "webp", "jpg"].includes(st.format)) st.format = DEF.format;
+    st.scale = [1, 1.5, 2].includes(Number(st.scale)) ? Number(st.scale) : 1;
     return st;
   }
   function normalizeProject(p) {
@@ -3890,20 +3894,50 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   }
   const autoRelinkOk = () => {
     if (!linked() || !(cloud.st && cloud.st.email) || navigator.onLine === false) return false;
-    try { if (sessionStorage.getItem("sedo-picking")) return false; if (Date.now() - Number(localStorage.getItem("sedo-cloud-auto") || 0) < 15 * 60000) return false; } catch (e) { return false; }
+    try { if (sessionStorage.getItem("sedo-picking")) return false; if (Date.now() - Number(sessionStorage.getItem("sedo-picked-at") || 0) < 5 * 60000) return false; /* 사진 고른 직후엔 화면을 다른 데로 옮기지 않음 */ if (Date.now() - Number(localStorage.getItem("sedo-cloud-auto") || 0) < 15 * 60000) return false; } catch (e) { return false; }
     return true;
   };
+  // 제타 스튜디오 안(iframe)에서는 구글 로그인 화면이 막혀서(구글이 iframe 표시를 거부) 바깥 창 전체를 이동시켜 로그인함
+  const SITE = "https://deca19.github.io/zeta/sedotoon/";
+  const inFrame = () => { try { return window.top !== window; } catch (e) { return true; } };
+  const topSameOrigin = () => { try { return !!window.top.location.href; } catch (e) { return false; } };
+  const inAppUA = () => /KAKAOTALK|Instagram|FBAN|FBAV|FB_IAB|Line\/|NAVER\(inapp|DaumApps|everytimeApp|; wv\)/i.test(navigator.userAgent || "");
+  function openOutside(url) {
+    const ua = navigator.userAgent || "";
+    if (/KAKAOTALK/i.test(ua)) { location.href = "kakaotalk://web/openExternal?url=" + encodeURIComponent(url); return; }
+    if (/Android/i.test(ua)) { location.href = "intent://" + url.replace(/^https?:\/\//, "") + "#Intent;scheme=https;package=com.android.chrome;end"; return; }
+    window.open(url, "_blank", "noopener");
+  }
   function cloudGo(select, silent) {
     if (!cloudReady()) return;
+    if (inAppUA()) {
+      if (silent) { cloudStatus("relink"); return; }
+      toast("카톡·인스타 같은 앱 안의 브라우저에서는 구글이 로그인을 막아요. 크롬(또는 삼성 인터넷)으로 열어 드릴게요.", true);
+      setTimeout(() => openOutside(SITE), 1200); return;
+    }
+    if (inFrame()) {
+      if (silent) { cloudStatus("relink"); return; } // 자동 재연결로 바깥 화면을 갑자기 옮기지 않음
+      if (!topSameOrigin()) { toast("여기서는 구글 로그인이 안 돼요. 새 창에서 세로툰을 열어 로그인해 주세요.", true); setTimeout(() => window.open(SITE, "_blank", "noopener"), 1200); return; }
+    }
     const state = Math.random().toString(36).slice(2) + Date.now().toString(36);
     try { sessionStorage.setItem("sedo-oauth", state); if (silent) { sessionStorage.setItem("sedo-oauth-silent", "1"); localStorage.setItem("sedo-cloud-auto", String(Date.now())); } else sessionStorage.removeItem("sedo-oauth-silent"); } catch (e) { /* ignore */ }
     clearTimeout(saveTimer);
     const go = () => {
       const q = new URLSearchParams({ client_id: GOOGLE_CLIENT_ID, redirect_uri: redirectUri(), response_type: "token", scope: CLOUD_SCOPES, include_granted_scopes: "true", state });
       if (select || !(cloud.st && cloud.st.email)) q.set("prompt", "select_account consent"); else { q.set("login_hint", cloud.st.email); if (silent) q.set("prompt", "none"); }
-      location.assign("https://accounts.google.com/o/oauth2/v2/auth?" + q.toString());
+      const url = "https://accounts.google.com/o/oauth2/v2/auth?" + q.toString();
+      if (inFrame()) {
+        try { sessionStorage.setItem("sedo-oauth-back", window.top.location.href); window.top.location.assign(url); return; }
+        catch (e) { toast("여기서는 구글 로그인이 안 돼요. 새 창에서 열어 주세요.", true); window.open(SITE, "_blank", "noopener"); return; }
+      }
+      try { sessionStorage.removeItem("sedo-oauth-back"); } catch (e) { /* ignore */ }
+      location.assign(url);
     };
     saveNow().then(go, go);
+  }
+  function oauthBack() {
+    let back = ""; try { back = sessionStorage.getItem("sedo-oauth-back") || ""; sessionStorage.removeItem("sedo-oauth-back"); } catch (e) { /* ignore */ }
+    return /^https:\/\/deca19\.github\.io\//.test(back) || /^http:\/\/localhost[:/]/.test(back) ? back : "";
   }
   function takeOAuthReturn() {
     const hs = location.hash || "";
@@ -4094,7 +4128,7 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   document.addEventListener("visibilitychange", () => {
     if (!linked()) return;
     if (document.hidden) { hiddenAt = Date.now(); if (tokenOk() && unsynced()) { clearTimeout(cloud.timer); clearTimeout(saveTimer); saveNow().then(() => cloudSync("push")); } return; }
-    if (!tokenOk()) { if (hiddenAt && Date.now() - hiddenAt > 3 * 60000 && autoRelinkOk() && !document.querySelector(".modal:not([hidden])") && !sheetOpen()) cloudGo(false, true); return; }
+    if (!tokenOk()) { if (hiddenAt && Date.now() - hiddenAt > 3 * 60000 && autoRelinkOk() && !inFrame() && !inAppUA() && !document.querySelector(".modal:not([hidden])") && !sheetOpen()) cloudGo(false, true); return; }
     if (Date.now() - (cloud.st.lastSync || 0) > 60000) cloudSync("full");
   });
   readyHooks.push(async () => {
@@ -4102,13 +4136,19 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     cloudLoad();
     const bl = $("bLib"); if (bl && !$("cloudDot")) { const d = h("span", { class: "dot", id: "cloudDot" }); d.hidden = true; bl.appendChild(d); }
     const back = takeOAuthReturn();
-    if (back && back.error) { if (!back.silent && back.error !== "access_denied") toast("구글 로그인을 마치지 못했어요. 다시 해 주세요.", true); cloudStatus(linked() ? "relink" : "off"); if (back.silent && linked()) nagRelink(true); return; }
+    const goBack = back ? oauthBack() : "";
+    if (back && back.error) {
+      if (goBack) { location.replace(goBack); return; }
+      if (!back.silent && back.error !== "access_denied") toast(back.error === "state" ? "로그인 창이 바뀌어서 확인을 못 했어요. 한 번만 다시 눌러 주세요." : "구글 로그인을 마치지 못했어요 (" + back.error + "). 다시 해 주세요.", true);
+      cloudStatus(linked() ? "relink" : "off"); if (back.silent && linked()) nagRelink(true); return;
+    }
     if (back && back.token) {
       if (!/drive\.appdata/.test(back.scope)) { toast("‘드라이브 앱 데이터’ 권한이 꺼져 있어서 저장할 수 없어요. 로그인할 때 체크해 주세요.", true); return; }
       const first = !linked();
       cloud.st = Object.assign(cloud.st || { pushed: {}, imgs: {}, tomb: {} }, { linked: true, token: back.token, exp: back.exp });
       cloudSave();
       await fetchEmail();
+      if (goBack) { toast("구글 계정에 연결했어요. 원래 화면으로 돌아가요…"); setTimeout(() => location.replace(goBack), 600); return; }
       if (first) toast("구글 계정에 연결했어요. 작품을 저장하는 중…");
       await cloudSync("full");
       if (first && cloud.status === "ok") toast("구글 계정에 모두 저장했어요. 이제 고치면 자동으로 저장돼요.");
@@ -4116,7 +4156,7 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     }
     if (linked()) {
       if (tokenOk()) { cloudStatus("ok"); cloudSync("full"); }
-      else if (autoRelinkOk()) { cloudStatus("sync"); cloudGo(false, true); }
+      else if (autoRelinkOk() && !inFrame() && !inAppUA()) { cloudStatus("sync"); cloudGo(false, true); }
       else cloudStatus("relink");
     }
   });
@@ -4334,25 +4374,47 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     }
     return out;
   }
-  function exportPlan() {
-    const W = P.settings.width, lay = stripLayout(W), maxH = Math.floor(16000000 / W);
-    const parts = isComic() && !P.settings.comicJoin ? lay.items.map((it) => [it.y, it.y + it.S.h]) : splitParts(lay, isComic() ? 1 : P.settings.parts, maxH);
-    return { W, lay, parts };
+  let webpOk = null;
+  function exportFormat() {
+    const want = P.settings.format;
+    if (want === "webp") {
+      if (webpOk === null) { try { const c = document.createElement("canvas"); c.width = c.height = 2; webpOk = c.toDataURL("image/webp").indexOf("data:image/webp") === 0; } catch (e) { webpOk = false; } }
+      if (webpOk) return { ext: "webp", mime: "image/webp", q: 0.92 };
+      return { ext: "jpg", mime: "image/jpeg", q: 0.95, fallback: true };
+    }
+    return want === "jpg" ? { ext: "jpg", mime: "image/jpeg", q: 0.93 } : { ext: "png", mime: "image/png" };
   }
+  function exportPlan() {
+    const W = P.settings.width, lay = stripLayout(W), sc = Math.min(Number(P.settings.scale) || 1, 2400 / W), f = exportFormat();
+    // 폰에서도 열리는 크기(1600만 화소) + WebP 최대 높이(16383px) 안에서 나눔
+    const maxH = Math.floor(Math.min(16000000 / (W * sc * sc), (f.mime === "image/webp" ? 16383 : 32000) / sc));
+    const parts = isComic() && !P.settings.comicJoin ? lay.items.map((it) => [it.y, it.y + it.S.h]) : splitParts(lay, isComic() ? 1 : P.settings.parts, maxH);
+    return { W, sc, lay, parts };
+  }
+  const fmtSize = (n) => n >= 1048576 ? (n / 1048576).toFixed(1) + "MB" : Math.max(1, Math.round(n / 1024)) + "KB";
   function renderExportUI() {
     const st = P.settings;
     $("eParts").innerHTML = "";
     if (isComic()) $("eParts").appendChild(seg([["pages", "페이지마다 따로"], ["join", "모두 이어서 한 장"]], st.comicJoin ? "join" : "pages", (v) => { st.comicJoin = v === "join"; exportInfo(); scheduleSave(); }));
     else $("eParts").appendChild(seg([[1, "한 장으로"], [2, "2장"], [3, "3장"], [4, "4장"], [5, "5장"]], st.parts, (v) => { st.parts = Number(v); exportInfo(); scheduleSave(); }));
     $("eWidth").innerHTML = ""; $("eWidth").appendChild(seg([[720, "720px"], [800, "800px"], [1080, "1080px"]], st.width, (v) => { st.width = Number(v); renderStrip(); exportInfo(); commit(); }));
-    $("eFormat").innerHTML = ""; $("eFormat").appendChild(seg([["png", "PNG 선명하게"], ["jpg", "JPG 가볍게"]], st.format, (v) => { st.format = v; scheduleSave(); }));
+    const scales = [[1, "보통"], [1.5, "1.5배"], [2, "2배 선명"]].filter(([k]) => k === 1 || st.width * k <= 2400);
+    if (!scales.some(([k]) => k === st.scale)) st.scale = 1;
+    $("eScale").innerHTML = ""; $("eScale").appendChild(seg(scales, st.scale, (v) => { st.scale = Number(v); exportInfo(); scheduleSave(); }));
+    $("eFormat").innerHTML = ""; $("eFormat").appendChild(seg([["webp", "고화질·저용량"], ["png", "PNG 원본"], ["jpg", "JPG 호환"]], st.format, (v) => { st.format = v; exportInfo(); scheduleSave(); }));
     exportInfo();
   }
+  const FMT_HINT = {
+    webp: "추천 · PNG와 눈으로 거의 같은 화질인데 용량은 보통 1/4~1/10이에요. 제타·카톡·갤러리에서 다 열려요.",
+    png: "화질 손실 0. 대신 용량이 제일 커요.",
+    jpg: "어디서나 열리는 옛날 형식. 글자 주변이 살짝 뭉개질 수 있어요.",
+  };
   function exportInfo() {
-    const { W, lay, parts } = exportPlan();
+    const { W, sc, lay, parts } = exportPlan(), f = exportFormat();
     const forced = !isComic() && parts.length > P.settings.parts;
+    $("eFmtHint").textContent = FMT_HINT[P.settings.format] + (f.fallback ? " (이 브라우저는 WebP로 못 만들어서 고화질 JPG로 저장돼요.)" : "");
     $("eInfo").innerHTML = "";
-    $("eInfo").append("전체 ", h("b", { text: W + " × " + lay.total.toLocaleString() + "px" }), " · ", h("b", { text: parts.length + "장" }), "으로 저장 (" + parts.map((p) => (p[1] - p[0]).toLocaleString()).join(" / ") + "px)" + (forced ? " · 휴대폰에서도 열리도록 길이 제한에 맞춰 더 나눴어요" : ""));
+    $("eInfo").append("전체 ", h("b", { text: Math.round(W * sc) + " × " + Math.round(lay.total * sc).toLocaleString() + "px" }), " · ", h("b", { text: parts.length + "장" }), "으로 저장 (" + parts.map((p) => Math.round((p[1] - p[0]) * sc).toLocaleString()).join(" / ") + "px)" + (forced ? " · 휴대폰에서도 열리도록 길이 제한에 맞춰 더 나눴어요" : ""));
   }
   $("eWork").addEventListener("click", (ev) => exportWork(curId, ev.currentTarget));
   $("bExport").addEventListener("click", () => { if (!P.blocks.length) { toast("먼저 컷 사진을 올려 주세요", true); return; } renderExportUI(); $("eStatus").textContent = ""; $("eResults").hidden = true; openModal("mExport"); });
@@ -4362,16 +4424,19 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     try {
       stEl.textContent = "글꼴 준비 중…";
       await ensureFonts();
-      const { W, lay, parts } = exportPlan();
-      const fmt = P.settings.format, mime = fmt === "jpg" ? "image/jpeg" : "image/png";
+      const { W, sc, lay, parts } = exportPlan();
+      const F = exportFormat(), fmt = F.ext, mime = F.mime;
       const blobs = [];
       for (let i = 0; i < parts.length; i++) {
         const [a, b] = parts[i];
         stEl.textContent = (i + 1) + " / " + parts.length + "장 그리는 중…";
         await new Promise((r) => setTimeout(r, 0));
-        const c = document.createElement("canvas"); c.width = W; c.height = Math.max(1, b - a);
+        const c = document.createElement("canvas"); c.width = Math.round(W * sc); c.height = Math.max(1, Math.round((b - a) * sc));
         const ctx = c.getContext("2d");
-        ctx.fillStyle = P.settings.bg; ctx.fillRect(0, 0, W, c.height);
+        if (!ctx) throw new Error("too_tall");
+        ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = "high";
+        ctx.scale(sc, sc);
+        ctx.fillStyle = P.settings.bg; ctx.fillRect(0, 0, W, b - a);
         (lay.joins || []).forEach((j) => { if (j.y + j.h <= a || j.y >= b) return; ctx.fillStyle = j.col; ctx.fillRect(0, j.y - a, W, j.h); });
         lay.items.forEach((it) => {
           if (it.y + it.S.h <= a || it.y >= b) return;
@@ -4382,31 +4447,47 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
           ctx.font = fontCss("gothic", px); ctx.textAlign = "right"; ctx.textBaseline = "bottom";
           ctx.lineWidth = Math.max(2, px * 0.22); ctx.lineJoin = "round";
           ctx.strokeStyle = lightBg() ? "rgba(255,255,255,.85)" : "rgba(0,0,0,.6)"; ctx.fillStyle = lightBg() ? "rgba(20,20,20,.75)" : "rgba(255,255,255,.85)";
-          const tx = W - 16 * k, ty = c.height - 12 * k;
+          const tx = W - 16 * k, ty = (b - a) - 12 * k;
           ctx.strokeText(P.settings.sign.trim(), tx, ty); ctx.fillText(P.settings.sign.trim(), tx, ty);
         }
-        const blob = await toBlob(c, mime, 0.93);
+        let blob = await toBlob(c, mime, F.q);
+        // 브라우저가 요청한 형식으로 못 만들면(예: 일부 아이폰) 고화질 JPG로 다시
+        if (blob && blob.type && blob.type !== mime && mime !== "image/png") blob = await toBlob(c, "image/jpeg", 0.95);
         c.width = 1; c.height = 1;
         if (!blob) throw new Error("too_tall");
         blobs.push(blob);
       }
-      for (let i = 0; i < blobs.length; i++) {
-        const a = document.createElement("a"), href = URL.createObjectURL(blobs[i]);
-        a.href = href; a.download = "sedotoon_" + String(i + 1).padStart(2, "0") + "." + fmt;
-        document.body.appendChild(a); a.click(); a.remove();
-        setTimeout(() => URL.revokeObjectURL(href), 60000);
-        await sleep(400);
-      }
-      blobs.forEach((bl, i) => { res.appendChild(h("div", { class: "sec-l", text: (i + 1) + "장" })); res.appendChild(h("img", { src: URL.createObjectURL(bl), alt: (i + 1) + "장 결과" })); });
+      const extOf = (bl) => bl.type === "image/webp" ? "webp" : bl.type === "image/jpeg" ? "jpg" : bl.type === "image/png" ? "png" : fmt;
+      const stamp = (() => { const d = new Date(), z = (n) => String(n).padStart(2, "0"); return z(d.getMonth() + 1) + z(d.getDate()) + "_" + z(d.getHours()) + z(d.getMinutes()); })();
+      const files = blobs.map((bl, i) => new File([bl], "sedotoon_" + stamp + "_" + String(i + 1).padStart(2, "0") + "." + extOf(bl), { type: bl.type || mime }));
+      const total = blobs.reduce((n, bl) => n + bl.size, 0);
+      const dlAll = async () => {
+        for (const f of files) {
+          const a = document.createElement("a"), href = URL.createObjectURL(f);
+          a.href = href; a.download = f.name; document.body.appendChild(a); a.click(); a.remove();
+          setTimeout(() => URL.revokeObjectURL(href), 60000);
+          await sleep(500);
+        }
+      };
+      const canShare = (() => { try { return !!(navigator.canShare && navigator.share && navigator.canShare({ files })); } catch (er) { return false; } })();
+      const inFrame = (() => { try { return window.top !== window; } catch (er) { return true; } })();
+      const btns = h("div", { class: "row-btns", style: "display:flex;flex-direction:column;gap:8px;margin-bottom:10px" });
+      if (canShare) btns.appendChild(h("button", { type: "button", class: "btn primary wide", onclick: async () => {
+        try { await navigator.share({ files, title: "세로툰" }); } catch (er) { if (er && er.name !== "AbortError") { toast("공유 창을 못 열었어요. ‘파일로 저장’을 눌러 주세요.", true); } }
+      } }, "📲 사진첩에 저장 · 공유"));
+      btns.appendChild(h("button", { type: "button", class: canShare ? "btn wide" : "btn primary wide", onclick: () => dlAll() }, "⬇ 파일로 저장" + (files.length > 1 ? " (" + files.length + "장)" : "")));
+      res.appendChild(btns);
+      files.forEach((f, i) => {
+        res.appendChild(h("div", { class: "sec-l", text: (i + 1) + "장 · " + fmtSize(f.size) }));
+        res.appendChild(h("img", { src: URL.createObjectURL(f), alt: (i + 1) + "장 결과" }));
+      });
       res.hidden = false;
-      stEl.textContent = blobs.length + "장을 저장했어요. 사진첩에 넣으려면 아래 버튼을 누르세요.";
-      const files = blobs.map((bl, i) => new File([bl], "sedotoon_" + String(i + 1).padStart(2, "0") + "." + fmt, { type: mime }));
-      if (navigator.canShare && navigator.canShare({ files })) {
-        res.insertBefore(h("button", { type: "button", class: "btn primary wide", onclick: async () => { try { await navigator.share({ files, title: "세로툰" }); } catch (er) { /* closed */ } } }, "사진첩에 저장 · 공유"), res.firstChild);
-      } else stEl.textContent = blobs.length + "장을 저장했어요. 다운로드 폴더를 확인하세요. 안 보이면 아래 그림을 길게 눌러 저장하세요.";
+      stEl.textContent = files.length + "장 완성 · 모두 " + fmtSize(total) + (F.fallback ? " (WebP 대신 고화질 JPG)" : "") + ". 아래 버튼으로 저장하세요. 버튼이 안 되면 그림을 길게 눌러 저장할 수 있어요.";
+      // PC에서는 바로 내려받기 (폰·앱 안에서는 버튼으로 — 자동 다운로드가 막히는 경우가 많음)
+      if (!isMobile() && !coarse() && !inFrame) dlAll();
     } catch (e) {
       stEl.classList.add("err");
-      stEl.textContent = e && e.message === "too_large" ? "파일이 너무 커요. JPG로 바꾸거나 장수를 늘려 주세요." : "이미지를 만들지 못했어요. 장수를 늘리거나 가로 폭을 줄여서 다시 해 보세요.";
+      stEl.textContent = e && e.message === "too_tall" ? "이미지가 너무 커서 못 만들었어요. 선명도를 낮추거나 장수를 늘려 주세요." : "이미지를 만들지 못했어요. 선명도를 낮추거나 장수를 늘려서 다시 해 보세요.";
     }
     btn.disabled = false;
   });

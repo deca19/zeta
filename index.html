@@ -842,7 +842,7 @@ VIEWS.cuts = (body) => {
 VIEWS.sedotoon = (body, view, bar) => {
   body.remove();
   bar.append(h("a",{class:"chip",href:"https://deca19.github.io/zeta/sedotoon/",target:"_blank",rel:"noopener",style:"text-decoration:none;color:var(--tx)"},"원본 열기 ↗"));
-  const fr = h("iframe",{class:"frame",src:"sedotoon/index.html",title:"세로툰"});
+  const fr = h("iframe",{class:"frame",src:"sedotoon/index.html",title:"세로툰",allow:"web-share; clipboard-read; clipboard-write; fullscreen"});
   view.append(fr);
   const fit = () => { fr.style.top = bar.getBoundingClientRect().bottom + "px"; fr.style.height = (window.innerHeight - bar.getBoundingClientRect().bottom) + "px"; };
   fit(); window.addEventListener("resize", fit);
