@@ -2447,7 +2447,9 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   function blobToDataURL(blob) { return new Promise((ok, no) => { const fr = new FileReader(); fr.onload = () => ok(fr.result); fr.onerror = no; fr.readAsDataURL(blob); }); }
   async function saveFileBlob(blob, name) {
     try {
-      const d = window.claude && typeof window.claude.use === "function" ? await window.claude.use("downloads") : null;
+      // 제타 스튜디오 안(같은 사이트 iframe)에서는 바깥 창의 저장 기능도 씀
+      let host = window.claude; try { if (!host && window.parent !== window && window.parent.claude) host = window.parent.claude; } catch (e2) { /* other site */ }
+      const d = host && typeof host.use === "function" ? await host.use("downloads") : null;
       if (d) { await d.save({ filename: name, data: blob }); return "saved"; }
     } catch (e) { if (e && e.code === "declined") return "declined"; }
     const a = document.createElement("a"), href = URL.createObjectURL(blob);
@@ -3866,21 +3868,26 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   }
 
 
-  // ---------- Google 계정 저장: 내 구글 드라이브의 앱 전용 숨김 공간에 작품을 자동 저장 ----------
-  const GOOGLE_CLIENT_ID = "996493191443-nhse0eck8027nuuu740qr4f6bf6kndtf.apps.googleusercontent.com";
-  const CLOUD_SCOPES = "https://www.googleapis.com/auth/drive.appdata openid email";
-  const DRIVE = "https://www.googleapis.com/drive/v3", DRIVE_UP = "https://www.googleapis.com/upload/drive/v3";
-  const cloud = { st: null, busy: false, again: false, timer: 0, status: "off", err: "", files: {}, nagged: false };
-  const cloudReady = () => !!GOOGLE_CLIENT_ID && GOOGLE_CLIENT_ID.indexOf("__") !== 0;
+  // ---------- 세로툰 계정 저장: 아이디·비밀번호로 로그인하면 작품이 서버(Supabase)에 자동 저장 ----------
+  // 어느 폰·컴퓨터에서든 같은 아이디로 로그인하면 저장한 작품이 그대로 돌아옴. 각자 자기 폴더만 읽고 쓸 수 있음.
+  const SB_URL = "https://xscxtgnvtylkaiozqqrl.supabase.co";
+  const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhzY3h0Z252dHlsa2Fpb3pxcXJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUwNDM3MDksImV4cCI6MjEwMDYxOTcwOX0.OI6xtF0lge5M-9CnN0Z5-fswtsUaptdzPUr8VRGjnIM";
+  const SB_BUCKET = "sedotoon";
+  const cloud = { st: null, busy: false, again: false, timer: 0, status: "off", err: "", files: {}, nagged: false, refreshing: null };
+  const cloudReady = () => !!SB_URL;
   function cloudLoad() {
-    try { cloud.st = JSON.parse(localStorage.getItem("sedo-cloud") || "null"); } catch (e) { cloud.st = null; }
+    try { cloud.st = JSON.parse(localStorage.getItem("sedo-acct") || "null"); } catch (e) { cloud.st = null; }
+    if (cloud.st && !cloud.st.refresh) cloud.st = null;
     if (cloud.st) ["pushed", "imgs", "tomb"].forEach((k) => { cloud.st[k] = cloud.st[k] || {}; });
   }
-  function cloudSave() { try { if (cloud.st) localStorage.setItem("sedo-cloud", JSON.stringify(cloud.st)); else localStorage.removeItem("sedo-cloud"); } catch (e) { /* ignore */ } }
-  const linked = () => !!(cloud.st && cloud.st.linked);
-  const tokenOk = () => !!(cloud.st && cloud.st.token && Date.now() < (cloud.st.exp || 0));
+  function cloudSave() { try { if (cloud.st) localStorage.setItem("sedo-acct", JSON.stringify(cloud.st)); else localStorage.removeItem("sedo-acct"); } catch (e) { /* ignore */ } }
+  try { localStorage.removeItem("sedo-cloud"); localStorage.removeItem("sedo-cloud-auto"); } catch (e) { /* 예전 구글 로그인 정보 정리 */ }
+  const linked = () => !!(cloud.st && cloud.st.linked && cloud.st.refresh);
+  const tokenOk = () => linked(); // 로그인 유지: 만료되면 저장된 갱신 키로 알아서 새로 받음
   const unsynced = () => lib.filter((e) => (cloud.st.pushed[e.id] || 0) < (e.updated || 0)).length + (cloud.st.tombDirty ? 1 : 0);
-  const redirectUri = () => location.origin + location.pathname.replace(/[^/]*$/, "");
+  const normId = (id) => String(id || "").trim().toLowerCase().normalize("NFC");
+  const idOk = (id) => /^[0-9a-z가-힣_.-]{2,20}$/.test(id) && new TextEncoder().encode(id).length <= 31;
+  const idToEmail = (id) => "u" + Array.from(new TextEncoder().encode(normId(id))).map((b) => b.toString(16).padStart(2, "0")).join("") + "@users.sedotoon.app";
 
   function cloudStatus(s, err) {
     cloud.status = s; cloud.err = err || "";
@@ -3892,97 +3899,63 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     }
     if (!$("mLib").hidden) renderCloud();
   }
-  const autoRelinkOk = () => {
-    if (!linked() || !(cloud.st && cloud.st.email) || navigator.onLine === false) return false;
-    try { if (sessionStorage.getItem("sedo-picking")) return false; if (Date.now() - Number(sessionStorage.getItem("sedo-picked-at") || 0) < 5 * 60000) return false; /* 사진 고른 직후엔 화면을 다른 데로 옮기지 않음 */ if (Date.now() - Number(localStorage.getItem("sedo-cloud-auto") || 0) < 15 * 60000) return false; } catch (e) { return false; }
-    return true;
-  };
-  // 제타 스튜디오 안(iframe)에서는 구글 로그인 화면이 막혀서(구글이 iframe 표시를 거부) 바깥 창 전체를 이동시켜 로그인함
-  const SITE = "https://deca19.github.io/zeta/sedotoon/";
-  const inFrame = () => { try { return window.top !== window; } catch (e) { return true; } };
-  const topSameOrigin = () => { try { return !!window.top.location.href; } catch (e) { return false; } };
-  const inAppUA = () => /KAKAOTALK|Instagram|FBAN|FBAV|FB_IAB|Line\/|NAVER\(inapp|DaumApps|everytimeApp|; wv\)/i.test(navigator.userAgent || "");
-  function openOutside(url) {
-    const ua = navigator.userAgent || "";
-    if (/KAKAOTALK/i.test(ua)) { location.href = "kakaotalk://web/openExternal?url=" + encodeURIComponent(url); return; }
-    if (/Android/i.test(ua)) { location.href = "intent://" + url.replace(/^https?:\/\//, "") + "#Intent;scheme=https;package=com.android.chrome;end"; return; }
-    window.open(url, "_blank", "noopener");
+  async function authCall(grant, body) {
+    let r;
+    try { r = await fetch(SB_URL + "/auth/v1/token?grant_type=" + grant, { method: "POST", headers: { apikey: SB_KEY, "Content-Type": "application/json" }, body: JSON.stringify(body) }); }
+    catch (e) { throw new Error("net"); }
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) { const code = j.error_code || j.error || ""; throw new Error(/invalid_credentials|invalid_grant/.test(code) ? (grant === "password" ? "wrong" : "auth") : /refresh_token_not_found|session_not_found|refresh_token_already_used/.test(code) ? "auth" : r.status === 429 ? "busy" : "http" + r.status); }
+    return j;
   }
-  function cloudGo(select, silent) {
-    if (!cloudReady()) return;
-    if (inAppUA()) {
-      if (silent) { cloudStatus("relink"); return; }
-      toast("카톡·인스타 같은 앱 안의 브라우저에서는 구글이 로그인을 막아요. 크롬(또는 삼성 인터넷)으로 열어 드릴게요.", true);
-      setTimeout(() => openOutside(SITE), 1200); return;
+  function takeSession(j) {
+    cloud.st = Object.assign(cloud.st || { pushed: {}, imgs: {}, tomb: {} }, { linked: true, token: j.access_token, refresh: j.refresh_token, exp: Date.now() + ((j.expires_in || 3600) - 120) * 1000, uid: (j.user && j.user.id) || cloud.st && cloud.st.uid });
+    cloudSave();
+  }
+  async function freshToken(force) {
+    if (!linked()) throw new Error("auth");
+    if (!force && cloud.st.token && Date.now() < (cloud.st.exp || 0)) return cloud.st.token;
+    if (!cloud.refreshing) cloud.refreshing = (async () => {
+      // 다른 창이 먼저 새로 받았으면 그걸 씀
+      try { const o = JSON.parse(localStorage.getItem("sedo-acct") || "null"); if (o && o.uid === cloud.st.uid && o.refresh !== cloud.st.refresh && Date.now() < (o.exp || 0)) { Object.assign(cloud.st, { token: o.token, refresh: o.refresh, exp: o.exp }); return; } } catch (e) { /* ignore */ }
+      const j = await authCall("refresh_token", { refresh_token: cloud.st.refresh });
+      takeSession(j);
+    })().finally(() => { cloud.refreshing = null; });
+    await cloud.refreshing;
+    return cloud.st.token;
+  }
+  async function api(method, url, body, type, extra) {
+    let tok = await freshToken();
+    for (let tryN = 0; tryN < 2; tryN++) {
+      let r;
+      try { r = await fetch(url, { method, headers: Object.assign({ apikey: SB_KEY, Authorization: "Bearer " + tok }, type ? { "Content-Type": type } : {}, extra || {}), body }); }
+      catch (e) { throw new Error("net"); }
+      if (r.ok) return r;
+      const t = await r.text().catch(() => "");
+      if ((r.status === 401 || /jwt expired|exp.*claim|invalid jwt/i.test(t)) && tryN === 0) { tok = await freshToken(true); continue; }
+      if (/not_found|Object not found|"statusCode":"404"/i.test(t) || r.status === 404) return { ok: false, status: 404 };
+      if (/exceeded|quota|too large|Payload too large/i.test(t) || r.status === 413) throw new Error("quota");
+      if (r.status === 401) throw new Error("auth");
+      throw new Error("http" + r.status);
     }
-    if (inFrame()) {
-      if (silent) { cloudStatus("relink"); return; } // 자동 재연결로 바깥 화면을 갑자기 옮기지 않음
-      if (!topSameOrigin()) { toast("여기서는 구글 로그인이 안 돼요. 새 창에서 세로툰을 열어 로그인해 주세요.", true); setTimeout(() => window.open(SITE, "_blank", "noopener"), 1200); return; }
-    }
-    const state = Math.random().toString(36).slice(2) + Date.now().toString(36);
-    try { localStorage.setItem("sedo-oauth-ls", JSON.stringify({ state, at: Date.now() })); } catch (e) { /* ignore */ }
-    try { sessionStorage.setItem("sedo-oauth", state); if (silent) { sessionStorage.setItem("sedo-oauth-silent", "1"); localStorage.setItem("sedo-cloud-auto", String(Date.now())); } else sessionStorage.removeItem("sedo-oauth-silent"); } catch (e) { /* ignore */ }
-    clearTimeout(saveTimer);
-    const go = () => {
-      const q = new URLSearchParams({ client_id: GOOGLE_CLIENT_ID, redirect_uri: redirectUri(), response_type: "token", scope: CLOUD_SCOPES, include_granted_scopes: "true", state });
-      if (select || !(cloud.st && cloud.st.email)) q.set("prompt", "select_account consent"); else { q.set("login_hint", cloud.st.email); if (silent) q.set("prompt", "none"); }
-      const url = "https://accounts.google.com/o/oauth2/v2/auth?" + q.toString();
-      if (inFrame()) {
-        try { const bk = window.top.location.href; sessionStorage.setItem("sedo-oauth-back", bk); try { localStorage.setItem("sedo-oauth-back", JSON.stringify({ url: bk, at: Date.now() })); } catch (e2) { /* ignore */ } window.top.location.assign(url); return; }
-        catch (e) { toast("여기서는 구글 로그인이 안 돼요. 새 창에서 열어 주세요.", true); window.open(SITE, "_blank", "noopener"); return; }
-      }
-      try { sessionStorage.removeItem("sedo-oauth-back"); localStorage.removeItem("sedo-oauth-back"); } catch (e) { /* ignore */ }
-      location.assign(url);
-    };
-    saveNow().then(go, go);
+    throw new Error("auth");
   }
-  function oauthBack() {
-    let back = ""; try { back = sessionStorage.getItem("sedo-oauth-back") || ""; sessionStorage.removeItem("sedo-oauth-back"); } catch (e) { /* ignore */ }
-    try { const j = JSON.parse(localStorage.getItem("sedo-oauth-back") || "null"); localStorage.removeItem("sedo-oauth-back"); if (!back && j && Date.now() - j.at < 30 * 60000) back = j.url || ""; } catch (e) { /* ignore */ }
-    return /^https:\/\/deca19\.github\.io\//.test(back) || /^http:\/\/localhost[:/]/.test(back) ? back : "";
-  }
-  function takeOAuthReturn() {
-    const hs = location.hash || "";
-    if (!/access_token=|error=/.test(hs)) return null;
-    const p = new URLSearchParams(hs.slice(1));
-    try { history.replaceState(null, "", location.pathname + location.search); } catch (e) { /* ignore */ }
-    let want = null, silent = false; try { want = sessionStorage.getItem("sedo-oauth"); sessionStorage.removeItem("sedo-oauth"); silent = sessionStorage.getItem("sedo-oauth-silent") === "1"; sessionStorage.removeItem("sedo-oauth-silent"); } catch (e) { /* ignore */ }
-    let wantLs = null; try { const j = JSON.parse(localStorage.getItem("sedo-oauth-ls") || "null"); localStorage.removeItem("sedo-oauth-ls"); if (j && Date.now() - j.at < 30 * 60000) wantLs = j.state; } catch (e) { /* ignore */ }
-    if (p.get("error")) return { error: p.get("error"), silent };
-    const got = p.get("state");
-    if (!got || (got !== want && got !== wantLs)) return { error: "state" };
-    if (!want) cloud.otherWindow = true; // 다른 창(홈 화면 앱 등)에서 시작한 로그인
-    return { token: p.get("access_token"), exp: Date.now() + (Number(p.get("expires_in")) || 3600) * 1000 - 120000, scope: p.get("scope") || "" };
-  }
-
-  async function api(method, url, body, type) {
-    if (!tokenOk()) throw new Error("auth");
-    const r = await fetch(url, { method, headers: Object.assign({ Authorization: "Bearer " + cloud.st.token }, type ? { "Content-Type": type } : {}), body });
-    if (r.status === 401) { cloud.st.exp = 0; cloudSave(); throw new Error("auth"); }
-    if (r.status === 403) { const t = await r.text().catch(() => ""); throw new Error(/accessNotConfigured|SERVICE_DISABLED|has not been used|is disabled/i.test(t) ? "api-off" : /storageQuota|quotaExceeded/i.test(t) ? "quota" : /insufficient|ACCESS_TOKEN_SCOPE|scope/i.test(t) ? "scope" : "http403"); }
-    if (!r.ok && r.status !== 404) throw new Error("http" + r.status);
-    return r;
-  }
+  const objUrl = (name) => SB_URL + "/storage/v1/object/" + SB_BUCKET + "/" + cloud.st.uid + "/" + encodeURIComponent(name);
   async function listFiles() {
-    const out = {}; let pt = "";
-    do {
-      const r = await api("GET", DRIVE + "/files?spaces=appDataFolder&pageSize=1000&fields=" + encodeURIComponent("nextPageToken,files(id,name,modifiedTime)") + (pt ? "&pageToken=" + encodeURIComponent(pt) : ""));
-      const j = await r.json();
-      (j.files || []).forEach((f) => { const o = out[f.name]; if (!o || o.t < f.modifiedTime) out[f.name] = { id: f.id, t: f.modifiedTime || "" }; });
-      pt = j.nextPageToken || "";
-    } while (pt);
-    cloud.files = {}; for (const [n, v] of Object.entries(out)) cloud.files[n] = v.id;
-    return cloud.files;
+    const out = {};
+    for (let off = 0; ; off += 1000) {
+      const r = await api("POST", SB_URL + "/storage/v1/object/list/" + SB_BUCKET, JSON.stringify({ prefix: cloud.st.uid + "/", limit: 1000, offset: off, sortBy: { column: "name", order: "asc" } }), "application/json");
+      const arr = r.ok ? await r.json() : [];
+      (arr || []).forEach((f) => { if (f && f.name && f.id !== null) out[f.name] = f.name; });
+      if (!arr || arr.length < 1000) break;
+    }
+    cloud.files = out;
+    return out;
   }
-  async function getJson(id) { const r = await api("GET", DRIVE + "/files/" + id + "?alt=media"); if (!r.ok) return null; try { return await r.json(); } catch (e) { return null; } }
-  async function getBlob(id) { const r = await api("GET", DRIVE + "/files/" + id + "?alt=media"); return r.ok ? r.blob() : null; }
+  async function getJson(name) { const r = await api("GET", SB_URL + "/storage/v1/object/authenticated/" + SB_BUCKET + "/" + cloud.st.uid + "/" + encodeURIComponent(name)); if (!r.ok) return null; try { return await r.json(); } catch (e) { return null; } }
+  async function getBlob(name) { const r = await api("GET", SB_URL + "/storage/v1/object/authenticated/" + SB_BUCKET + "/" + cloud.st.uid + "/" + encodeURIComponent(name)); return r.ok ? r.blob() : null; }
   async function upsert(name, body, type) {
-    const id = cloud.files[name];
-    if (id) { const r = await api("PATCH", DRIVE_UP + "/files/" + id + "?uploadType=media", body, type); if (r.ok) return; delete cloud.files[name]; }
-    const bnd = "sedo" + Math.random().toString(36).slice(2);
-    const blob = new Blob(["--" + bnd + "\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n" + JSON.stringify({ name, parents: ["appDataFolder"] }) + "\r\n--" + bnd + "\r\nContent-Type: " + type + "\r\n\r\n", body, "\r\n--" + bnd + "--"]);
-    const r = await api("POST", DRIVE_UP + "/files?uploadType=multipart&fields=id", blob, "multipart/related; boundary=" + bnd);
-    const j = await r.json(); cloud.files[name] = j.id;
+    await api("POST", objUrl(name), body, type, { "x-upsert": "true", "cache-control": "no-cache" });
+    cloud.files[name] = name;
   }
   const workImgs = (proj, sb) => { const keys = new Set(); (proj.blocks || []).forEach((b) => blockImgs(b).forEach((k) => keys.add(k))); if (sb && Array.isArray(sb.cuts)) sb.cuts.forEach((c) => c.img && keys.add(c.img)); return [...keys].filter((k) => k && !k.startsWith("sample")); };
   function mergeIndex(remote) {
@@ -4070,7 +4043,6 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   }
   async function cloudSync(mode) {
     if (!cloudReady() || !linked()) return;
-    if (!tokenOk()) { cloudStatus("relink"); nagRelink(); return; }
     if (cloud.busy) { cloud.again = cloud.again === "full" ? "full" : mode || "full"; return; }
     cloud.busy = true; cloudStatus("sync");
     try {
@@ -4087,102 +4059,103 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
       if (cloud.again) { const m = cloud.again; cloud.again = false; setTimeout(() => cloudSync(m), 400); }
     }
   }
-  function nagRelink(force) {
-    if (cloud.nagged || !linked() || (!force && !unsynced())) return;
+  function nagRelink() {
+    if (cloud.nagged || !linked()) return;
     cloud.nagged = true;
-    toast("구글 계정 저장이 잠깐 멈췄어요. 보관함에서 ‘다시 연결’을 누르면 이어서 저장돼요.", true);
+    toast("로그인이 풀렸어요. 보관함에서 다시 로그인하면 이어서 저장돼요.", true);
   }
-  const DRIVE_API_URL = "https://console.cloud.google.com/apis/library/drive.googleapis.com?project=" + GOOGLE_CLIENT_ID.split("-")[0];
-  const CLOUD_MSG = { "api-off": "구글 클라우드에서 ‘Google Drive API’가 꺼져 있어요. 아래 버튼으로 켜고(사용 클릭) 1~2분 뒤 ‘지금 저장’을 누르세요.", http403: "구글이 저장을 거부했어요 (403).", quota: "구글 드라이브 용량이 가득 찼어요.", scope: "로그인할 때 ‘드라이브 앱 데이터’ 권한에 체크해 주세요.", net: "인터넷 연결을 확인해 주세요." };
+  const CLOUD_MSG = { quota: "저장 공간이 가득 찼거나 사진 한 장이 너무 커요.", net: "인터넷 연결을 확인해 주세요.", busy: "잠깐 너무 많이 시도했어요. 1분 뒤 다시 해 주세요." };
   let cloudSig = "";
+  async function accountGo(kind, idEl, pwEl, msgEl, btns) {
+    const id = normId(idEl.value), pw = pwEl.value;
+    const say = (t) => { msgEl.textContent = t; msgEl.classList.toggle("err", !!t); };
+    if (!idOk(id)) return say("아이디는 2~20자로, 한글·영어 소문자·숫자·_ . - 만 쓸 수 있어요.");
+    if (pw.length < 6) return say("비밀번호는 6자 이상으로 해 주세요.");
+    btns.forEach((b) => { b.disabled = true; }); say(""); msgEl.textContent = kind === "signup" ? "계정 만드는 중…" : "로그인 중…";
+    try {
+      if (kind === "signup") {
+        let r; try { r = await fetch(SB_URL + "/functions/v1/sedo-signup", { method: "POST", headers: { apikey: SB_KEY, Authorization: "Bearer " + SB_KEY, "Content-Type": "application/json" }, body: JSON.stringify({ id, pw }) }); } catch (e) { throw new Error("net"); }
+        const j = await r.json().catch(() => ({}));
+        if (!r.ok) throw new Error(j.error === "taken" ? "taken" : j.error === "bad_id" ? "bad_id" : j.error === "bad_pw" ? "bad_pw" : "http" + r.status);
+      }
+      const j = await authCall("password", { email: idToEmail(id), password: pw });
+      const prevUid = cloud.st && cloud.st.uid;
+      if (prevUid && prevUid !== (j.user && j.user.id)) cloud.st = null; // 다른 계정이면 저장 기록을 새로
+      takeSession(j); cloud.st.user = id; cloud.nagged = false; cloudSave();
+      pwEl.value = "";
+      toast(kind === "signup" ? "계정을 만들었어요! 이 폰의 작품을 저장하는 중…" : "로그인했어요. 저장한 작품을 불러오는 중…");
+      cloudStatus("sync"); renderCloud();
+      await cloudSync("full");
+      if (cloud.status === "ok") toast("모두 저장됐어요. 이제 고치면 자동으로 저장돼요. 다른 폰에서도 같은 아이디로 로그인하면 그대로 나와요.");
+    } catch (e) {
+      const m = String((e && e.message) || e);
+      say(m === "taken" ? "이미 있는 아이디예요. 다른 아이디를 쓰거나, 내 아이디라면 ‘로그인’을 누르세요."
+        : m === "wrong" ? "아이디 또는 비밀번호가 달라요." : m === "bad_id" ? "그 아이디는 쓸 수 없어요." : m === "bad_pw" ? "더 긴 비밀번호로 해 주세요."
+        : m === "net" ? (/github\.io$|^localhost$|^127\./.test(location.hostname) ? "인터넷 연결을 확인해 주세요." : "Claude 앱 안에서는 서버에 연결할 수 없어요. 브라우저에서 deca19.github.io/zeta/sedotoon 을 열어 로그인해 주세요.") : m === "busy" ? "잠깐 너무 많이 시도했어요. 1분 뒤 다시 해 주세요." : "문제가 생겼어요 (" + m + "). 잠시 뒤 다시 해 주세요.");
+    } finally { btns.forEach((b) => { b.disabled = false; }); }
+  }
   function renderCloud() {
     const box = $("lCloud"); if (!box) return;
-    const sig = JSON.stringify([cloudReady(), !!store.db, linked(), cloud.st && cloud.st.email, cloud.status, cloud.err, linked() ? unsynced() : 0, tokenOk(), cloud.st && cloud.st.lastSync]);
+    const sig = JSON.stringify([cloudReady(), !!store.db, linked(), cloud.st && cloud.st.user, cloud.status, cloud.err, linked() ? unsynced() : 0, cloud.st && cloud.st.lastSync]);
     if (sig === cloudSig && box.childElementCount) return;
+    if (box.querySelector("input") && document.activeElement && box.contains(document.activeElement)) return; // 입력 중엔 다시 그리지 않음
     cloudSig = sig;
     box.innerHTML = "";
     if (!cloudReady() || !store.db) return;
     const card = h("div", { class: "auto-card cloud-card" });
     if (!linked()) {
-      card.append(h("h3", { text: "☁ 구글 계정에 저장" }),
-        h("p", { text: "로그인하면 작품이 내 구글 드라이브의 앱 전용 공간에 자동으로 저장돼요. 폰을 바꾸거나 앱을 지워도 같은 계정으로 로그인하면 그대로 돌아와요." }),
-        h("button", { type: "button", class: "btn primary", onclick: () => cloudGo(true) }, "Google로 로그인"),
-        navigator.standalone === true ? h("p", { class: "hint", text: "아이폰 홈 화면 앱은 로그인 정보를 사파리와 따로 써서 연결이 안 될 수 있어요. 안 되면 사파리에서 deca19.github.io/zeta/sedotoon 을 열어 로그인하세요." }) : "",
-        inAppUA() ? h("p", { class: "hint", text: "지금은 카톡·인스타 같은 앱 안의 브라우저라 구글이 로그인을 막아요. 버튼을 누르면 크롬으로 열어 드려요." }) : "");
+      const idEl = h("input", { type: "text", placeholder: "아이디", autocomplete: "username", autocapitalize: "none", spellcheck: "false", maxlength: "20", style: "width:100%;font-size:16px" });
+      const pwEl = h("input", { type: "password", placeholder: "비밀번호 (6자 이상)", autocomplete: "current-password", maxlength: "72", style: "width:100%;font-size:16px" });
+      const msg = h("p", { class: "hint", text: "" });
+      const bIn = h("button", { type: "button", class: "btn primary" }, "로그인");
+      const bUp = h("button", { type: "button", class: "btn" }, "계정 만들기");
+      bIn.onclick = () => accountGo("login", idEl, pwEl, msg, [bIn, bUp]);
+      bUp.onclick = () => accountGo("signup", idEl, pwEl, msg, [bIn, bUp]);
+      pwEl.addEventListener("keydown", (e) => { if (e.key === "Enter") bIn.click(); });
+      card.append(h("h3", { text: "☁ 세로툰 계정에 저장" }),
+        h("p", { text: "아이디와 비밀번호만 정하면 돼요. 로그인하면 작품이 자동으로 저장되고, 폰을 바꿔도 같은 아이디로 로그인하면 그대로 돌아와요." }),
+        h("div", { style: "display:flex;flex-direction:column;gap:8px;margin-top:8px" }, idEl, pwEl, h("div", { class: "row" }, bIn, bUp)), msg,
+        h("p", { class: "hint", text: "비밀번호는 찾기 기능이 없어요. 꼭 기억해 두세요." }));
     } else {
       const pend = unsynced(), t = cloud.st.lastSync ? fmtDate(cloud.st.lastSync) : "";
-      const line = cloud.status === "sync" ? "저장하는 중…" : cloud.status === "relink" || !tokenOk() ? "연결이 잠깐 끊겼어요 · 다시 연결하면 이어서 저장돼요" + (pend ? " (저장할 작품 " + pend + "개)" : "")
-        : cloud.status === "err" ? "저장하지 못했어요. " + (CLOUD_MSG[cloud.err] || CLOUD_MSG.net) : pend ? "저장할 내용이 있어요 · 곧 저장돼요" : "모두 저장됨" + (t ? " · " + t : "");
-      card.append(h("h3", { text: "☁ " + (cloud.st.email || "구글 계정") }), h("p", { text: line }),
+      const line = cloud.status === "sync" ? "저장하는 중…" : cloud.status === "relink" ? "로그인이 풀렸어요 · 다시 로그인하면 이어서 저장돼요" + (pend ? " (저장할 작품 " + pend + "개)" : "")
+        : cloud.status === "err" ? "저장하지 못했어요. " + (CLOUD_MSG[cloud.err] || "잠시 뒤 다시 해 주세요.") + " (" + cloud.err + ")" : pend ? "저장할 내용이 있어요 · 곧 저장돼요" : "모두 저장됨" + (t ? " · " + t : "");
+      card.append(h("h3", { text: "☁ " + (cloud.st.user || "내 계정") }), h("p", { text: line }),
         h("div", { class: "row" },
-          !tokenOk() ? h("button", { type: "button", class: "btn primary small", onclick: () => cloudGo(false) }, "다시 연결") : h("button", { type: "button", class: "btn small", disabled: cloud.status === "sync", onclick: () => cloudSync("full") }, "지금 저장·불러오기"),
-          h("button", { type: "button", class: "btn small", onclick: cloudLogout }, "로그아웃")),
-        cloud.status === "err" && cloud.err === "api-off" ? h("a", { class: "btn primary small", href: DRIVE_API_URL, target: "_blank", rel: "noopener", style: "margin-top:8px;display:inline-block;text-decoration:none" }, "Google Drive API 켜러 가기 ↗") : "",
-        cloud.status === "err" ? h("p", { class: "hint", text: "오류 코드: " + cloud.err }) : "");
+          cloud.status === "relink" ? h("button", { type: "button", class: "btn primary small", onclick: () => { const u = cloud.st.user; cloudLogout(true); cloudPrefill = u; renderCloud(); } }, "다시 로그인")
+            : h("button", { type: "button", class: "btn small", disabled: cloud.status === "sync", onclick: () => cloudSync("full") }, "지금 저장·불러오기"),
+          h("button", { type: "button", class: "btn small", onclick: () => cloudLogout() }, "로그아웃")));
     }
     box.appendChild(card);
+    if (!linked() && cloudPrefill) { const i = box.querySelector("input"); if (i) i.value = cloudPrefill; cloudPrefill = ""; }
   }
-  function cloudLogout() {
+  let cloudPrefill = "";
+  function cloudLogout(quiet) {
     const tok = cloud.st && cloud.st.token;
-    if (tok) fetch("https://oauth2.googleapis.com/revoke?token=" + encodeURIComponent(tok), { method: "POST" }).catch(() => {});
-    cloud.st = null; cloudSave(); cloudStatus("off"); renderCloud();
-    toast("로그아웃했어요. 작품은 이 폰에도 그대로 있어요.");
+    if (tok) fetch(SB_URL + "/auth/v1/logout", { method: "POST", headers: { apikey: SB_KEY, Authorization: "Bearer " + tok } }).catch(() => {});
+    cloud.st = null; cloudSave(); cloudSig = ""; cloudStatus("off"); renderCloud();
+    if (!quiet) toast("로그아웃했어요. 작품은 이 폰에도 그대로 있어요.");
   }
-  async function fetchEmail() {
-    try { const r = await api("GET", "https://www.googleapis.com/oauth2/v3/userinfo"); if (r.ok) { const j = await r.json(); if (j.email) { cloud.st.email = j.email; cloudSave(); } } } catch (e) { /* ignore */ }
-  }
-  saveHooks.push(() => { if (!linked()) return; cloudStatus(cloud.status === "sync" ? "sync" : tokenOk() ? cloud.status : "relink"); clearTimeout(cloud.timer); cloud.timer = setTimeout(() => cloudSync("push"), 4000); });
+  saveHooks.push(() => { if (!linked()) return; cloudStatus(cloud.status === "sync" ? "sync" : cloud.status); clearTimeout(cloud.timer); cloud.timer = setTimeout(() => cloudSync("push"), 4000); });
   deleteHooks.push((id) => { if (!linked()) return; cloud.st.tomb[id] = Date.now(); cloud.st.tombDirty = true; cloudSave(); clearTimeout(cloud.timer); cloud.timer = setTimeout(() => cloudSync("push"), 1500); });
-  libHooks.push(() => { renderCloud(); if (linked() && tokenOk() && !cloud.busy && Date.now() - (cloud.st.lastSync || 0) > 20000) cloudSync("full"); });
-  function adoptOtherLogin() {
-    let fresh = null; try { fresh = JSON.parse(localStorage.getItem("sedo-cloud") || "null"); } catch (e) { return false; }
-    if (!fresh || !fresh.linked || !fresh.token || fresh.token === (cloud.st && cloud.st.token) || !(Date.now() < (fresh.exp || 0))) return false;
-    const wasLinked = linked(); cloudLoad(); cloud.nagged = false; cloudStatus("ok");
-    toast(wasLinked ? "구글 계정에 다시 연결됐어요" : "구글 계정에 연결됐어요. 작품을 저장하는 중…");
-    cloudSync("full"); return true;
-  }
-  window.addEventListener("storage", (e) => { if (e.key === "sedo-cloud") adoptOtherLogin(); });
-  let hiddenAt = 0;
+  libHooks.push(() => { renderCloud(); if (linked() && cloud.status !== "relink" && !cloud.busy && Date.now() - (cloud.st.lastSync || 0) > 20000) cloudSync("full"); });
+  // 다른 창(홈 화면 앱 등)에서 로그인·로그아웃하면 여기도 따라감
+  window.addEventListener("storage", (e) => {
+    if (e.key !== "sedo-acct") return;
+    const was = cloud.st && cloud.st.uid; cloudLoad(); const now = cloud.st && cloud.st.uid;
+    cloudSig = ""; if (was !== now) { cloudStatus(linked() ? "ok" : "off"); if (linked()) cloudSync("full"); } else renderCloud();
+  });
   document.addEventListener("visibilitychange", () => {
-    if (!document.hidden && adoptOtherLogin()) return;
     if (!linked()) return;
-    if (document.hidden) { hiddenAt = Date.now(); if (tokenOk() && unsynced()) { clearTimeout(cloud.timer); clearTimeout(saveTimer); saveNow().then(() => cloudSync("push")); } return; }
-    if (!tokenOk()) { if (hiddenAt && Date.now() - hiddenAt > 3 * 60000 && autoRelinkOk() && !inFrame() && !inAppUA() && !document.querySelector(".modal:not([hidden])") && !sheetOpen()) cloudGo(false, true); return; }
-    if (Date.now() - (cloud.st.lastSync || 0) > 60000) cloudSync("full");
+    if (document.hidden) { if (unsynced()) { clearTimeout(cloud.timer); clearTimeout(saveTimer); saveNow().then(() => cloudSync("push")); } return; }
+    if (cloud.status !== "relink" && Date.now() - (cloud.st.lastSync || 0) > 60000) cloudSync("full");
   });
   readyHooks.push(async () => {
     if (!cloudReady()) return;
     cloudLoad();
     const bl = $("bLib"); if (bl && !$("cloudDot")) { const d = h("span", { class: "dot", id: "cloudDot" }); d.hidden = true; bl.appendChild(d); }
-    const back = takeOAuthReturn();
-    const goBack = back ? oauthBack() : "";
-    if (back && back.error) {
-      if (goBack) { location.replace(goBack); return; }
-      if (!back.silent) {
-        const why = back.error === "access_denied" ? "구글이 로그인을 막았거나 취소됐어요. ‘액세스 차단됨’이 떴다면 구글 클라우드 → OAuth 동의 화면에서 이 계정을 테스트 사용자로 넣거나 앱을 게시해야 해요."
-          : back.error === "state" ? "로그인 창이 바뀌어서 확인을 못 했어요. 한 번만 다시 눌러 주세요." : "구글 로그인을 마치지 못했어요 (" + back.error + "). 다시 해 주세요.";
-        cloud.lastLoginErr = back.error; toast(why, true);
-      }
-      cloudStatus(linked() ? "relink" : "off"); if (back.silent && linked()) nagRelink(true); return;
-    }
-    if (back && back.token) {
-      if (!/drive\.appdata/.test(back.scope)) { toast("‘드라이브 앱 데이터’ 권한이 꺼져 있어서 저장할 수 없어요. 로그인할 때 체크해 주세요.", true); return; }
-      const first = !linked();
-      cloud.st = Object.assign(cloud.st || { pushed: {}, imgs: {}, tomb: {} }, { linked: true, token: back.token, exp: back.exp });
-      cloudSave();
-      await fetchEmail();
-      if (goBack) { toast("구글 계정에 연결했어요. 원래 화면으로 돌아가요…"); setTimeout(() => location.replace(goBack), 600); return; }
-      if (cloud.otherWindow) toast("구글 계정에 연결했어요. 홈 화면 앱으로 돌아가도 이어서 저장돼요.");
-      if (first) toast("구글 계정에 연결했어요. 작품을 저장하는 중…");
-      await cloudSync("full");
-      if (first && cloud.status === "ok") toast("구글 계정에 모두 저장했어요. 이제 고치면 자동으로 저장돼요.");
-      return;
-    }
-    if (linked()) {
-      if (tokenOk()) { cloudStatus("ok"); cloudSync("full"); }
-      else if (autoRelinkOk() && !inFrame() && !inAppUA()) { cloudStatus("sync"); cloudGo(false, true); }
-      else cloudStatus("relink");
-    }
+    if (/access_token=|error=/.test(location.hash || "")) { try { history.replaceState(null, "", location.pathname + location.search); } catch (e) { /* 예전 구글 로그인에서 돌아온 주소 정리 */ } }
+    if (linked()) { cloudStatus("ok"); cloudSync("full"); }
   });
   // ---------- quick build ----------
   const qb = { src: "new", photos: [], mode: "replace" };
@@ -4408,12 +4381,26 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     }
     return want === "jpg" ? { ext: "jpg", mime: "image/jpeg", q: 0.93 } : { ext: "png", mime: "image/png" };
   }
+  const isIOS = () => /iPhone|iPad|iPod/.test(navigator.userAgent || "") || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  // 고른 장수를 최대한 지킴: WebP(최대 16383px)로 안 되면 고화질 JPG(최대 32767px), 그래도 안 되면 선명도를 낮춤.
+  // 그래도 한 장에 안 들어갈 만큼 길 때만 어쩔 수 없이 나눔.
   function exportPlan() {
-    const W = P.settings.width, lay = stripLayout(W), sc = Math.min(Number(P.settings.scale) || 1, 2400 / W), f = exportFormat();
-    // 폰에서도 열리는 크기(1600만 화소) + WebP 최대 높이(16383px) 안에서 나눔
-    const maxH = Math.floor(Math.min(16000000 / (W * sc * sc), (f.mime === "image/webp" ? 16383 : 32000) / sc));
-    const parts = isComic() && !P.settings.comicJoin ? lay.items.map((it) => [it.y, it.y + it.S.h]) : splitParts(lay, isComic() ? 1 : P.settings.parts, maxH);
-    return { W, sc, lay, parts };
+    const W = P.settings.width, lay = stripLayout(W), want = isComic() ? 1 : P.settings.parts;
+    const sc0 = Math.min(Number(P.settings.scale) || 1, 2400 / W), F0 = exportFormat();
+    const AREA = isIOS() ? 16700000 : 64000000;
+    const JPG = { ext: "jpg", mime: "image/jpeg", q: 0.95 };
+    const tries = [[F0, sc0]];
+    if (F0.mime === "image/webp") tries.push([Object.assign({}, JPG, { swapped: true }), sc0]);
+    [1.5, 1].forEach((s) => { if (s < sc0) { tries.push([F0, s]); if (F0.mime === "image/webp") tries.push([Object.assign({}, JPG, { swapped: true }), s]); } });
+    const plan = (F, sc) => {
+      const maxH = Math.floor(Math.min(AREA / (W * sc * sc), (F.mime === "image/webp" ? 16383 : 32767) / sc));
+      const parts = isComic() && !P.settings.comicJoin ? lay.items.map((it) => [it.y, it.y + it.S.h]) : splitParts(lay, want, maxH);
+      return { W, sc, lay, parts, F };
+    };
+    let best = null;
+    for (const [F, sc] of tries) { const p = plan(F, sc); if (!best) best = p; if (isComic() || p.parts.length <= want) { best = p; break; } if (p.parts.length < best.parts.length) best = p; }
+    best.lowered = best.sc < sc0;
+    return best;
   }
   const fmtSize = (n) => n >= 1048576 ? (n / 1048576).toFixed(1) + "MB" : Math.max(1, Math.round(n / 1024)) + "KB";
   function renderExportUI() {
@@ -4434,11 +4421,12 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     jpg: "어디서나 열리는 옛날 형식. 글자 주변이 살짝 뭉개질 수 있어요.",
   };
   function exportInfo() {
-    const { W, sc, lay, parts } = exportPlan(), f = exportFormat();
+    const { W, sc, lay, parts, F: f, lowered } = exportPlan();
     const forced = !isComic() && parts.length > P.settings.parts;
-    $("eFmtHint").textContent = FMT_HINT[P.settings.format] + (f.fallback ? " (이 브라우저는 WebP로 못 만들어서 고화질 JPG로 저장돼요.)" : "");
+    $("eFmtHint").textContent = FMT_HINT[P.settings.format] + (f.fallback ? " (이 브라우저는 WebP로 못 만들어서 고화질 JPG로 저장돼요.)" : "")
+      + (f.swapped ? " · 이 작품은 WebP 한 장에 담기엔 길어서, 고른 장수를 지키려고 고화질 JPG로 저장해요." : "") + (lowered ? " · 장수를 지키려고 선명도를 " + sc + "배로 낮췄어요." : "");
     $("eInfo").innerHTML = "";
-    $("eInfo").append("전체 ", h("b", { text: Math.round(W * sc) + " × " + Math.round(lay.total * sc).toLocaleString() + "px" }), " · ", h("b", { text: parts.length + "장" }), "으로 저장 (" + parts.map((p) => Math.round((p[1] - p[0]) * sc).toLocaleString()).join(" / ") + "px)" + (forced ? " · 휴대폰에서도 열리도록 길이 제한에 맞춰 더 나눴어요" : ""));
+    $("eInfo").append("전체 ", h("b", { text: Math.round(W * sc) + " × " + Math.round(lay.total * sc).toLocaleString() + "px" }), " · ", h("b", { text: parts.length + "장" }), "으로 저장 (" + parts.map((p) => Math.round((p[1] - p[0]) * sc).toLocaleString()).join(" / ") + "px)" + (forced ? " · 이 작품은 너무 길어서 한 장의 최대 길이(" + Math.round((f.mime === "image/webp" ? 16383 : 32767)).toLocaleString() + "px)를 넘어 어쩔 수 없이 나눴어요. 가로 폭을 720px로 줄이면 장수가 줄 수 있어요." : ""));
   }
   $("eWork").addEventListener("click", (ev) => exportWork(curId, ev.currentTarget));
   $("bExport").addEventListener("click", () => { if (!P.blocks.length) { toast("먼저 컷 사진을 올려 주세요", true); return; } renderExportUI(); $("eStatus").textContent = ""; $("eResults").hidden = true; openModal("mExport"); });
@@ -4448,8 +4436,8 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     try {
       stEl.textContent = "글꼴 준비 중…";
       await ensureFonts();
-      const { W, sc, lay, parts } = exportPlan();
-      const F = exportFormat(), fmt = F.ext, mime = F.mime;
+      const { W, sc, lay, parts, F } = exportPlan();
+      const fmt = F.ext, mime = F.mime;
       const blobs = [];
       for (let i = 0; i < parts.length; i++) {
         const [a, b] = parts[i];
@@ -4486,18 +4474,16 @@ details.help code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
       const files = blobs.map((bl, i) => new File([bl], "sedotoon_" + stamp + "_" + String(i + 1).padStart(2, "0") + "." + extOf(bl), { type: bl.type || mime }));
       const total = blobs.reduce((n, bl) => n + bl.size, 0);
       const dlAll = async () => {
-        for (const f of files) {
-          const a = document.createElement("a"), href = URL.createObjectURL(f);
-          a.href = href; a.download = f.name; document.body.appendChild(a); a.click(); a.remove();
-          setTimeout(() => URL.revokeObjectURL(href), 60000);
-          await sleep(500);
-        }
+        let how = "";
+        for (const f of files) { how = await saveFileBlob(f, f.name); if (how === "declined") return; await sleep(600); }
+        toast(how === "saved" ? "저장했어요" : isMobile() || coarse() ? "다운로드 폴더에 저장했어요. 갤러리의 ‘다운로드’ 앨범(또는 내 파일 → 다운로드)에서 보여요." : "다운로드 폴더에 저장했어요.");
       };
       const canShare = (() => { try { return !!(navigator.canShare && navigator.share && navigator.canShare({ files })); } catch (er) { return false; } })();
       const inFrame = (() => { try { return window.top !== window; } catch (er) { return true; } })();
       const btns = h("div", { class: "row-btns", style: "display:flex;flex-direction:column;gap:8px;margin-bottom:10px" });
       if (canShare) btns.appendChild(h("button", { type: "button", class: "btn primary wide", onclick: async () => {
-        try { await navigator.share({ files, title: "세로툰" }); } catch (er) { if (er && er.name !== "AbortError") { toast("공유 창을 못 열었어요. ‘파일로 저장’을 눌러 주세요.", true); } }
+        try { await navigator.share({ files }); toast("공유 창에서 ‘갤러리에 저장’(아이폰은 ‘이미지 저장’)을 고르면 사진첩에 들어가요."); }
+        catch (er) { if (er && er.name === "AbortError") return; try { await navigator.share({ files: [files[0]] }); } catch (er2) { if (er2 && er2.name !== "AbortError") { toast("공유 창을 못 열어서 파일로 저장할게요.", true); dlAll(); } } }
       } }, "📲 사진첩에 저장 · 공유"));
       btns.appendChild(h("button", { type: "button", class: canShare ? "btn wide" : "btn primary wide", onclick: () => dlAll() }, "⬇ 파일로 저장" + (files.length > 1 ? " (" + files.length + "장)" : "")));
       res.appendChild(btns);
